@@ -1,8 +1,16 @@
 
-RESULT [Baikal] python-caldav version: 3.4.0
-RESULT [Baikal] unknown token, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://127.0.0.1:8811/dav.php/calendars/test/client/', 'reason': 'Forbidden'}
-RESULT [Baikal] unknown token, DAVClient.report(): raised AuthorizationError {'url': 'http://127.0.0.1:8811/dav.php/calendars/test/client/', 'reason': 'Forbidden'}
-RESULT [Baikal] unknown token, default fallback: returned ('fake-d41d8cd98f00b204e9800998ecf8427e', 0)
+RESULT [Baikal] python-caldav version: 3.4.1.dev28+g1a75f457a
+RESULT [Baikal] unknown token, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://127.0.0.1:8811/dav.php/calendars/test/client/', 'reason': 'Forbidden', 'preconditions': "['{http://sabredav.org/ns}sabredav-version', '{http://sabredav.org/ns}exception', '{http://sabredav.org/ns}message', '{DAV:}valid-sync-token", 'body': 'b\'<?xml version="1.0" encoding="utf-8"?>\\n<d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">\\n  <s:sabredav-version>4.7.0</s:sabredav'}
+RESULT [Baikal] unknown 40-hex-digit token, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://127.0.0.1:8811/dav.php/calendars/test/client/', 'reason': 'Forbidden', 'preconditions': "['{http://sabredav.org/ns}sabredav-version', '{http://sabredav.org/ns}exception', '{http://sabredav.org/ns}message', '{DAV:}valid-sync-token", 'body': 'b\'<?xml version="1.0" encoding="utf-8"?>\\n<d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">\\n  <s:sabredav-version>4.7.0</s:sabredav'}
+RESULT [Baikal] unknown token, DAVClient.report(): raised AuthorizationError {'url': 'http://127.0.0.1:8811/dav.php/calendars/test/client/', 'reason': 'Forbidden', 'preconditions': "['{http://sabredav.org/ns}sabredav-version', '{http://sabredav.org/ns}exception', '{http://sabredav.org/ns}message', '{DAV:}valid-sync-token", 'body': 'b\'<?xml version="1.0" encoding="utf-8"?>\\n<d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">\\n  <s:sabredav-version>4.7.0</s:sabredav'}
+RESULT [Baikal] unknown token, default fallback: returned ('fake-d41d8cd98f00b204e9800998ecf8427e', 0, False)
 RESULT [Baikal] a removed member as returned: (href, getetag, data is None): [('client-removed.ics', None, True)]
+RESULT [Baikal] full listing through get_objects_by_sync_token(): the collection itself among the members: False
 RESULT [Baikal] DAV:limit 1 through DAVClient.report(): status 207, 507 present: False, token http://sabre.io/ns/sync/6
+RESULT [Baikal] DAV:limit 1, get_objects_by_sync_token(disable_fallback=True): (token, objects, truncated): returned ('http://sabre.io/ns/sync/6', 3, False)
+RESULT [Baikal] same calendar unlimited: (token, objects, truncated): returned ('http://sabre.io/ns/sync/6', 3, False)
 RESULT [Baikal] calendar-multiget through DAVClient.report(depth=None), no Depth header: status 207, entries 2 for 2 hrefs
+RESULT [Baikal] SEQUENCE stored: after create, after save(increase_seqno=False), after save(): ('1', '1', '2')
+RESULT [Baikal] save(increase_seqno=False) of an object someone else saved since: raised ETagMismatchError {'url': '412 Precondition Failed\n\n<?xml version="1.0" encoding="utf-8"?>\n<d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">\n  <s:sabredav-vers'}
+RESULT [Baikal] delete(if_match=<ETag before someone else's save>): raised ETagMismatchError {'url': '412 Precondition Failed\n\n<?xml version="1.0" encoding="utf-8"?>\n<d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">\n  <s:sabredav-vers'}
+RESULT [Baikal] delete(if_match=<last ETag>) on an object already deleted: raised ETagMismatchError {'url': '412 Precondition Failed\n\n<?xml version="1.0" encoding="utf-8"?>\n<d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">\n  <s:sabredav-vers'}

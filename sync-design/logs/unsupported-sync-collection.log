@@ -1,5 +1,5 @@
 
-RESULT [stand-in] no sync-collection, 403 with DAV:supported-report, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://127.0.0.1:5240/calendar/', 'reason': 'Forbidden'}
-RESULT [stand-in] no sync-collection, 403 with DAV:supported-report, DAVClient.report(): raised AuthorizationError {'url': 'http://127.0.0.1:5240/calendar/', 'reason': 'Forbidden'}
+RESULT [stand-in] no sync-collection, 403 with DAV:supported-report, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://127.0.0.1:5240/calendar/', 'reason': 'Forbidden', 'preconditions': "['{DAV:}supported-report']", 'body': 'b\'<?xml version="1.0"?><D:error xmlns:D="DAV:"><D:supported-report/></D:error>\''}
+RESULT [stand-in] no sync-collection, 403 with DAV:supported-report, DAVClient.report(): raised AuthorizationError {'url': 'http://127.0.0.1:5240/calendar/', 'reason': 'Forbidden', 'preconditions': "['{DAV:}supported-report']", 'body': 'b\'<?xml version="1.0"?><D:error xmlns:D="DAV:"><D:supported-report/></D:error>\''}
 RESULT [stand-in] no sync-collection, 501, get_objects_by_sync_token(disable_fallback=True): raised ReportError {'url': '501 Not Implemented\n\nREPORT not implemented'}
 RESULT [stand-in] no sync-collection, 501, DAVClient.report(): returned 501

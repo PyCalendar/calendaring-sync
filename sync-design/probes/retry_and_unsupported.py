@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""The adapter's retry rule against a real refusal, and python-caldav on a server without
+"""An expired token against a real refusal, and python-caldav on a server without
 sync-collection.
 
 Usage:
@@ -28,7 +28,7 @@ def report(client, url, token):
     try:
         return str(caldav_sync_report(client, url, token).status)
     except error.AuthorizationError as e:
-        return f"AuthorizationError {vars(e)['reason']}"
+        return f"AuthorizationError {e.reason}, preconditions {getattr(e, 'preconditions', None)}"
 
 
 if sys.argv[1] == "retry":
@@ -42,6 +42,18 @@ if sys.argv[1] == "retry":
             f"expired token: {report(client, calendar_url, expired)}; "
             f"retry with an empty token: {report(client, calendar_url, None)}",
         )
+        calendar = client.calendar(url=calendar_url)
+        for fallback in (False, True):
+            result(
+                "Radicale",
+                f"user {user}, expired token, "
+                f"get_objects_by_sync_token(disable_fallback={fallback})",
+                outcome(
+                    lambda cal=calendar, off=fallback: (
+                        sync_objects(cal, sync_token=expired, disable_fallback=off).sync_token
+                    )
+                ),
+            )
 else:
     port_403, port_501 = int(sys.argv[2]), int(sys.argv[3])
 

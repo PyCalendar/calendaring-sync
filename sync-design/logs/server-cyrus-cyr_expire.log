@@ -17,9 +17,9 @@ cleaning up expunged messages in user.user1.Drafts
 cleaning up expunged messages in user.user1.Sent
 cleaning up expunged messages in user.user1.Spam
 cleaning up expunged messages in user.user1.Trash
-Expired 0 and expunged 26 out of 50 messages from 18 mailboxes
+Expired 0 and expunged 31 out of 56 messages from 18 mailboxes
 Removing conversation entries older than 90.00 days
-Pruning conversations from db /var/imap/config/user/uuid/3/D/3D55EF5C-C473-11F1-8378-AA3B52AE6379/conversations.db
-Expired 0 entries of 41 entries seen in 1 conversation databases
+Pruning conversations from db /var/imap/config/user/uuid/7/2/720AB6C2-C5A1-11F1-9F89-934421C9397F/conversations.db
+Expired 0 entries of 43 entries seen in 1 conversation databases
 Removing deleted mailboxes older than 0.00 days
 Removed 0 deleted mailboxes

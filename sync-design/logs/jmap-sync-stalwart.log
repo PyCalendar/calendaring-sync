@@ -1,7 +1,7 @@
 
 ===== current state =====
 >>> CalendarEvent/get {"ids": []}
-<<< CalendarEvent/get {"accountId": "b", "state": "sdi", "list": [], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "sea", "list": [], "notFound": []}
 
 ===== calendars =====
 >>> Calendar/get {"ids": null}
@@ -9,39 +9,39 @@
 
 ===== 2 create a, b, c =====
 >>> CalendarEvent/set {"create": {"a": {"@type": "Event", "uid": "probe-a", "title": "a", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "b": {"@type": "Event", "uid": "probe-b", "title": "b", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "c": {"@type": "Event", "uid": "probe-c", "title": "c", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sdi", "newState": "sdm", "created": {"a": {"id": "p"}, "b": {"id": "q"}, "c": {"id": "r"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sea", "newState": "see", "created": {"c": {"id": "t"}, "a": {"id": "r"}, "b": {"id": "s"}}}
 
 ===== 2 update a, destroy b, create d =====
->>> CalendarEvent/set {"update": {"p": {"title": "a v2"}}, "destroy": ["q"], "create": {"d": {"@type": "Event", "uid": "probe-d", "title": "d", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sdm", "newState": "sdq", "created": {"d": {"id": "s"}}, "updated": {"p": null}, "destroyed": ["q"]}
+>>> CalendarEvent/set {"update": {"r": {"title": "a v2"}}, "destroy": ["s"], "create": {"d": {"@type": "Event", "uid": "probe-d", "title": "d", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "see", "newState": "sei", "created": {"d": {"id": "u"}}, "updated": {"r": null}, "destroyed": ["s"]}
 
 ===== 2 page 0 =====
->>> CalendarEvent/changes {"sinceState": "sdi", "maxChanges": 1}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "sdi", "newState": "rdmaqc", "hasMoreChanges": true, "created": ["r"], "updated": [], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "sea", "maxChanges": 1}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "sea", "newState": "reeaqc", "hasMoreChanges": true, "created": ["t"], "updated": [], "destroyed": []}
 
 ===== 2 page 1 =====
->>> CalendarEvent/changes {"sinceState": "rdmaqc", "maxChanges": 1}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "rdmaqc", "newState": "rdmaqe", "hasMoreChanges": true, "created": ["p"], "updated": [], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "reeaqc", "maxChanges": 1}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "reeaqc", "newState": "reeaqe", "hasMoreChanges": true, "created": ["r"], "updated": [], "destroyed": []}
 
 ===== 2 page 2 =====
->>> CalendarEvent/changes {"sinceState": "rdmaqe", "maxChanges": 1}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "rdmaqe", "newState": "sdq", "hasMoreChanges": false, "created": ["s"], "updated": [], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "reeaqe", "maxChanges": 1}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "reeaqe", "newState": "sei", "hasMoreChanges": false, "created": ["u"], "updated": [], "destroyed": []}
 
 ===== 2 unpaged =====
->>> CalendarEvent/changes {"sinceState": "sdi"}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "sdi", "newState": "sdq", "hasMoreChanges": false, "created": ["r", "p", "s"], "updated": [], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "sea"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "sea", "newState": "sei", "hasMoreChanges": false, "created": ["t", "r", "u"], "updated": [], "destroyed": []}
 
 ===== 3 create e =====
 >>> CalendarEvent/set {"create": {"e": {"@type": "Event", "uid": "probe-e", "title": "e", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sdq", "newState": "sdu", "created": {"e": {"id": "t"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sei", "newState": "sem", "created": {"e": {"id": "v"}}}
 
 ===== 3 destroy e =====
->>> CalendarEvent/set {"destroy": ["t"]}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sdu", "newState": "sdy", "destroyed": ["t"]}
+>>> CalendarEvent/set {"destroy": ["v"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sem", "newState": "seq", "destroyed": ["v"]}
 
 ===== 3 changes after e was created and destroyed =====
->>> CalendarEvent/changes {"sinceState": "sdq"}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "sdq", "newState": "sdy", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "sei"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "sei", "newState": "seq", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": []}
 
 ===== 4 sinceState garbage =====
 >>> CalendarEvent/changes {"sinceState": "garbage-state"}
@@ -52,154 +52,162 @@
 <<< error {"type": "invalidArguments", "description": "invalid JMAP State at line 1 column 153"}
 
 ===== 4 sinceState real state with its last character changed =====
->>> CalendarEvent/changes {"sinceState": "sdA"}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "sda", "newState": "sdy", "hasMoreChanges": false, "created": ["n", "o", "r", "p", "s"], "updated": [], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "seA"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "sea", "newState": "seq", "hasMoreChanges": false, "created": ["t", "r", "u"], "updated": [], "destroyed": []}
 
 ===== 4 sinceState current state with a suffix =====
->>> CalendarEvent/changes {"sinceState": "sdqx"}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "sdq", "newState": "sdy", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "seix"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "sei", "newState": "seq", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": []}
 
 ===== 5 ifInState stale =====
->>> CalendarEvent/set {"ifInState": "sdi", "update": {"p": {"title": "a v3"}}}
+>>> CalendarEvent/set {"ifInState": "sea", "update": {"r": {"title": "a v3"}}}
 <<< error {"type": "stateMismatch", "description": "An \"ifInState\" argument was supplied, but it does not match the current state."}
 
 ===== current state =====
 >>> CalendarEvent/get {"ids": []}
-<<< CalendarEvent/get {"accountId": "b", "state": "sdy", "list": [], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "seq", "list": [], "notFound": []}
 
 ===== 5 ifInState current =====
->>> CalendarEvent/set {"ifInState": "sdy", "update": {"p": {"title": "a v3"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sdy", "newState": "sd2", "updated": {"p": null}}
+>>> CalendarEvent/set {"ifInState": "seq", "update": {"r": {"title": "a v3"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "seq", "newState": "seu", "updated": {"r": null}}
 
 ===== 6 get a =====
->>> CalendarEvent/get {"ids": ["p"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sd2", "list": [{"uid": "probe-a", "@type": "Event", "duration": "PT1H", "updated": "2026-10-10T06:24:57Z", "timeZone": "Etc/UTC", "start": "2026-10-20T10:00:00", "title": "a v3", "id": "p", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true}], "notFound": []}
+>>> CalendarEvent/get {"ids": ["r"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "seu", "list": [{"duration": "PT1H", "uid": "probe-a", "start": "2026-10-20T10:00:00", "@type": "Event", "updated": "2026-10-11T18:28:31Z", "timeZone": "Etc/UTC", "title": "a v3", "id": "r", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true}], "notFound": []}
 
 ===== 7 create without version =====
 >>> CalendarEvent/set {"create": {"n": {"@type": "Event", "uid": "probe-noversion", "title": "no version", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sd2", "newState": "sea", "created": {"n": {"id": "u"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "seu", "newState": "sey", "created": {"n": {"id": "w"}}}
 
 ===== 8 create with an existing uid =====
 >>> CalendarEvent/set {"create": {"dup": {"@type": "Event", "uid": "probe-a", "title": "dup", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sea", "newState": "sea", "notCreated": {"dup": {"type": "invalidProperties", "description": "An event with UID probe-a already exists.", "properties": ["uid"]}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sey", "newState": "sey", "notCreated": {"dup": {"type": "invalidProperties", "description": "An event with UID probe-a already exists.", "properties": ["uid"]}}}
 
 ===== 8 update a destroyed id =====
->>> CalendarEvent/set {"update": {"q": {"title": "gone"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sea", "newState": "sea", "notUpdated": {"q": {"type": "notFound"}}}
+>>> CalendarEvent/set {"update": {"s": {"title": "gone"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sey", "newState": "sey", "notUpdated": {"s": {"type": "notFound"}}}
 
 ===== 8 destroy a destroyed id =====
->>> CalendarEvent/set {"destroy": ["q"]}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sea", "newState": "sea", "notDestroyed": {"q": {"type": "notFound"}}}
+>>> CalendarEvent/set {"destroy": ["s"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sey", "newState": "sey", "notDestroyed": {"s": {"type": "notFound"}}}
 
 ===== 9 create five =====
 >>> CalendarEvent/set {"create": {"l0": {"@type": "Event", "uid": "probe-list-0", "title": "before 0", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l1": {"@type": "Event", "uid": "probe-list-1", "title": "before 1", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l2": {"@type": "Event", "uid": "probe-list-2", "title": "before 2", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l3": {"@type": "Event", "uid": "probe-list-3", "title": "before 3", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l4": {"@type": "Event", "uid": "probe-list-4", "title": "before 4", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sea", "newState": "see", "created": {"l4": {"id": "z"}, "l0": {"id": "v"}, "l1": {"id": "w"}, "l3": {"id": "y"}, "l2": {"id": "x"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sey", "newState": "se2", "created": {"l2": {"id": "z"}, "l1": {"id": "y"}, "l3": {"id": "7"}, "l4": {"id": "9"}, "l0": {"id": "x"}}}
 
 ===== current state =====
 >>> CalendarEvent/get {"ids": []}
-<<< CalendarEvent/get {"accountId": "b", "state": "see", "list": [], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "se2", "list": [], "notFound": []}
 
 ===== 9 query page 0 =====
 >>> CalendarEvent/query {"position": 0, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "see", "canCalculateChanges": true, "position": 0, "ids": ["b", "g"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "se2", "canCalculateChanges": true, "position": 0, "ids": ["b", "g"], "limit": 2}
 
 ===== 9 get page 0 =====
 >>> CalendarEvent/get {"ids": ["b", "g"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "see", "list": [{"title": "a v3", "id": "b"}, {"title": "c v2", "id": "g"}], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "se2", "list": [{"title": "a v3", "id": "b"}, {"title": "c v2", "id": "g"}], "notFound": []}
 
 ===== 9 change an event mid-listing =====
->>> CalendarEvent/set {"update": {"r": {"title": "changed mid-listing"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "see", "newState": "sei", "updated": {"r": null}}
+>>> CalendarEvent/set {"update": {"t": {"title": "changed mid-listing"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "se2", "newState": "sfa", "updated": {"t": null}}
 
 ===== 9 create an event mid-listing =====
 >>> CalendarEvent/set {"create": {"m": {"@type": "Event", "uid": "probe-mid", "title": "created mid-listing", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sei", "newState": "sem", "created": {"m": {"id": "7"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sfa", "newState": "sfe", "created": {"m": {"id": "2"}}}
 
 ===== 9 query page 1 =====
 >>> CalendarEvent/query {"position": 2, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 2, "ids": ["h", "i"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 2, "ids": ["h", "i"], "limit": 2}
 
 ===== 9 get page 1 =====
 >>> CalendarEvent/get {"ids": ["h", "i"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sem", "list": [{"title": "no DTSTAMP", "id": "h"}, {"title": "round trip", "id": "i"}], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "no DTSTAMP", "id": "h"}, {"title": "round trip", "id": "i"}], "notFound": []}
 
 ===== 9 query page 2 =====
 >>> CalendarEvent/query {"position": 4, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 4, "ids": ["j", "m"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 4, "ids": ["j", "m"], "limit": 2}
 
 ===== 9 get page 2 =====
 >>> CalendarEvent/get {"ids": ["j", "m"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sem", "list": [{"title": "v2 changed after the report", "id": "j"}, {"title": "x", "id": "m"}], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "v3", "id": "j"}, {"title": "x", "id": "m"}], "notFound": []}
 
 ===== 9 query page 3 =====
 >>> CalendarEvent/query {"position": 6, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 6, "ids": ["n", "o"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 6, "ids": ["n", "o"], "limit": 2}
 
 ===== 9 get page 3 =====
 >>> CalendarEvent/get {"ids": ["n", "o"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sem", "list": [{"title": "x", "id": "n"}, {"title": "x", "id": "o"}], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "x", "id": "n"}, {"title": "x", "id": "o"}], "notFound": []}
 
 ===== 9 query page 4 =====
 >>> CalendarEvent/query {"position": 8, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 8, "ids": ["p", "r"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 8, "ids": ["p", "r"], "limit": 2}
 
 ===== 9 get page 4 =====
 >>> CalendarEvent/get {"ids": ["p", "r"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sem", "list": [{"title": "a v3", "id": "p"}, {"title": "changed mid-listing", "id": "r"}], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "sequence", "id": "p"}, {"title": "a v3", "id": "r"}], "notFound": []}
 
 ===== 9 query page 5 =====
 >>> CalendarEvent/query {"position": 10, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 10, "ids": ["s", "u"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 10, "ids": ["t", "u"], "limit": 2}
 
 ===== 9 get page 5 =====
->>> CalendarEvent/get {"ids": ["s", "u"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sem", "list": [{"title": "d", "id": "s"}, {"title": "no version", "id": "u"}], "notFound": []}
+>>> CalendarEvent/get {"ids": ["t", "u"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "changed mid-listing", "id": "t"}, {"title": "d", "id": "u"}], "notFound": []}
 
 ===== 9 query page 6 =====
 >>> CalendarEvent/query {"position": 12, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 12, "ids": ["v", "w"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 12, "ids": ["w", "x"], "limit": 2}
 
 ===== 9 get page 6 =====
->>> CalendarEvent/get {"ids": ["v", "w"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sem", "list": [{"title": "before 0", "id": "v"}, {"title": "before 1", "id": "w"}], "notFound": []}
+>>> CalendarEvent/get {"ids": ["w", "x"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "no version", "id": "w"}, {"title": "before 0", "id": "x"}], "notFound": []}
 
 ===== 9 query page 7 =====
 >>> CalendarEvent/query {"position": 14, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 14, "ids": ["x", "y"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 14, "ids": ["y", "z"], "limit": 2}
 
 ===== 9 get page 7 =====
->>> CalendarEvent/get {"ids": ["x", "y"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sem", "list": [{"title": "before 2", "id": "x"}, {"title": "before 3", "id": "y"}], "notFound": []}
+>>> CalendarEvent/get {"ids": ["y", "z"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "before 1", "id": "y"}, {"title": "before 2", "id": "z"}], "notFound": []}
 
 ===== 9 query page 8 =====
 >>> CalendarEvent/query {"position": 16, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 16, "ids": ["z", "7"], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 16, "ids": ["7", "9"], "limit": 2}
 
 ===== 9 get page 8 =====
->>> CalendarEvent/get {"ids": ["z", "7"], "properties": ["title"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "sem", "list": [{"title": "before 4", "id": "z"}, {"title": "created mid-listing", "id": "7"}], "notFound": []}
+>>> CalendarEvent/get {"ids": ["7", "9"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "before 3", "id": "7"}, {"title": "before 4", "id": "9"}], "notFound": []}
 
 ===== 9 query page 9 =====
 >>> CalendarEvent/query {"position": 18, "limit": 2}
-<<< CalendarEvent/query {"accountId": "b", "queryState": "sem", "canCalculateChanges": true, "position": 18, "ids": [], "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 18, "ids": ["2"], "limit": 2}
+
+===== 9 get page 9 =====
+>>> CalendarEvent/get {"ids": ["2"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sfe", "list": [{"title": "created mid-listing", "id": "2"}], "notFound": []}
+
+===== 9 query page 10 =====
+>>> CalendarEvent/query {"position": 19, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sfe", "canCalculateChanges": true, "position": 19, "ids": [], "limit": 2}
 
 ===== 9 changes from the state read before listing =====
->>> CalendarEvent/changes {"sinceState": "see"}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "see", "newState": "sem", "hasMoreChanges": false, "created": ["7"], "updated": ["r"], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "se2"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "se2", "newState": "sfe", "hasMoreChanges": false, "created": ["2"], "updated": ["t"], "destroyed": []}
 
 RESULT [Stalwart] 1 capabilities: calendars: True, tasks: False
-RESULT [Stalwart] 2 paging: pages 3; oldState echoed on every page: True; ends at the unpaged newState: True; paged {'created': ['p', 'r', 's'], 'updated': [], 'destroyed': []}; unpaged created ['r', 'p', 's'] destroyed []
+RESULT [Stalwart] 2 paging: pages 3; oldState echoed on every page: True; ends at the unpaged newState: True; paged {'created': ['r', 't', 'u'], 'updated': [], 'destroyed': []}; unpaged created ['t', 'r', 'u'] destroyed []
 RESULT [Stalwart] 3 created and destroyed between states: listed in nothing
 RESULT [Stalwart] 4 sinceState garbage: invalidArguments
 RESULT [Stalwart] 4 sinceState empty: invalidArguments
-RESULT [Stalwart] 4 sinceState real state with its last character changed: answered, oldState 'sda' for sinceState 'sdA', echoed: False
-RESULT [Stalwart] 4 sinceState current state with a suffix: answered, oldState 'sdq' for sinceState 'sdqx', echoed: False
+RESULT [Stalwart] 4 sinceState real state with its last character changed: answered, oldState 'sea' for sinceState 'seA', echoed: False
+RESULT [Stalwart] 4 sinceState current state with a suffix: answered, oldState 'sei' for sinceState 'seix', echoed: False
 RESULT [Stalwart] 5 ifInState stale: error stateMismatch
-RESULT [Stalwart] 5 ifInState current: updated ['p']
+RESULT [Stalwart] 5 ifInState current: updated ['r']
 RESULT [Stalwart] 6 properties the server added: ['isDraft', 'isOrigin', 'updated']
 RESULT [Stalwart] 7 create without version: "accepted"
 RESULT [Stalwart] 8 duplicate uid: {"dup": {"type": "invalidProperties", "description": "An event with UID probe-a already exists.", "properties": ["uid"]}}
-RESULT [Stalwart] 8 update a destroyed id: {"q": {"type": "notFound"}}
-RESULT [Stalwart] 8 destroy a destroyed id: {"q": {"type": "notFound"}}
+RESULT [Stalwart] 8 update a destroyed id: {"s": {"type": "notFound"}}
+RESULT [Stalwart] 8 destroy a destroyed id: {"s": {"type": "notFound"}}
 RESULT [Stalwart] PASS 9 the event changed mid-listing is reported: ok
 RESULT [Stalwart] PASS 9 the event created mid-listing is reported: ok

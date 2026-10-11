@@ -1,6 +1,6 @@
 
 RESULT [Stalwart] calendaring-jmap version: 1.1.1.dev49+g004c6b4e4
 RESULT [Stalwart] state the server never issued: raised JMAPMethodError {'url': 'http://localhost:8809/jmap/', 'reason': "Method call failed: {'type': 'invalidArguments', 'description': 'invalid JMAP State at line 1 column 166'}", 'error_type': 'invalidArguments'}
-RESULT [Stalwart] three creates since the token, unlimited: returned (3, 0, 0, 'sey')
+RESULT [Stalwart] three creates since the token, unlimited: returned (3, 0, 0, 'sfq')
 RESULT [Stalwart] the same, with maxChanges 1 in calendaring-jmap's own request: raised JMAPMethodError {'url': 'http://localhost:8809/jmap/', 'reason': 'CalendarEvent/changes response was truncated by the server (hasMoreChanges=true). Call get_sync_token() to obtain a fresh baseline and re-sy', 'error_type': 'serverPartialFail'}
 RESULT [Stalwart] get_task_sync_token(): raised HTTPError {'response': '<Response HTTP/1.1 [400]>', 'request': '<PreparedRequest [POST]>'}

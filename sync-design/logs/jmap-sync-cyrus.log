@@ -1,51 +1,51 @@
 
 ===== current state =====
 >>> CalendarEvent/get {"ids": []}
-<<< CalendarEvent/get {"state": "85", "list": [], "notFound": [], "accountId": "user1"}
+<<< CalendarEvent/get {"state": "98", "list": [], "notFound": [], "accountId": "user1"}
 
 ===== calendars =====
 >>> Calendar/get {"ids": null}
-<<< Calendar/get {"state": "85", "list": [{"id": "Default", "name": "personal", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": true, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": false, "mayShare": true}, "shareWith": null}, {"id": "client", "name": "client", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": false, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": true, "mayShare": true}, "shareWith": null}, {"id": "probe", "name": "probe", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": false, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": true, "mayShare": true}, "shareWith": null}], "notFound": [], "accountId": "user1"}
+<<< Calendar/get {"state": "98", "list": [{"id": "Default", "name": "personal", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": true, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": false, "mayShare": true}, "shareWith": null}, {"id": "client", "name": "client", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": false, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": true, "mayShare": true}, "shareWith": null}, {"id": "probe", "name": "probe", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": false, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": true, "mayShare": true}, "shareWith": null}], "notFound": [], "accountId": "user1"}
 
 ===== 2 create a, b, c =====
 >>> CalendarEvent/set {"create": {"a": {"@type": "Event", "version": "2.0", "uid": "probe-a", "title": "a", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "b": {"@type": "Event", "version": "2.0", "uid": "probe-b", "title": "b", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "c": {"@type": "Event", "version": "2.0", "uid": "probe-c", "title": "c", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"oldState": "85", "newState": "89", "created": {"a": {"updated": "2026-10-10T06:24:35Z", "created": "2026-10-10T06:24:35Z", "id": "EMKk", "uid": "probe-a", "x-href": "/dav/calendars/user/user1/Default/fe630cce-31a6-40ca-867f-74083782637b.ics"}, "b": {"updated": "2026-10-10T06:24:35Z", "created": "2026-10-10T06:24:35Z", "id": "EML-", "uid": "probe-b", "x-href": "/dav/calendars/user/user1/Default/fe992b08-c833-4664-bad9-f05c7237e4de.ics"}, "c": {"updated": "2026-10-10T06:24:35Z", "created": "2026-10-10T06:24:35Z", "id": "EMLF", "uid": "probe-c", "x-href": "/dav/calendars/user/user1/Default/c81d1139-f87e-4277-8fe4-a4867732216e.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+<<< CalendarEvent/set {"oldState": "98", "newState": "102", "created": {"a": {"updated": "2026-10-11T18:27:51Z", "created": "2026-10-11T18:27:51Z", "id": "EMO-", "uid": "probe-a", "x-href": "/dav/calendars/user/user1/Default/2cd2d19d-d268-43b6-8ef6-e7090606274c.ics"}, "b": {"updated": "2026-10-11T18:27:51Z", "created": "2026-10-11T18:27:51Z", "id": "EMOF", "uid": "probe-b", "x-href": "/dav/calendars/user/user1/Default/447c0290-47c1-42d2-8556-ad774ea855b2.ics"}, "c": {"updated": "2026-10-11T18:27:51Z", "created": "2026-10-11T18:27:51Z", "id": "EMOV", "uid": "probe-c", "x-href": "/dav/calendars/user/user1/Default/9f4a20f3-2ad3-45d4-896a-791fbef90ada.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 2 update a, destroy b, create d =====
->>> CalendarEvent/set {"update": {"EMKk": {"title": "a v2"}}, "destroy": ["EML-"], "create": {"d": {"@type": "Event", "version": "2.0", "uid": "probe-d", "title": "d", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"oldState": "89", "newState": "93", "created": {"d": {"updated": "2026-10-10T06:24:35Z", "created": "2026-10-10T06:24:35Z", "id": "EMLk", "uid": "probe-d", "x-href": "/dav/calendars/user/user1/Default/3f1e24c6-bf1e-47d7-b4d2-d43b2090a69b.ics"}}, "updated": {"EMKk": {"sequence": 1, "updated": "2026-10-10T06:24:35Z"}}, "destroyed": ["EML-"], "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+>>> CalendarEvent/set {"update": {"EMO-": {"title": "a v2"}}, "destroy": ["EMOF"], "create": {"d": {"@type": "Event", "version": "2.0", "uid": "probe-d", "title": "d", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"oldState": "102", "newState": "106", "created": {"d": {"updated": "2026-10-11T18:27:51Z", "created": "2026-10-11T18:27:51Z", "id": "EMP-", "uid": "probe-d", "x-href": "/dav/calendars/user/user1/Default/c85f22e7-89e8-445e-9cae-d0e765f6d3d7.ics"}}, "updated": {"EMO-": {"sequence": 1, "updated": "2026-10-11T18:27:51Z"}}, "destroyed": ["EMOF"], "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 2 page 0 =====
->>> CalendarEvent/changes {"sinceState": "85", "maxChanges": 1}
-<<< CalendarEvent/changes {"oldState": "85", "newState": "89", "hasMoreChanges": true, "created": ["EMLF"], "updated": [], "destroyed": [], "accountId": "user1"}
+>>> CalendarEvent/changes {"sinceState": "98", "maxChanges": 1}
+<<< CalendarEvent/changes {"oldState": "98", "newState": "102", "hasMoreChanges": true, "created": ["EMOV"], "updated": [], "destroyed": [], "accountId": "user1"}
 
 ===== 2 page 1 =====
->>> CalendarEvent/changes {"sinceState": "89", "maxChanges": 1}
-<<< CalendarEvent/changes {"oldState": "89", "newState": "90", "hasMoreChanges": true, "created": [], "updated": [], "destroyed": ["EML-"], "accountId": "user1"}
+>>> CalendarEvent/changes {"sinceState": "102", "maxChanges": 1}
+<<< CalendarEvent/changes {"oldState": "102", "newState": "103", "hasMoreChanges": true, "created": [], "updated": [], "destroyed": ["EMOF"], "accountId": "user1"}
 
 ===== 2 page 2 =====
->>> CalendarEvent/changes {"sinceState": "90", "maxChanges": 1}
-<<< CalendarEvent/changes {"oldState": "90", "newState": "91", "hasMoreChanges": true, "created": ["EMLk"], "updated": [], "destroyed": [], "accountId": "user1"}
+>>> CalendarEvent/changes {"sinceState": "103", "maxChanges": 1}
+<<< CalendarEvent/changes {"oldState": "103", "newState": "104", "hasMoreChanges": true, "created": ["EMP-"], "updated": [], "destroyed": [], "accountId": "user1"}
 
 ===== 2 page 3 =====
->>> CalendarEvent/changes {"sinceState": "91", "maxChanges": 1}
-<<< CalendarEvent/changes {"oldState": "91", "newState": "93", "hasMoreChanges": false, "created": [], "updated": ["EMKk"], "destroyed": [], "accountId": "user1"}
+>>> CalendarEvent/changes {"sinceState": "104", "maxChanges": 1}
+<<< CalendarEvent/changes {"oldState": "104", "newState": "106", "hasMoreChanges": false, "created": [], "updated": ["EMO-"], "destroyed": [], "accountId": "user1"}
 
 ===== 2 unpaged =====
->>> CalendarEvent/changes {"sinceState": "85"}
-<<< CalendarEvent/changes {"oldState": "85", "newState": "93", "hasMoreChanges": false, "created": ["EMLF", "EMLk", "EMKk"], "updated": [], "destroyed": [], "accountId": "user1"}
+>>> CalendarEvent/changes {"sinceState": "98"}
+<<< CalendarEvent/changes {"oldState": "98", "newState": "106", "hasMoreChanges": false, "created": ["EMOV", "EMP-", "EMO-"], "updated": [], "destroyed": [], "accountId": "user1"}
 
 ===== 3 create e =====
 >>> CalendarEvent/set {"create": {"e": {"@type": "Event", "version": "2.0", "uid": "probe-e", "title": "e", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"oldState": "93", "newState": "94", "created": {"e": {"updated": "2026-10-10T06:24:36Z", "created": "2026-10-10T06:24:36Z", "id": "EMMV", "uid": "probe-e", "x-href": "/dav/calendars/user/user1/Default/9505e6dc-936a-4cdb-94cc-964f0561d056.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+<<< CalendarEvent/set {"oldState": "106", "newState": "107", "created": {"e": {"updated": "2026-10-11T18:27:51Z", "created": "2026-10-11T18:27:51Z", "id": "EMPk", "uid": "probe-e", "x-href": "/dav/calendars/user/user1/Default/e4e469ec-f0d1-4e5f-bd2f-e8248833963a.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 3 destroy e =====
->>> CalendarEvent/set {"destroy": ["EMMV"]}
-<<< CalendarEvent/set {"oldState": "94", "newState": "95", "created": null, "updated": null, "destroyed": ["EMMV"], "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+>>> CalendarEvent/set {"destroy": ["EMPk"]}
+<<< CalendarEvent/set {"oldState": "107", "newState": "108", "created": null, "updated": null, "destroyed": ["EMPk"], "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 3 changes after e was created and destroyed =====
->>> CalendarEvent/changes {"sinceState": "93"}
-<<< CalendarEvent/changes {"oldState": "93", "newState": "95", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": [], "accountId": "user1"}
+>>> CalendarEvent/changes {"sinceState": "106"}
+<<< CalendarEvent/changes {"oldState": "106", "newState": "108", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": [], "accountId": "user1"}
 
 ===== 4 sinceState garbage =====
 >>> CalendarEvent/changes {"sinceState": "garbage-state"}
@@ -56,154 +56,154 @@
 <<< error {"type": "cannotCalculateChanges", "description": "invalid sinceState"}
 
 ===== 4 sinceState real state with its last character changed =====
->>> CalendarEvent/changes {"sinceState": "8A"}
+>>> CalendarEvent/changes {"sinceState": "9A"}
 <<< error {"type": "cannotCalculateChanges", "description": "invalid sinceState"}
 
 ===== 4 sinceState current state with a suffix =====
->>> CalendarEvent/changes {"sinceState": "93x"}
+>>> CalendarEvent/changes {"sinceState": "106x"}
 <<< error {"type": "cannotCalculateChanges", "description": "invalid sinceState"}
 
 ===== 5 ifInState stale =====
->>> CalendarEvent/set {"ifInState": "85", "update": {"EMKk": {"title": "a v3"}}}
+>>> CalendarEvent/set {"ifInState": "98", "update": {"EMO-": {"title": "a v3"}}}
 <<< error {"type": "stateMismatch"}
 
 ===== current state =====
 >>> CalendarEvent/get {"ids": []}
-<<< CalendarEvent/get {"state": "95", "list": [], "notFound": [], "accountId": "user1"}
+<<< CalendarEvent/get {"state": "108", "list": [], "notFound": [], "accountId": "user1"}
 
 ===== 5 ifInState current =====
->>> CalendarEvent/set {"ifInState": "95", "update": {"EMKk": {"title": "a v3"}}}
-<<< CalendarEvent/set {"oldState": "95", "newState": "97", "created": null, "updated": {"EMKk": {"sequence": 2, "updated": "2026-10-10T06:24:36Z"}}, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+>>> CalendarEvent/set {"ifInState": "108", "update": {"EMO-": {"title": "a v3"}}}
+<<< CalendarEvent/set {"oldState": "108", "newState": "110", "created": null, "updated": {"EMO-": {"sequence": 2, "updated": "2026-10-11T18:27:52Z"}}, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 6 get a =====
->>> CalendarEvent/get {"ids": ["EMKk"]}
-<<< CalendarEvent/get {"state": "97", "list": [{"@type": "Event", "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H", "created": "2026-10-10T06:24:35Z", "updated": "2026-10-10T06:24:36Z", "sequence": 2, "title": "a v3", "uid": "probe-a", "prodId": "-//CyrusIMAP.org/Cyrus 3.13.7-545-gc04cece19//EN", "version": "2.0", "isDraft": false, "calendarIds": {"Default": true}, "isOrigin": true, "id": "EMKk"}], "notFound": [], "accountId": "user1"}
+>>> CalendarEvent/get {"ids": ["EMO-"]}
+<<< CalendarEvent/get {"state": "110", "list": [{"@type": "Event", "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H", "created": "2026-10-11T18:27:51Z", "updated": "2026-10-11T18:27:52Z", "sequence": 2, "title": "a v3", "uid": "probe-a", "prodId": "-//CyrusIMAP.org/Cyrus 3.13.7-545-gc04cece19//EN", "version": "2.0", "isDraft": false, "calendarIds": {"Default": true}, "isOrigin": true, "id": "EMO-"}], "notFound": [], "accountId": "user1"}
 
 ===== 7 create without version =====
 >>> CalendarEvent/set {"create": {"n": {"@type": "Event", "uid": "probe-noversion", "title": "no version", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"oldState": "97", "newState": "97", "created": null, "updated": null, "destroyed": null, "notCreated": {"n": {"type": "invalidProperties", "properties": ["version"]}}, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+<<< CalendarEvent/set {"oldState": "110", "newState": "110", "created": null, "updated": null, "destroyed": null, "notCreated": {"n": {"type": "invalidProperties", "properties": ["version"]}}, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 8 create with an existing uid =====
 >>> CalendarEvent/set {"create": {"dup": {"@type": "Event", "version": "2.0", "uid": "probe-a", "title": "dup", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"oldState": "97", "newState": "97", "created": null, "updated": null, "destroyed": null, "notCreated": {"dup": {"type": "invalidProperties", "properties": ["uid"]}}, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+<<< CalendarEvent/set {"oldState": "110", "newState": "110", "created": null, "updated": null, "destroyed": null, "notCreated": {"dup": {"type": "invalidProperties", "properties": ["uid"]}}, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 8 update a destroyed id =====
->>> CalendarEvent/set {"update": {"EML-": {"title": "gone"}}}
-<<< CalendarEvent/set {"oldState": "97", "newState": "97", "created": null, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": {"EML-": {"type": "notFound"}}, "notDestroyed": null, "accountId": "user1"}
+>>> CalendarEvent/set {"update": {"EMOF": {"title": "gone"}}}
+<<< CalendarEvent/set {"oldState": "110", "newState": "110", "created": null, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": {"EMOF": {"type": "notFound"}}, "notDestroyed": null, "accountId": "user1"}
 
 ===== 8 destroy a destroyed id =====
->>> CalendarEvent/set {"destroy": ["EML-"]}
-<<< CalendarEvent/set {"oldState": "97", "newState": "97", "created": null, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": {"EML-": {"type": "notFound"}}, "accountId": "user1"}
+>>> CalendarEvent/set {"destroy": ["EMOF"]}
+<<< CalendarEvent/set {"oldState": "110", "newState": "110", "created": null, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": {"EMOF": {"type": "notFound"}}, "accountId": "user1"}
 
 ===== 9 create five =====
 >>> CalendarEvent/set {"create": {"l0": {"@type": "Event", "version": "2.0", "uid": "probe-list-0", "title": "before 0", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l1": {"@type": "Event", "version": "2.0", "uid": "probe-list-1", "title": "before 1", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l2": {"@type": "Event", "version": "2.0", "uid": "probe-list-2", "title": "before 2", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l3": {"@type": "Event", "version": "2.0", "uid": "probe-list-3", "title": "before 3", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l4": {"@type": "Event", "version": "2.0", "uid": "probe-list-4", "title": "before 4", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"oldState": "97", "newState": "102", "created": {"l0": {"updated": "2026-10-10T06:24:36Z", "created": "2026-10-10T06:24:36Z", "id": "EMNV", "uid": "probe-list-0", "x-href": "/dav/calendars/user/user1/Default/99a1304c-1eba-4c68-aef2-0acaf1fc146a.ics"}, "l1": {"updated": "2026-10-10T06:24:36Z", "created": "2026-10-10T06:24:36Z", "id": "EMNk", "uid": "probe-list-1", "x-href": "/dav/calendars/user/user1/Default/952f959d-b676-4326-bff0-ef3a4aacd37e.ics"}, "l2": {"updated": "2026-10-10T06:24:36Z", "created": "2026-10-10T06:24:36Z", "id": "EMO-", "uid": "probe-list-2", "x-href": "/dav/calendars/user/user1/Default/645bbcbf-90ca-4cb2-a4cd-271d401d891d.ics"}, "l3": {"updated": "2026-10-10T06:24:36Z", "created": "2026-10-10T06:24:36Z", "id": "EMOF", "uid": "probe-list-3", "x-href": "/dav/calendars/user/user1/Default/8fb0725d-a4c4-4ace-adbd-689c05587511.ics"}, "l4": {"updated": "2026-10-10T06:24:36Z", "created": "2026-10-10T06:24:36Z", "id": "EMOV", "uid": "probe-list-4", "x-href": "/dav/calendars/user/user1/Default/d0b9f827-c0ee-47b9-9ba7-2fa498a6c807.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+<<< CalendarEvent/set {"oldState": "110", "newState": "115", "created": {"l0": {"updated": "2026-10-11T18:27:52Z", "created": "2026-10-11T18:27:52Z", "id": "EMQk", "uid": "probe-list-0", "x-href": "/dav/calendars/user/user1/Default/3266ea35-f141-4848-b7c1-b2fdd62bae65.ics"}, "l1": {"updated": "2026-10-11T18:27:52Z", "created": "2026-10-11T18:27:52Z", "id": "EMR-", "uid": "probe-list-1", "x-href": "/dav/calendars/user/user1/Default/29d6f75b-e926-4bea-aedf-eaeb9de64452.ics"}, "l2": {"updated": "2026-10-11T18:27:52Z", "created": "2026-10-11T18:27:52Z", "id": "EMRF", "uid": "probe-list-2", "x-href": "/dav/calendars/user/user1/Default/8a29958b-abff-47d6-940b-41bc8c907adf.ics"}, "l3": {"updated": "2026-10-11T18:27:52Z", "created": "2026-10-11T18:27:52Z", "id": "EMRV", "uid": "probe-list-3", "x-href": "/dav/calendars/user/user1/Default/df258fe2-82d3-4096-891c-e7bcfeffe7d8.ics"}, "l4": {"updated": "2026-10-11T18:27:52Z", "created": "2026-10-11T18:27:52Z", "id": "EMRk", "uid": "probe-list-4", "x-href": "/dav/calendars/user/user1/Default/513902db-4d79-412d-a89e-a7b2a989cbaf.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== current state =====
 >>> CalendarEvent/get {"ids": []}
-<<< CalendarEvent/get {"state": "102", "list": [], "notFound": [], "accountId": "user1"}
+<<< CalendarEvent/get {"state": "115", "list": [], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 0 =====
 >>> CalendarEvent/query {"position": 0, "limit": 2}
-<<< CalendarEvent/query {"queryState": "102", "canCalculateChanges": false, "position": 0, "total": 16, "ids": ["EMA-", "EMDk"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "115", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMA-", "EMDk"], "accountId": "user1"}
 
 ===== 9 get page 0 =====
 >>> CalendarEvent/get {"ids": ["EMA-", "EMDk"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "102", "list": [{"title": "a v3", "id": "EMA-", "uid": "uid-a", "@type": "Event"}, {"title": "c v2", "id": "EMDk", "uid": "uid-c", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+<<< CalendarEvent/get {"state": "115", "list": [{"title": "a v3", "id": "EMA-", "uid": "uid-a", "@type": "Event"}, {"title": "c v2", "id": "EMDk", "uid": "uid-c", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 change an event mid-listing =====
->>> CalendarEvent/set {"update": {"EMLF": {"title": "changed mid-listing"}}}
-<<< CalendarEvent/set {"oldState": "102", "newState": "104", "created": null, "updated": {"EMLF": {"sequence": 1, "updated": "2026-10-10T06:24:36Z"}}, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+>>> CalendarEvent/set {"update": {"EMOV": {"title": "changed mid-listing"}}}
+<<< CalendarEvent/set {"oldState": "115", "newState": "117", "created": null, "updated": {"EMOV": {"sequence": 1, "updated": "2026-10-11T18:27:52Z"}}, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 9 create an event mid-listing =====
 >>> CalendarEvent/set {"create": {"m": {"@type": "Event", "version": "2.0", "uid": "probe-mid", "title": "created mid-listing", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"oldState": "104", "newState": "105", "created": {"m": {"updated": "2026-10-10T06:24:36Z", "created": "2026-10-10T06:24:36Z", "id": "EMPF", "uid": "probe-mid", "x-href": "/dav/calendars/user/user1/Default/220918b6-200e-4088-b60f-4617602e220a.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+<<< CalendarEvent/set {"oldState": "117", "newState": "118", "created": {"m": {"updated": "2026-10-11T18:27:52Z", "created": "2026-10-11T18:27:52Z", "id": "EMSV", "uid": "probe-mid", "x-href": "/dav/calendars/user/user1/Default/96ad8792-9650-480a-841b-f03c09a7539c.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
 
 ===== 9 query page 1 =====
 >>> CalendarEvent/query {"position": 2, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMEk", "EMG-"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": ["EMEk", "EMG-"], "accountId": "user1"}
 
 ===== 9 get page 1 =====
 >>> CalendarEvent/get {"ids": ["EMEk", "EMG-"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "105", "list": [{"title": "round trip", "id": "EMG-", "uid": "ac7ae0b9-3f3f-410a-9b36-b19d31f472ff.ics", "@type": "Event"}, {"title": "no DTSTAMP", "id": "EMEk", "uid": "uid-f", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+<<< CalendarEvent/get {"state": "118", "list": [{"title": "no DTSTAMP", "id": "EMEk", "uid": "uid-f", "@type": "Event"}, {"title": "round trip", "id": "EMG-", "uid": "3827e1f8-b9f1-4c7e-8472-dd327e184f74.ics", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 2 =====
 >>> CalendarEvent/query {"position": 4, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMGV", "EMJ-"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": ["EMGV", "EMJV"], "accountId": "user1"}
 
 ===== 9 get page 2 =====
->>> CalendarEvent/get {"ids": ["EMGV", "EMJ-"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "105", "list": [{"title": "v2 changed after the report", "id": "EMGV", "uid": "keep", "@type": "Event"}, {"title": "x", "id": "EMJ-", "uid": "client-0", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+>>> CalendarEvent/get {"ids": ["EMGV", "EMJV"], "properties": ["title"]}
+<<< CalendarEvent/get {"state": "118", "list": [{"title": "v3", "id": "EMGV", "uid": "keep", "@type": "Event"}, {"title": "x", "id": "EMJV", "uid": "client-0", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 3 =====
 >>> CalendarEvent/query {"position": 6, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMJV", "EMK-"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": ["EMK-", "EMKV"], "accountId": "user1"}
 
 ===== 9 get page 3 =====
->>> CalendarEvent/get {"ids": ["EMJV", "EMK-"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "105", "list": [{"title": "x", "id": "EMK-", "uid": "client-2", "@type": "Event"}, {"title": "x", "id": "EMJV", "uid": "client-1", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+>>> CalendarEvent/get {"ids": ["EMK-", "EMKV"], "properties": ["title"]}
+<<< CalendarEvent/get {"state": "118", "list": [{"title": "x", "id": "EMK-", "uid": "client-1", "@type": "Event"}, {"title": "x", "id": "EMKV", "uid": "client-2", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 4 =====
 >>> CalendarEvent/query {"position": 8, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMKk", "EMLF"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": ["EML-", "EMO-"], "accountId": "user1"}
 
 ===== 9 get page 4 =====
->>> CalendarEvent/get {"ids": ["EMKk", "EMLF"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "105", "list": [{"title": "changed mid-listing", "id": "EMLF", "uid": "probe-c", "@type": "Event"}, {"title": "a v3", "id": "EMKk", "uid": "probe-a", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+>>> CalendarEvent/get {"ids": ["EML-", "EMO-"], "properties": ["title"]}
+<<< CalendarEvent/get {"state": "118", "list": [{"title": "a v3", "id": "EMO-", "uid": "probe-a", "@type": "Event"}, {"title": "sequence", "id": "EML-", "uid": "client-sequence", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 5 =====
 >>> CalendarEvent/query {"position": 10, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMLk", "EMNV"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": ["EMOV", "EMP-"], "accountId": "user1"}
 
 ===== 9 get page 5 =====
->>> CalendarEvent/get {"ids": ["EMLk", "EMNV"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "105", "list": [{"title": "d", "id": "EMLk", "uid": "probe-d", "@type": "Event"}, {"title": "before 0", "id": "EMNV", "uid": "probe-list-0", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+>>> CalendarEvent/get {"ids": ["EMOV", "EMP-"], "properties": ["title"]}
+<<< CalendarEvent/get {"state": "118", "list": [{"title": "d", "id": "EMP-", "uid": "probe-d", "@type": "Event"}, {"title": "changed mid-listing", "id": "EMOV", "uid": "probe-c", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 6 =====
 >>> CalendarEvent/query {"position": 12, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMNk", "EMO-"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": ["EMQk", "EMR-"], "accountId": "user1"}
 
 ===== 9 get page 6 =====
->>> CalendarEvent/get {"ids": ["EMNk", "EMO-"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "105", "list": [{"title": "before 2", "id": "EMO-", "uid": "probe-list-2", "@type": "Event"}, {"title": "before 1", "id": "EMNk", "uid": "probe-list-1", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+>>> CalendarEvent/get {"ids": ["EMQk", "EMR-"], "properties": ["title"]}
+<<< CalendarEvent/get {"state": "118", "list": [{"title": "before 0", "id": "EMQk", "uid": "probe-list-0", "@type": "Event"}, {"title": "before 1", "id": "EMR-", "uid": "probe-list-1", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 7 =====
 >>> CalendarEvent/query {"position": 14, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMOF", "EMOV"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": ["EMRF", "EMRV"], "accountId": "user1"}
 
 ===== 9 get page 7 =====
->>> CalendarEvent/get {"ids": ["EMOF", "EMOV"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "105", "list": [{"title": "before 4", "id": "EMOV", "uid": "probe-list-4", "@type": "Event"}, {"title": "before 3", "id": "EMOF", "uid": "probe-list-3", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+>>> CalendarEvent/get {"ids": ["EMRF", "EMRV"], "properties": ["title"]}
+<<< CalendarEvent/get {"state": "118", "list": [{"title": "before 3", "id": "EMRV", "uid": "probe-list-3", "@type": "Event"}, {"title": "before 2", "id": "EMRF", "uid": "probe-list-2", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 8 =====
 >>> CalendarEvent/query {"position": 16, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": ["EMPF"], "accountId": "user1"}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": ["EMRk", "EMSV"], "accountId": "user1"}
 
 ===== 9 get page 8 =====
->>> CalendarEvent/get {"ids": ["EMPF"], "properties": ["title"]}
-<<< CalendarEvent/get {"state": "105", "list": [{"title": "created mid-listing", "id": "EMPF", "uid": "probe-mid", "@type": "Event"}], "notFound": [], "accountId": "user1"}
+>>> CalendarEvent/get {"ids": ["EMRk", "EMSV"], "properties": ["title"]}
+<<< CalendarEvent/get {"state": "118", "list": [{"title": "created mid-listing", "id": "EMSV", "uid": "probe-mid", "@type": "Event"}, {"title": "before 4", "id": "EMRk", "uid": "probe-list-4", "@type": "Event"}], "notFound": [], "accountId": "user1"}
 
 ===== 9 query page 9 =====
->>> CalendarEvent/query {"position": 17, "limit": 2}
-<<< CalendarEvent/query {"queryState": "105", "canCalculateChanges": false, "position": 0, "total": 17, "ids": [], "accountId": "user1"}
+>>> CalendarEvent/query {"position": 18, "limit": 2}
+<<< CalendarEvent/query {"queryState": "118", "canCalculateChanges": false, "position": 0, "total": 18, "ids": [], "accountId": "user1"}
 
 ===== 9 changes from the state read before listing =====
->>> CalendarEvent/changes {"sinceState": "102"}
-<<< CalendarEvent/changes {"oldState": "102", "newState": "105", "hasMoreChanges": false, "created": ["EMPF"], "updated": ["EMLF"], "destroyed": [], "accountId": "user1"}
+>>> CalendarEvent/changes {"sinceState": "115"}
+<<< CalendarEvent/changes {"oldState": "115", "newState": "118", "hasMoreChanges": false, "created": ["EMSV"], "updated": ["EMOV"], "destroyed": [], "accountId": "user1"}
 
 RESULT [Cyrus] 1 capabilities: calendars: True, tasks: False
-RESULT [Cyrus] 2 paging: pages 4; oldState echoed on every page: True; ends at the unpaged newState: True; paged {'created': ['EMLF', 'EMLk'], 'updated': ['EMKk'], 'destroyed': ['EML-']}; unpaged created ['EMLF', 'EMLk', 'EMKk'] destroyed []
+RESULT [Cyrus] 2 paging: pages 4; oldState echoed on every page: True; ends at the unpaged newState: True; paged {'created': ['EMOV', 'EMP-'], 'updated': ['EMO-'], 'destroyed': ['EMOF']}; unpaged created ['EMOV', 'EMP-', 'EMO-'] destroyed []
 RESULT [Cyrus] 3 created and destroyed between states: listed in nothing
 RESULT [Cyrus] 4 sinceState garbage: cannotCalculateChanges
 RESULT [Cyrus] 4 sinceState empty: cannotCalculateChanges
 RESULT [Cyrus] 4 sinceState real state with its last character changed: cannotCalculateChanges
 RESULT [Cyrus] 4 sinceState current state with a suffix: cannotCalculateChanges
 RESULT [Cyrus] 5 ifInState stale: error stateMismatch
-RESULT [Cyrus] 5 ifInState current: updated ['EMKk']
+RESULT [Cyrus] 5 ifInState current: updated ['EMO-']
 RESULT [Cyrus] 6 properties the server added: ['created', 'isDraft', 'isOrigin', 'prodId', 'sequence', 'updated']
 RESULT [Cyrus] 7 create without version: {"n": {"type": "invalidProperties", "properties": ["version"]}}
 RESULT [Cyrus] 8 duplicate uid: {"dup": {"type": "invalidProperties", "properties": ["uid"]}}
-RESULT [Cyrus] 8 update a destroyed id: {"EML-": {"type": "notFound"}}
-RESULT [Cyrus] 8 destroy a destroyed id: {"EML-": {"type": "notFound"}}
+RESULT [Cyrus] 8 update a destroyed id: {"EMOF": {"type": "notFound"}}
+RESULT [Cyrus] 8 destroy a destroyed id: {"EMOF": {"type": "notFound"}}
 RESULT [Cyrus] PASS 9 the event changed mid-listing is reported: ok
 RESULT [Cyrus] PASS 9 the event created mid-listing is reported: ok

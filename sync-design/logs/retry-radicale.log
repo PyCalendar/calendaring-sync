@@ -1,3 +1,7 @@
 
-RESULT [Radicale] retry rule, user test: expired token: AuthorizationError Forbidden; retry with an empty token: 207
-RESULT [Radicale] retry rule, user intruder: expired token: AuthorizationError Forbidden; retry with an empty token: AuthorizationError Forbidden
+RESULT [Radicale] retry rule, user test: expired token: AuthorizationError Forbidden, preconditions ['{DAV:}valid-sync-token']; retry with an empty token: 207
+RESULT [Radicale] user test, expired token, get_objects_by_sync_token(disable_fallback=False): returned 'fake-85cb173b0fd70d3048ec012fe2176e49'
+RESULT [Radicale] user test, expired token, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://127.0.0.1:5233/test/expiry/', 'reason': 'Forbidden', 'preconditions': "['{DAV:}valid-sync-token']", 'body': 'b\'<?xml version=\\\'1.0\\\' encoding=\\\'utf-8\\\'?>\\n<error xmlns="DAV:"><valid-sync-token /></error>\''}
+RESULT [Radicale] retry rule, user intruder: expired token: AuthorizationError Forbidden, preconditions []; retry with an empty token: AuthorizationError Forbidden, preconditions []
+RESULT [Radicale] user intruder, expired token, get_objects_by_sync_token(disable_fallback=False): raised AuthorizationError {'url': 'http://127.0.0.1:5233/test/expiry/', 'reason': 'Forbidden', 'preconditions': '[]', 'body': "b'Access to the requested resource forbidden.'"}
+RESULT [Radicale] user intruder, expired token, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://127.0.0.1:5233/test/expiry/', 'reason': 'Forbidden', 'preconditions': '[]', 'body': "b'Access to the requested resource forbidden.'"}

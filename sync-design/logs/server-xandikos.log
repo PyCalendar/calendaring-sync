@@ -3,29 +3,29 @@ Create calendar in <data>\xandikos\user\calendars\calendar.
 Create addressbook in <data>\xandikos\user\contacts\addressbook.
 Create inbox in <data>\xandikos\user\inbox.
 Create outbox in <data>\xandikos\user\outbox.
-xandikos 0.4.8, dulwich 1.2.17, vobject 0.9.9, icalendar 7.3.0, aiohttp 3.14.4, defusedxml 0.7.1
+xandikos 0.4.8, dulwich 1.2.17, vobject 0.9.9, icalendar 7.3.0, aiohttp 3.14.5, defusedxml 0.7.1
 Listening on 127.0.0.1:8090
 qrcode package not installed; QR code generation disabled
-127.0.0.1 [10/Oct/2026:11:52:54 +0530] "GET / HTTP/1.1" 200 997 "-" "curl/8.4.0"
-127.0.0.1 [10/Oct/2026:11:52:54 +0530] "MKCALENDAR /user/calendars/client/ HTTP/1.1" 201 170 "-" "curl/8.4.0"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "DELETE /user/calendars/probe/ HTTP/1.1" 404 216 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "MKCALENDAR /user/calendars/probe/ HTTP/1.1" 201 170 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PROPFIND /user/calendars/probe/ HTTP/1.1" 207 1042 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 289 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/b.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/c.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 997 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/d.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "DELETE /user/calendars/probe/b.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 885 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/e.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "DELETE /user/calendars/probe/e.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 289 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "DELETE /user/calendars/probe/c.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/c.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 525 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "GET / HTTP/1.1" 200 997 "-" "curl/8.4.0"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "MKCALENDAR /user/calendars/client/ HTTP/1.1" 201 170 "-" "curl/8.4.0"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "DELETE /user/calendars/probe/ HTTP/1.1" 404 216 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "MKCALENDAR /user/calendars/probe/ HTTP/1.1" 201 170 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "PROPFIND /user/calendars/probe/ HTTP/1.1" 207 1042 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 289 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "PUT /user/calendars/probe/b.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "PUT /user/calendars/probe/c.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 997 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "PUT /user/calendars/probe/d.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "DELETE /user/calendars/probe/b.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 885 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:35 +0530] "PUT /user/calendars/probe/e.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "DELETE /user/calendars/probe/e.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 289 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "DELETE /user/calendars/probe/c.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/c.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 525 "-" "python-requests/2.34.2"
 Error handling request from 127.0.0.1
 Traceback (most recent call last):
   File "<site-packages>\aiohttp\web_protocol.py", line 577, in _handle_request
@@ -76,7 +76,7 @@ Traceback (most recent call last):
   File "<site-packages>\dulwich\object_store.py", line 2718, in get_raw
     raise AssertionError(f"Invalid object name {name!r}")
 AssertionError: Invalid object name b'http://example.invalid/never-issued'
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 500 246 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 500 246 "-" "python-requests/2.34.2"
 Error handling request from 127.0.0.1
 Traceback (most recent call last):
   File "<site-packages>\aiohttp\web_protocol.py", line 577, in _handle_request
@@ -127,7 +127,7 @@ Traceback (most recent call last):
   File "<site-packages>\dulwich\object_store.py", line 2718, in get_raw
     raise AssertionError(f"Invalid object name {name!r}")
 AssertionError: Invalid object name b'not a uri'
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 500 246 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 500 246 "-" "python-requests/2.34.2"
 Error handling request from 127.0.0.1
 Traceback (most recent call last):
   File "<site-packages>\aiohttp\web_protocol.py", line 577, in _handle_request
@@ -181,38 +181,45 @@ Traceback (most recent call last):
     return RawObjectID(binascii.unhexlify(hex))
                        ~~~~~~~~~~~~~~~~~~^^^^^
 binascii.Error: Non-hexadecimal digit found
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 500 246 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 412 359 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 997 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 761 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 289 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 997 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "GET /user/calendars/probe/a.ics HTTP/1.1" 200 487 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PROPFIND /user/calendars/probe/a.ics HTTP/1.1" 207 452 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/f.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "GET /user/calendars/probe/f.ics HTTP/1.1" 200 467 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PROPFIND /user/calendars/probe/a.ics HTTP/1.1" 207 452 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 412 182 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 412 182 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/8a56d42b-f992-4d32-b71b-90fc7dc44ca3.ics HTTP/1.1" 412 182 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/g.ics HTTP/1.1" 412 347 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "DELETE /user/calendars/probe/d.ics HTTP/1.1" 412 182 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PROPFIND /user/calendars/probe/d.ics HTTP/1.1" 207 452 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "DELETE /user/calendars/probe/d.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "DELETE /user/calendars/probe/d.ics HTTP/1.1" 404 221 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/f23df41d-47dc-4080-85b5-11daaf716bff.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 1156 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/keep.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/gone.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 767 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PROPFIND /user/calendars/probe/keep.ics HTTP/1.1" 207 455 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:55 +0530] "PUT /user/calendars/probe/keep.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "DELETE /user/calendars/probe/gone.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "PROPFIND /user/calendars/probe/keep.ics HTTP/1.1" 207 455 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 898 "-" "python-requests/2.34.2"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 655 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 500 246 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 412 359 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 997 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 997 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 761 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 289 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 761 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 289 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "GET /user/calendars/probe/a.ics HTTP/1.1" 200 487 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PROPFIND /user/calendars/probe/a.ics HTTP/1.1" 207 452 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/f.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "GET /user/calendars/probe/f.ics HTTP/1.1" 200 467 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PROPFIND /user/calendars/probe/a.ics HTTP/1.1" 207 452 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 412 182 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/a.ics HTTP/1.1" 412 182 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/9805b926-059c-4691-bc71-4863c2ff5866.ics HTTP/1.1" 412 182 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/g.ics HTTP/1.1" 412 347 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "DELETE /user/calendars/probe/d.ics HTTP/1.1" 412 182 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PROPFIND /user/calendars/probe/d.ics HTTP/1.1" 207 452 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "DELETE /user/calendars/probe/d.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "DELETE /user/calendars/probe/d.ics HTTP/1.1" 404 221 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/7d869dd2-add9-4cb2-a7aa-4a6770ce0595.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 1156 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/keep.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/gone.ics HTTP/1.1" 201 302 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 767 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PROPFIND /user/calendars/probe/keep.ics HTTP/1.1" 207 455 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/keep.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "DELETE /user/calendars/probe/gone.ics HTTP/1.1" 204 100 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PROPFIND /user/calendars/probe/keep.ics HTTP/1.1" 207 455 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 898 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 655 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PROPFIND /user/calendars/probe/ HTTP/1.1" 207 451 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PROPFIND /user/calendars/probe/ HTTP/1.1" 207 1666 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 1508 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "PUT /user/calendars/probe/keep.ics HTTP/1.1" 204 232 "-" "python-requests/2.34.2"
+127.0.0.1 [11/Oct/2026:23:56:36 +0530] "REPORT /user/calendars/probe/ HTTP/1.1" 207 528 "-" "python-requests/2.34.2"
 Error handling request from 127.0.0.1
 Traceback (most recent call last):
   File "<site-packages>\aiohttp\web_protocol.py", line 577, in _handle_request
@@ -263,7 +270,8 @@ Traceback (most recent call last):
   File "<site-packages>\dulwich\object_store.py", line 2718, in get_raw
     raise AssertionError(f"Invalid object name {name!r}")
 AssertionError: Invalid object name b'http://example.invalid/never-issued'
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 500 246 "-" "python-caldav/3.4.0"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 500 246 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 412 359 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
 Error handling request from 127.0.0.1
 Traceback (most recent call last):
   File "<site-packages>\aiohttp\web_protocol.py", line 577, in _handle_request
@@ -314,7 +322,7 @@ Traceback (most recent call last):
   File "<site-packages>\dulwich\object_store.py", line 2718, in get_raw
     raise AssertionError(f"Invalid object name {name!r}")
 AssertionError: Invalid object name b'http://example.invalid/never-issued'
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 500 246 "-" "python-caldav/3.4.0"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 500 246 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
 Error handling request from 127.0.0.1
 Traceback (most recent call last):
   File "<site-packages>\aiohttp\web_protocol.py", line 577, in _handle_request
@@ -365,16 +373,34 @@ Traceback (most recent call last):
   File "<site-packages>\dulwich\object_store.py", line 2718, in get_raw
     raise AssertionError(f"Invalid object name {name!r}")
 AssertionError: Invalid object name b'http://example.invalid/never-issued'
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 500 246 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 199 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 289 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "PUT /user/calendars/client/client-removed.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 539 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "DELETE /user/calendars/client/client-removed.ics HTTP/1.1" 204 100 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:56 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 427 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:57 +0530] "PUT /user/calendars/client/client-0.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:57 +0530] "PUT /user/calendars/client/client-1.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:57 +0530] "PUT /user/calendars/client/client-2.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:57 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 533 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:57 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 1021 "-" "python-caldav/3.4.0"
-127.0.0.1 [10/Oct/2026:11:52:57 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 1251 "-" "python-caldav/3.4.0"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 500 246 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 199 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 289 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-removed.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 539 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "DELETE /user/calendars/client/client-removed.ics HTTP/1.1" 204 100 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 427 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 289 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-0.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-1.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-2.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 533 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 533 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 1021 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 1021 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "REPORT /user/calendars/client/ HTTP/1.1" 207 1251 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-sequence.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "GET /user/calendars/client/client-sequence.ics HTTP/1.1" 200 513 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-sequence.ics HTTP/1.1" 204 232 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "GET /user/calendars/client/client-sequence.ics HTTP/1.1" 200 513 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-sequence.ics HTTP/1.1" 204 232 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "GET /user/calendars/client/client-sequence.ics HTTP/1.1" 200 513 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-delete.ics HTTP/1.1" 201 302 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PROPFIND /user/calendars/client/client-delete.ics HTTP/1.1" 207 465 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "GET /user/calendars/client/client-delete.ics HTTP/1.1" 200 497 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-delete.ics HTTP/1.1" 204 232 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PUT /user/calendars/client/client-delete.ics HTTP/1.1" 412 182 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "DELETE /user/calendars/client/client-delete.ics HTTP/1.1" 412 182 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "PROPFIND /user/calendars/client/client-delete.ics HTTP/1.1" 207 465 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "DELETE /user/calendars/client/client-delete.ics HTTP/1.1" 204 100 "-" "python-caldav/3.4.1.dev28+g1a75f457a"
+127.0.0.1 [11/Oct/2026:23:56:37 +0530] "DELETE /user/calendars/client/client-delete.ics HTTP/1.1" 404 234 "-" "python-caldav/3.4.1.dev28+g1a75f457a"

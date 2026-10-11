@@ -100,27 +100,35 @@ result(
     f"collection listed: {any(n == COLLECTION for n, _ in m)}",
 )
 
-# 7. DAV:limit, paged from an old token and followed to the end (RFC 6578 sections 3.6, 3.7)
-tok, state, pages, saw_507 = t0, {}, 0, False
-while pages < 10:
-    _, m, nxt = dav.sync(f"7 page {pages}, nresults=2", tok, limit=2)
-    pages += 1
-    truncated = (COLLECTION, "507") in m
-    saw_507 |= truncated
-    state.update({n: s for n, s in m if n != COLLECTION})
-    tok = nxt
-    if not truncated:
-        break
-_, m, _ = dav.sync("7 follow-up from the last page's token", tok)
-state.update({n: s for n, s in m if n != COLLECTION})
+# 7. DAV:limit, paged from an old token and from an empty one, each followed to the end
+# (RFC 6578 sections 3.6, 3.7)
 live = {n for n, s in dav.sync("7 live state", "")[1] if n != COLLECTION and s == "200"}
-paged = {n for n, s in state.items() if s == "200"}
-result(
-    SERVER,
-    "7 DAV:limit",
-    f"507 sent: {saw_507}; pages {pages}; "
-    f"paged + follow-up equals live: {paged == live}; missing {sorted(live - paged)}",
-)
+
+
+def paged(label, tok):
+    state, pages, saw_507 = {}, 0, False
+    while pages < 10:
+        _, m, nxt = dav.sync(f"7 {label}, page {pages}, nresults=2", tok, limit=2)
+        pages += 1
+        truncated = (COLLECTION, "507") in m
+        saw_507 |= truncated
+        state.update({n: s for n, s in m if n != COLLECTION})
+        tok = nxt
+        if not truncated:
+            break
+    _, m, _ = dav.sync(f"7 {label}, follow-up from the last page's token", tok)
+    state.update({n: s for n, s in m if n != COLLECTION})
+    got = {n for n, s in state.items() if s == "200"}
+    result(
+        SERVER,
+        f"7 DAV:limit {label}",
+        f"507 sent: {saw_507}; pages {pages}; "
+        f"paged + follow-up equals live: {got == live}; missing {sorted(live - got)}",
+    )
+
+
+paged("from an old token", t0)
+paged("from an empty token", "")
 
 # 8. identical PUT, and a PUT the server may store differently (RFC 4791 section 5.3.4)
 r1 = dav.request("8 GET a", "GET", dav.href("a.ics"))
@@ -203,5 +211,26 @@ result(
 )
 _, m, _ = dav.sync("11 next report", t11)
 check(SERVER, "11 the removal arrives in the next report", ("gone.ics", "404") in m)
+
+# 12. a full listing without sync-collection: the DAV:sync-token property first (RFC 6578
+#     section 4), then members and ETags by PROPFIND (RFC 4918 section 9.1)
+r = dav.request(
+    "12 DAV:sync-token property",
+    "PROPFIND",
+    CALENDAR,
+    propfind_body("sync-token"),
+    {"Depth": "0", **XML},
+)
+t12 = capture(r"sync-token>([^<]*)<", r.text, "")
+check(SERVER, "12 DAV:sync-token property is defined", bool(t12), t12)
+r = dav.request(
+    "12 members and ETags", "PROPFIND", CALENDAR, propfind_body("getetag"), {"Depth": "1", **XML}
+)
+listed = {n for n, resp in responses(r.text).items() if n != COLLECTION and "getetag>" in resp}
+live = {n for n, s in dav.sync("12 live state", "")[1] if n != COLLECTION and s == "200"}
+check(SERVER, "12 PROPFIND lists every member", listed == live, f"missing {sorted(live - listed)}")
+dav.put("12 change keep after the property was read", "keep.ics", ics("keep", "v3"))
+_, m, _ = dav.sync("12 report from the property's token", t12)
+check(SERVER, "12 a change after the property arrives in the next report", ("keep.ics", "200") in m)
 
 finish()

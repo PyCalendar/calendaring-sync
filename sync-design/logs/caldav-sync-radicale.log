@@ -124,7 +124,7 @@
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/be68ef9af8b60de5db82e6ea4d3cead8a4af49b09157b09477b348c6f4690f22</sync-token><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"fc9bd7c7003f0543aca1c390653bcc77946500d05f6e4760de3589e3f54efca8"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/b.ics</href><propstat><prop><getetag>"f0695443e7df86b2bfbc3908ea23de6cbf858b8802d9246dc6f9e911ed77c23d"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"e8133c19cc1a81355177bf2f01bee7b1f1ee03d63cfa61d6bef08ddeed802bd3"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/fdb200a45faecc619a5b2c810e748dae865410d1f24196ded51e88955f001c10</sync-token><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"fc9bd7c7003f0543aca1c390653bcc77946500d05f6e4760de3589e3f54efca8"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/b.ics</href><propstat><prop><getetag>"f0695443e7df86b2bfbc3908ea23de6cbf858b8802d9246dc6f9e911ed77c23d"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"e8133c19cc1a81355177bf2f01bee7b1f1ee03d63cfa61d6bef08ddeed802bd3"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
 
 ===== 2 create d =====
 >>> PUT /test/probe/d.ics
@@ -195,11 +195,11 @@
 >>> REPORT /test/probe/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/be68ef9af8b60de5db82e6ea4d3cead8a4af49b09157b09477b348c6f4690f22</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/fdb200a45faecc619a5b2c810e748dae865410d1f24196ded51e88955f001c10</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/8d9418b3d24c8b8fcc556d4ecfd239b398dff9a3a2e679c3651a9c30cea46670</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/55b32c1b0b49f16bc5e11258b8f1b0b631ce16c0959b765d377e0da3598a64d6</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
 
 ===== 3 create e =====
 >>> PUT /test/probe/e.ics
@@ -241,11 +241,11 @@
 >>> REPORT /test/probe/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/8d9418b3d24c8b8fcc556d4ecfd239b398dff9a3a2e679c3651a9c30cea46670</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/55b32c1b0b49f16bc5e11258b8f1b0b631ce16c0959b765d377e0da3598a64d6</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/879b555c2edb9bfdf854d74ed00af048a2de42404ede648bedb81156ff8bcb3a</sync-token><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/07c64e122af86ccc37a90056883f6ac0b8be580b2265fa75256cf84cbd4fbea7</sync-token><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response></multistatus>
 
 ===== 4 delete c =====
 >>> DELETE /test/probe/c.ics
@@ -287,11 +287,11 @@
 >>> REPORT /test/probe/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/879b555c2edb9bfdf854d74ed00af048a2de42404ede648bedb81156ff8bcb3a</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/07c64e122af86ccc37a90056883f6ac0b8be580b2265fa75256cf84cbd4fbea7</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/033312367d87454bbe58be3b96e3a6f8630d70f752c45f7392e16bc5eac0edfa</sync-token><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</sync-token><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
 
 ===== 5 token: well-formed URI =====
 >>> REPORT /test/probe/
@@ -317,7 +317,7 @@
 >>> REPORT /test/probe/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/be68ef9af8b60de5db82e6ea4d3cead8a4af49b09157b09477b348c6f4690fzz</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/fdb200a45faecc619a5b2c810e748dae865410d1f24196ded51e88955f001czz</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 403 Forbidden
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
@@ -327,7 +327,7 @@
 >>> REPORT /test/probe/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/be68ef9af8b60de5db82e6ea4d3cead8a4af49b09157b09477b348c6f4690f21</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/fdb200a45faecc619a5b2c810e748dae865410d1f24196ded51e88955f001c11</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 403 Forbidden
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
@@ -341,27 +341,7 @@
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/033312367d87454bbe58be3b96e3a6f8630d70f752c45f7392e16bc5eac0edfa</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
-
-===== 7 page 0, nresults=2 =====
->>> REPORT /test/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< Content-Type: text/xml; charset=utf-8
-<<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/033312367d87454bbe58be3b96e3a6f8630d70f752c45f7392e16bc5eac0edfa</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
-
-===== 7 follow-up from the last page's token =====
->>> REPORT /test/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/033312367d87454bbe58be3b96e3a6f8630d70f752c45f7392e16bc5eac0edfa</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< Content-Type: text/xml; charset=utf-8
-<<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/033312367d87454bbe58be3b96e3a6f8630d70f752c45f7392e16bc5eac0edfa</sync-token></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
 
 ===== 7 live state =====
 >>> REPORT /test/probe/
@@ -371,7 +351,47 @@
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/033312367d87454bbe58be3b96e3a6f8630d70f752c45f7392e16bc5eac0edfa</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+
+===== 7 from an old token, page 0, nresults=2 =====
+>>> REPORT /test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: text/xml; charset=utf-8
+<<< <?xml version='1.0' encoding='utf-8'?>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+
+===== 7 from an old token, follow-up from the last page's token =====
+>>> REPORT /test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: text/xml; charset=utf-8
+<<< <?xml version='1.0' encoding='utf-8'?>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</sync-token></multistatus>
+
+===== 7 from an empty token, page 0, nresults=2 =====
+>>> REPORT /test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: text/xml; charset=utf-8
+<<< <?xml version='1.0' encoding='utf-8'?>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/d.ics</href><propstat><prop><getetag>"62080b2920049fb171077a2903e12bd2e3fed8955e286cedf4905e437c017e6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+
+===== 7 from an empty token, follow-up from the last page's token =====
+>>> REPORT /test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: text/xml; charset=utf-8
+<<< <?xml version='1.0' encoding='utf-8'?>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</sync-token></multistatus>
 
 ===== 8 GET a =====
 >>> GET /test/probe/a.ics
@@ -454,13 +474,13 @@
 
 >>> 
 <<< 201 Created
-<<< ETag: "2ccdd4801180d51bfd357e9087e61446230a68395ff5399b2236d58ca16f41b7"
+<<< ETag: "2923e8929925f08cb8c5639ae989165efff89793077ccacadbfba613fc7b959e"
 
 ===== 8 GET f =====
 >>> GET /test/probe/f.ics
 <<< 200 OK
 <<< Content-Type: text/calendar; charset=utf-8
-<<< ETag: "2ccdd4801180d51bfd357e9087e61446230a68395ff5399b2236d58ca16f41b7"
+<<< ETag: "2923e8929925f08cb8c5639ae989165efff89793077ccacadbfba613fc7b959e"
 <<< BEGIN:VCALENDAR
 
 <<< VERSION:2.0
@@ -475,7 +495,7 @@
 
 <<< DTEND:20261020T110000Z
 
-<<< DTSTAMP:20261010T062248Z
+<<< DTSTAMP:20261011T182625Z
 
 <<< SUMMARY:no DTSTAMP
 
@@ -576,7 +596,7 @@
 <<< Precondition failed.
 
 ===== 9 PUT If-Match on missing =====
->>> PUT /test/probe/7143378a-49f4-4b35-8167-d0f0a3bb7790.ics
+>>> PUT /test/probe/56dacdb8-5810-47f1-a74d-5a3c50ae46b1.ics
 >>> Content-Type: text/calendar; charset=utf-8
 >>> If-Match: "x"
 >>> BEGIN:VCALENDAR
@@ -661,7 +681,7 @@
 <<< The requested resource could not be found.
 
 ===== 10 create with a UUID href =====
->>> PUT /test/probe/a2166509-9d7f-4c67-b6f7-1582f0df49f4.ics
+>>> PUT /test/probe/515f2fe7-72bb-4571-a5ed-dd4660d007be.ics
 >>> Content-Type: text/calendar; charset=utf-8
 >>> If-None-Match: *
 >>> BEGIN:VCALENDAR
@@ -672,7 +692,7 @@
 
 >>> BEGIN:VEVENT
 
->>> UID:a2166509-9d7f-4c67-b6f7-1582f0df49f4.ics
+>>> UID:515f2fe7-72bb-4571-a5ed-dd4660d007be.ics
 
 >>> DTSTAMP:20261010T000000Z
 
@@ -688,17 +708,17 @@
 
 >>> 
 <<< 201 Created
-<<< ETag: "dc5f59fd6fe234f0f44b1cd2c93e2518e05ba3bd82c4594ecaf005bed32c0861"
+<<< ETag: "4fde2b1819c86a3467d5baf412ea906850719bf1836a911841dfff28a6f770ac"
 
 ===== 10 report after the UUID create =====
 >>> REPORT /test/probe/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/033312367d87454bbe58be3b96e3a6f8630d70f752c45f7392e16bc5eac0edfa</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/71acef9281911230cb957ca0aa8c62a6aa28d723085f468cb1669b6abb3e256a</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/01c48a7018c3fd62677245fed9a38bd49823d1a732c279a93d42a75c29d320e7</sync-token><response><href>/test/probe/d.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"e6a272c3d277f22b3580a70b6904b0a64a959d2ea5a3b631a57c6022f2986816"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/a2166509-9d7f-4c67-b6f7-1582f0df49f4.ics</href><propstat><prop><getetag>"dc5f59fd6fe234f0f44b1cd2c93e2518e05ba3bd82c4594ecaf005bed32c0861"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/f.ics</href><propstat><prop><getetag>"2ccdd4801180d51bfd357e9087e61446230a68395ff5399b2236d58ca16f41b7"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/3a3b50ee9737565154da3ce5bfaead6d9c6017c0434b596378d85e9e46f7c0ec</sync-token><response><href>/test/probe/d.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/515f2fe7-72bb-4571-a5ed-dd4660d007be.ics</href><propstat><prop><getetag>"4fde2b1819c86a3467d5baf412ea906850719bf1836a911841dfff28a6f770ac"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"e6a272c3d277f22b3580a70b6904b0a64a959d2ea5a3b631a57c6022f2986816"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/f.ics</href><propstat><prop><getetag>"2923e8929925f08cb8c5639ae989165efff89793077ccacadbfba613fc7b959e"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
 
 ===== 11 create keep =====
 >>> PUT /test/probe/keep.ics
@@ -762,11 +782,11 @@
 >>> REPORT /test/probe/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/01c48a7018c3fd62677245fed9a38bd49823d1a732c279a93d42a75c29d320e7</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/3a3b50ee9737565154da3ce5bfaead6d9c6017c0434b596378d85e9e46f7c0ec</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/49d3ee712522d8c3baf985069ac75301588a0496e65c59b89c11d7daad108c2f</sync-token><response><href>/test/probe/gone.ics</href><propstat><prop><getetag>"331bc4f915097c438f01019a3a938516143f87642e8f516a30781730cb2b4e69"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/keep.ics</href><propstat><prop><getetag>"335e9927abd859a8886857c4730401d1e13bba77da32ced21408b7e376a3892a"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/c25c2fc49a1e5fe15002ce34c4f7ff7c34833236847f843c91d12d55e67529e2</sync-token><response><href>/test/probe/gone.ics</href><propstat><prop><getetag>"331bc4f915097c438f01019a3a938516143f87642e8f516a30781730cb2b4e69"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/keep.ics</href><propstat><prop><getetag>"335e9927abd859a8886857c4730401d1e13bba77da32ced21408b7e376a3892a"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
 
 ===== 11 change keep after the report =====
 >>> PUT /test/probe/keep.ics
@@ -839,11 +859,80 @@
 >>> REPORT /test/probe/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/49d3ee712522d8c3baf985069ac75301588a0496e65c59b89c11d7daad108c2f</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/c25c2fc49a1e5fe15002ce34c4f7ff7c34833236847f843c91d12d55e67529e2</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/be410405fa5b2a33f9a3d67aae210431d629512f3e1eb3263fa40d76d5d40aeb</sync-token><response><href>/test/probe/gone.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/keep.ics</href><propstat><prop><getetag>"44fb227061452749926cc7d1d4fb1a5c9e98c946497ea8bdff82d755901fd69d"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/85f1c1cd12c9020c24e4f208edf9b43eff6ec827de5a073d206f9dd642120e89</sync-token><response><href>/test/probe/gone.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/keep.ics</href><propstat><prop><getetag>"44fb227061452749926cc7d1d4fb1a5c9e98c946497ea8bdff82d755901fd69d"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+
+===== 12 DAV:sync-token property =====
+>>> PROPFIND /test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:sync-token/></D:prop></D:propfind>
+<<< 207 Multi-Status
+<<< Content-Type: text/xml; charset=utf-8
+<<< <?xml version='1.0' encoding='utf-8'?>
+<<< <multistatus xmlns="DAV:"><response><href>/test/probe/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/85f1c1cd12c9020c24e4f208edf9b43eff6ec827de5a073d206f9dd642120e89</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+
+===== 12 members and ETags =====
+>>> PROPFIND /test/probe/
+>>> Depth: 1
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:getetag/></D:prop></D:propfind>
+<<< 207 Multi-Status
+<<< Content-Type: text/xml; charset=utf-8
+<<< <?xml version='1.0' encoding='utf-8'?>
+<<< <multistatus xmlns="DAV:"><response><href>/test/probe/</href><propstat><prop><getetag>"147fea017b75ae661c98518ee5620f2af8e9ca201859c216c7caae5dced66941"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/515f2fe7-72bb-4571-a5ed-dd4660d007be.ics</href><propstat><prop><getetag>"4fde2b1819c86a3467d5baf412ea906850719bf1836a911841dfff28a6f770ac"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"e6a272c3d277f22b3580a70b6904b0a64a959d2ea5a3b631a57c6022f2986816"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/f.ics</href><propstat><prop><getetag>"2923e8929925f08cb8c5639ae989165efff89793077ccacadbfba613fc7b959e"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/keep.ics</href><propstat><prop><getetag>"44fb227061452749926cc7d1d4fb1a5c9e98c946497ea8bdff82d755901fd69d"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+
+===== 12 live state =====
+>>> REPORT /test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: text/xml; charset=utf-8
+<<< <?xml version='1.0' encoding='utf-8'?>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/85f1c1cd12c9020c24e4f208edf9b43eff6ec827de5a073d206f9dd642120e89</sync-token><response><href>/test/probe/b.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/d.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/e.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/gone.ics</href><status>HTTP/1.1 404 Not Found</status></response><response><href>/test/probe/515f2fe7-72bb-4571-a5ed-dd4660d007be.ics</href><propstat><prop><getetag>"4fde2b1819c86a3467d5baf412ea906850719bf1836a911841dfff28a6f770ac"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/a.ics</href><propstat><prop><getetag>"e6a272c3d277f22b3580a70b6904b0a64a959d2ea5a3b631a57c6022f2986816"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/c.ics</href><propstat><prop><getetag>"0ef2b5126a513c43ff523b96430e8905ff64b9a42c92cf284152367e065a2490"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/f.ics</href><propstat><prop><getetag>"2923e8929925f08cb8c5639ae989165efff89793077ccacadbfba613fc7b959e"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/probe/keep.ics</href><propstat><prop><getetag>"44fb227061452749926cc7d1d4fb1a5c9e98c946497ea8bdff82d755901fd69d"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+
+===== 12 change keep after the property was read =====
+>>> PUT /test/probe/keep.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:keep
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:v3
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 204 No Content
+<<< ETag: "7e775c838474e94ae21b634a0e94800243d77d32d3baaf97e1b9d88b142dd20e"
+
+===== 12 report from the property's token =====
+>>> REPORT /test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://radicale.org/ns/sync/85f1c1cd12c9020c24e4f208edf9b43eff6ec827de5a073d206f9dd642120e89</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: text/xml; charset=utf-8
+<<< <?xml version='1.0' encoding='utf-8'?>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/4058519dff1365d4b6033ee73253737dce77c5bdc1cbac4bf983357cd9575ae1</sync-token><response><href>/test/probe/keep.ics</href><propstat><prop><getetag>"7e775c838474e94ae21b634a0e94800243d77d32d3baaf97e1b9d88b142dd20e"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
 
 RESULT [Radicale] 1 sync-collection in supported-report-set: True; ['calendar-multiget', 'calendar-query', 'expand-property', 'free-busy-query', 'principal-property-search', 'principal-search-property-set', 'sync-collection']
 RESULT [Radicale] 2 initial listing: [('a.ics', '200'), ('b.ics', '200'), ('c.ics', '200')]
@@ -855,9 +944,10 @@ RESULT [Radicale] 5 token not a URI: 403, valid-sync-token: True, members []
 RESULT [Radicale] 5 token real token with two characters replaced: 403, valid-sync-token: True, members []
 RESULT [Radicale] 5 token real token with its last character changed: 403, valid-sync-token: True, members []
 RESULT [Radicale] 6 empty token after deletions: removed members listed: [('b.ics', '404'), ('e.ics', '404')]; collection listed: False
-RESULT [Radicale] 7 DAV:limit: 507 sent: False; pages 1; paged + follow-up equals live: True; missing []
+RESULT [Radicale] 7 DAV:limit from an old token: 507 sent: False; pages 1; paged + follow-up equals live: True; missing []
+RESULT [Radicale] 7 DAV:limit from an empty token: 507 sent: False; pages 1; paged + follow-up equals live: True; missing []
 RESULT [Radicale] 8 identical PUT: ETag unchanged: True
-RESULT [Radicale] 8 PUT stored differently: stored equals sent: False; ETag in the PUT answer: "2ccdd4801180d51bfd357e9087e61446230a68395ff5399b2236d58ca16f41b7"
+RESULT [Radicale] 8 PUT stored differently: stored equals sent: False; ETag in the PUT answer: "2923e8929925f08cb8c5639ae989165efff89793077ccacadbfba613fc7b959e"
 RESULT [Radicale] 9 PUT If-Match wrong: 412
 RESULT [Radicale] 9 PUT If-Match right: 204
 RESULT [Radicale] 9 PUT If-None-Match * on existing: 412
@@ -871,3 +961,6 @@ RESULT [Radicale] PASS 11 multiget is 207: 207
 RESULT [Radicale] PASS 11 multiget returns the newer ETag with the newer content: report-time "335e9927abd859a8886857c4730401d1e13bba77da32ced21408b7e376a3892a", fetched "44fb227061452749926cc7d1d4fb1a5c9e98c946497ea8bdff82d755901fd69d", live "44fb227061452749926cc7d1d4fb1a5c9e98c946497ea8bdff82d755901fd69d"
 RESULT [Radicale] 11 multiget for a member deleted after the report: entry with status ['404']
 RESULT [Radicale] PASS 11 the removal arrives in the next report: ok
+RESULT [Radicale] PASS 12 DAV:sync-token property is defined: http://radicale.org/ns/sync/85f1c1cd12c9020c24e4f208edf9b43eff6ec827de5a073d206f9dd642120e89
+RESULT [Radicale] PASS 12 PROPFIND lists every member: missing []
+RESULT [Radicale] PASS 12 a change after the property arrives in the next report: ok

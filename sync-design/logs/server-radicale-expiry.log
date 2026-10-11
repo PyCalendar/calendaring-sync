@@ -1,177 +1,203 @@
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Logging level set to: 'INFO'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Logging of backtrace is disabled in this loglevel
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Logging level set to: 'INFO'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Loaded default config
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Loaded command line arguments
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Starting Radicale (python=3.14.0 radicale=3.8.3 vobject=0.9.9 passlib=1.9.3 defusedxml=0.7.1 bcrypt=n/a argon2-cffi=n/a pika=1.4.4 ldap=n/a ldap3=n/a pam=n/a) as user=sasha on Windows-11-10.0.26300-SP0
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth type is 'radicale.auth.htpasswd'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth.strip_domain: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth.lc_username: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth.uc_username: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth.urldecode_username: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth.delay: 1.000000 seconds
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth.cache_logins: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth htpasswd file: '<data>\\htpasswd'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth htpasswd file encoding: 'utf-8'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth htpasswd cache: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] auth htpasswd encryption is 'radicale.auth.htpasswd_encryption.plain'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Read content of htpasswd file start: '<data>\\htpasswd'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Read content of htpasswd file done: '<data>\\htpasswd' (entries: 2, duplicates: 0, errors: 0)
-[2026-10-10 11:56:17 +0530] [8164] [INFO] No user groups lookup method is selected
-[2026-10-10 11:56:17 +0530] [8164] [INFO] group type is 'radicale.group.none'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] storage type is 'radicale.storage.multifilesystem'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location: '<data>\\radicale-expiry'
-[2026-10-10 11:56:17 +0530] [8164] [WARNING] Storage location: '<data>\\radicale-expiry' does not exist, creating now
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location permissions: path='<data>\\radicale-expiry' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder: '<data>\\radicale-expiry\\collection-root'
-[2026-10-10 11:56:17 +0530] [8164] [WARNING] Storage location subfolder: '<data>\\radicale-expiry\\collection-root' does not exist, creating now
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder permissions: path='<data>\\radicale-expiry\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder softlink support: True
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder supports unicode: True
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder supports trailing whitespace: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder supports problematic chars: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache subfolder usage for 'item': False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache subfolder usage for 'history': False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache subfolder usage for 'sync-token': False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache use mtime and size for 'item': False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage item mtime resolution test result: 100 ns
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
-[2026-10-10 11:56:17 +0530] [8164] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] rights type is 'radicale.rights.owner_only'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] web type is 'radicale.web.internal'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing type is 'radicale.sharing.none'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] rights type is 'radicale.rights.owner_only'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] storage type is 'radicale.storage.multifilesystem'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location: '<data>\\radicale-expiry'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location permissions: path='<data>\\radicale-expiry' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder: '<data>\\radicale-expiry\\collection-root'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder permissions: path='<data>\\radicale-expiry\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder softlink support: True
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder supports unicode: True
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder supports trailing whitespace: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage location subfolder supports problematic chars: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache subfolder usage for 'item': False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache subfolder usage for 'history': False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache subfolder usage for 'sync-token': False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache use mtime and size for 'item': False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage item mtime resolution test result: 100 ns
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
-[2026-10-10 11:56:17 +0530] [8164] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] No user groups lookup method is selected
-[2026-10-10 11:56:17 +0530] [8164] [INFO] group type is 'radicale.group.none'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.collection_by_map  : False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.collection_by_token: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.permit_create_token: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.permit_create_map  : False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.default_permissions_create_token: 'rp'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.default_permissions_create_map  : 'r'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.permit_properties_overlay: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.enforce_properties_overlay: True
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.conversion_bday_summary_template: '[{n:f} {n:g}|{fn}|{nickname}] ({year}) (BDAY)'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.conversion_bday_description_template: 'BDAY={year}-{month}-{day}'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.conversion_bday_alarm_trigger_template: ''
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.conversion_bday_categories: 'Birthday'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.conversion_bday_age_max: 99
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing.database_type: none
-[2026-10-10 11:56:17 +0530] [8164] [INFO] sharing disabled as no feature is enabled
-[2026-10-10 11:56:17 +0530] [8164] [INFO] hook type is 'radicale.hook.none'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] delay_on_error set to: 1.000 seconds
-[2026-10-10 11:56:17 +0530] [8164] [INFO] max_content_length set to: 100000000 bytes (95.4 Mbytes)
-[2026-10-10 11:56:17 +0530] [8164] [INFO] max_resource_size set to: 10000000 bytes (9.5 Mbytes)
-[2026-10-10 11:56:17 +0530] [8164] [INFO] max_vevent_rrule_occurrence set to: 10000
-[2026-10-10 11:56:17 +0530] [8164] [INFO] log bad put request content: False
-[2026-10-10 11:56:17 +0530] [8164] [NOTICE] log request  header  on notice condition: {}
-[2026-10-10 11:56:17 +0530] [8164] [NOTICE] log request  content on notice condition: {}
-[2026-10-10 11:56:17 +0530] [8164] [NOTICE] log response header  on notice condition: {}
-[2026-10-10 11:56:17 +0530] [8164] [NOTICE] log response content on notice condition: {}
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Default script name to strip from URI if called by reverse proxy is taken from HTTP_X_SCRIPT_NAME or SCRIPT_NAME
-[2026-10-10 11:56:17 +0530] [8164] [INFO] permit delete of collection: True
-[2026-10-10 11:56:17 +0530] [8164] [INFO] permit overwrite of collection: True
-[2026-10-10 11:56:17 +0530] [8164] [INFO] strict preconditions check: False
-[2026-10-10 11:56:17 +0530] [8164] [INFO] validate user value: 'minimal'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] validate path value: 'minimal'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] profiling: 'none'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Listening on '127.0.0.1:5233'
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Maximum parallel connections: 8
-[2026-10-10 11:56:17 +0530] [8164] [INFO] Radicale server ready
-[2026-10-10 11:56:17 +0530] [8164/Thread-1 (process_request_thread)] [INFO] GET request for '/' received from 127.0.0.1 using 'curl/8.4.0'
-[2026-10-10 11:56:17 +0530] [8164/Thread-1 (process_request_thread)] [INFO] GET response status for '/' in 0.000 seconds plain 19 bytes: 302 Found
-[2026-10-10 11:56:18 +0530] [8164/Thread-2 (process_request_thread)] [INFO] MKCALENDAR request for '/test/expiry/' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-2 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-2 (process_request_thread)] [NOTICE] MKCALENDAR response status for '/test/expiry/' in 0.008 seconds: 201 Created
-[2026-10-10 11:56:18 +0530] [8164/Thread-3 (process_request_thread)] [INFO] PUT request for '/test/expiry/known.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-3 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-3 (process_request_thread)] [INFO] PUT response status for '/test/expiry/known.ics' in 0.014 seconds: 201 Created
-[2026-10-10 11:56:18 +0530] [8164/Thread-4 (process_request_thread)] [INFO] PUT request for '/test/expiry/edited.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-4 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-4 (process_request_thread)] [INFO] PUT response status for '/test/expiry/edited.ics' in 0.011 seconds: 201 Created
-[2026-10-10 11:56:18 +0530] [8164/Thread-5 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-5 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-5 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.082 seconds gzip 362 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:56:18 +0530] [8164/Thread-6 (process_request_thread)] [INFO] DELETE request for '/test/expiry/known.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-6 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-6 (process_request_thread)] [INFO] DELETE response status for '/test/expiry/known.ics' in 0.005 seconds gzip 153 bytes: 200 OK
-[2026-10-10 11:56:18 +0530] [8164/Thread-7 (process_request_thread)] [INFO] PUT request for '/test/expiry/edited.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-7 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-7 (process_request_thread)] [INFO] PUT response status for '/test/expiry/edited.ics' in 0.017 seconds: 204 No Content
-[2026-10-10 11:56:18 +0530] [8164/Thread-8 (process_request_thread)] [INFO] PUT request for '/test/expiry/later0.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-8 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-8 (process_request_thread)] [INFO] PUT response status for '/test/expiry/later0.ics' in 0.013 seconds: 201 Created
-[2026-10-10 11:56:18 +0530] [8164/Thread-9 (process_request_thread)] [INFO] PUT request for '/test/expiry/later1.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-9 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-9 (process_request_thread)] [INFO] PUT response status for '/test/expiry/later1.ics' in 0.013 seconds: 201 Created
-[2026-10-10 11:56:18 +0530] [8164/Thread-10 (process_request_thread)] [INFO] PUT request for '/test/expiry/later2.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-10 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-10 (process_request_thread)] [INFO] PUT response status for '/test/expiry/later2.ics' in 0.011 seconds: 201 Created
-[2026-10-10 11:56:18 +0530] [8164/Thread-11 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:18 +0530] [8164/Thread-11 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:18 +0530] [8164/Thread-11 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.247 seconds gzip 472 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:56:23 +0530] [8164/Thread-12 (process_request_thread)] [INFO] PUT request for '/test/expiry/tick-83d524b2-6db5-4a8f-be6a-8495eb62e760.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:23 +0530] [8164/Thread-12 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:23 +0530] [8164/Thread-12 (process_request_thread)] [INFO] PUT response status for '/test/expiry/tick-83d524b2-6db5-4a8f-be6a-8495eb62e760.ics' in 0.034 seconds: 201 Created
-[2026-10-10 11:56:23 +0530] [8164/Thread-13 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:23 +0530] [8164/Thread-13 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:23 +0530] [8164/Thread-13 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.055 seconds gzip 517 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:56:27 +0530] [8164/Thread-14 (process_request_thread)] [INFO] PUT request for '/test/expiry/tick-a10e71b2-cc9e-468b-bf48-e17cd955cda1.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:27 +0530] [8164/Thread-14 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:27 +0530] [8164/Thread-14 (process_request_thread)] [INFO] PUT response status for '/test/expiry/tick-a10e71b2-cc9e-468b-bf48-e17cd955cda1.ics' in 0.067 seconds: 201 Created
-[2026-10-10 11:56:27 +0530] [8164/Thread-15 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:27 +0530] [8164/Thread-15 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:27 +0530] [8164/Thread-15 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.045 seconds gzip 579 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:56:30 +0530] [8164/Thread-16 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:56:30 +0530] [8164/Thread-16 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:30 +0530] [8164/Thread-16 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/expiry/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Token not found: 'http://radicale.org/ns/sync/765045b504c5715ae473f9114d76de2883830b007277913c5d05892e3dfaa9b4'
-[2026-10-10 11:56:32 +0530] [8164/Thread-16 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 1.488 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:56:32 +0530] [8164/Thread-17 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:32 +0530] [8164/Thread-17 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for anonymous user
-[2026-10-10 11:56:33 +0530] [8164/Thread-17 (process_request_thread)] [NOTICE] REPORT response status for '/test/expiry/' with depth '0' in 0.829 seconds gzip 62 bytes: 401 Unauthorized
-[2026-10-10 11:56:33 +0530] [8164/Thread-18 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:33 +0530] [8164/Thread-18 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:33 +0530] [8164/Thread-18 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/expiry/' (user 'test' from 127.0.0.1 using 'python-caldav/3.4.0'): Token not found: 'http://radicale.org/ns/sync/765045b504c5715ae473f9114d76de2883830b007277913c5d05892e3dfaa9b4'
-[2026-10-10 11:56:34 +0530] [8164/Thread-18 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.647 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:56:34 +0530] [8164/Thread-19 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:34 +0530] [8164/Thread-19 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:34 +0530] [8164/Thread-19 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.008 seconds gzip 579 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:56:34 +0530] [8164/Thread-20 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:34 +0530] [8164/Thread-20 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for anonymous user
-[2026-10-10 11:56:36 +0530] [8164/Thread-20 (process_request_thread)] [NOTICE] REPORT response status for '/test/expiry/' with depth '0' in 1.361 seconds gzip 62 bytes: 401 Unauthorized
-[2026-10-10 11:56:36 +0530] [8164/Thread-21 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:36 +0530] [8164/Thread-21 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:36 +0530] [8164/Thread-21 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/expiry/' (user 'test' from 127.0.0.1 using 'python-caldav/3.4.0'): Token not found: 'http://radicale.org/ns/sync/765045b504c5715ae473f9114d76de2883830b007277913c5d05892e3dfaa9b4'
-[2026-10-10 11:56:37 +0530] [8164/Thread-21 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.993 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:56:37 +0530] [8164/Thread-22 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:37 +0530] [8164/Thread-22 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
-[2026-10-10 11:56:37 +0530] [8164/Thread-22 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.007 seconds gzip 579 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:56:37 +0530] [8164/Thread-23 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:37 +0530] [8164/Thread-23 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for anonymous user
-[2026-10-10 11:56:37 +0530] [8164/Thread-23 (process_request_thread)] [NOTICE] REPORT response status for '/test/expiry/' with depth '0' in 0.619 seconds gzip 62 bytes: 401 Unauthorized
-[2026-10-10 11:56:37 +0530] [8164/Thread-24 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:37 +0530] [8164/Thread-24 (process_request_thread)] [INFO] Successful login: 'intruder' (htpasswd)
-[2026-10-10 11:56:37 +0530] [8164/Thread-24 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for 'intruder'
-[2026-10-10 11:56:38 +0530] [8164/Thread-24 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.787 seconds gzip 62 bytes: 403 Forbidden
-[2026-10-10 11:56:38 +0530] [8164/Thread-25 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:56:38 +0530] [8164/Thread-25 (process_request_thread)] [INFO] Successful login: 'intruder' (htpasswd)
-[2026-10-10 11:56:38 +0530] [8164/Thread-25 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for 'intruder'
-[2026-10-10 11:56:40 +0530] [8164/Thread-25 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 1.356 seconds gzip 62 bytes: 403 Forbidden
+[2026-10-11 23:27:58 +0530] [8300] [INFO] Logging level set to: 'INFO'
+[2026-10-11 23:27:58 +0530] [8300] [INFO] Logging of backtrace is disabled in this loglevel
+[2026-10-11 23:27:58 +0530] [8300] [INFO] Logging level set to: 'INFO'
+[2026-10-11 23:27:58 +0530] [8300] [INFO] Loaded default config
+[2026-10-11 23:27:58 +0530] [8300] [INFO] Loaded command line arguments
+[2026-10-11 23:27:58 +0530] [8300] [INFO] Starting Radicale (python=3.14.0 radicale=3.8.3 vobject=0.9.9 passlib=1.9.3 defusedxml=0.7.1 bcrypt=n/a argon2-cffi=n/a pika=1.4.4 ldap=n/a ldap3=n/a pam=n/a) as user=<user> on Windows-11-10.0.26300-SP0
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth type is 'radicale.auth.htpasswd'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth.strip_domain: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth.lc_username: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth.uc_username: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth.urldecode_username: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth.delay: 1.000000 seconds
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth.cache_logins: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth htpasswd file: '<data>\\htpasswd'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth htpasswd file encoding: 'utf-8'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth htpasswd cache: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] auth htpasswd encryption is 'radicale.auth.htpasswd_encryption.plain'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Read content of htpasswd file start: '<data>\\htpasswd'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Read content of htpasswd file done: '<data>\\htpasswd' (entries: 2, duplicates: 0, errors: 0)
+[2026-10-11 23:27:59 +0530] [8300] [INFO] No user groups lookup method is selected
+[2026-10-11 23:27:59 +0530] [8300] [INFO] group type is 'radicale.group.none'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] storage type is 'radicale.storage.multifilesystem'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location: '<data>\\radicale-expiry'
+[2026-10-11 23:27:59 +0530] [8300] [WARNING] Storage location: '<data>\\radicale-expiry' does not exist, creating now
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location permissions: path='<data>\\radicale-expiry' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder: '<data>\\radicale-expiry\\collection-root'
+[2026-10-11 23:27:59 +0530] [8300] [WARNING] Storage location subfolder: '<data>\\radicale-expiry\\collection-root' does not exist, creating now
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder permissions: path='<data>\\radicale-expiry\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder softlink support: True
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder supports unicode: True
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder supports trailing whitespace: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder supports problematic chars: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache subfolder usage for 'item': False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache subfolder usage for 'history': False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache subfolder usage for 'sync-token': False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache use mtime and size for 'item': False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage item mtime resolution test result: 100 ns
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
+[2026-10-11 23:27:59 +0530] [8300] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] rights type is 'radicale.rights.owner_only'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] web type is 'radicale.web.internal'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing type is 'radicale.sharing.none'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] rights type is 'radicale.rights.owner_only'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] storage type is 'radicale.storage.multifilesystem'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location: '<data>\\radicale-expiry'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location permissions: path='<data>\\radicale-expiry' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder: '<data>\\radicale-expiry\\collection-root'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder permissions: path='<data>\\radicale-expiry\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder softlink support: True
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder supports unicode: True
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder supports trailing whitespace: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage location subfolder supports problematic chars: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache subfolder usage for 'item': False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache subfolder usage for 'history': False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache subfolder usage for 'sync-token': False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache use mtime and size for 'item': False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage item mtime resolution test result: 100 ns
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
+[2026-10-11 23:27:59 +0530] [8300] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] No user groups lookup method is selected
+[2026-10-11 23:27:59 +0530] [8300] [INFO] group type is 'radicale.group.none'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.collection_by_map  : False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.collection_by_token: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.permit_create_token: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.permit_create_map  : False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.default_permissions_create_token: 'rp'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.default_permissions_create_map  : 'r'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.permit_properties_overlay: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.enforce_properties_overlay: True
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.conversion_bday_summary_template: '[{n:f} {n:g}|{fn}|{nickname}] ({year}) (BDAY)'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.conversion_bday_description_template: 'BDAY={year}-{month}-{day}'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.conversion_bday_alarm_trigger_template: ''
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.conversion_bday_categories: 'Birthday'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.conversion_bday_age_max: 99
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing.database_type: none
+[2026-10-11 23:27:59 +0530] [8300] [INFO] sharing disabled as no feature is enabled
+[2026-10-11 23:27:59 +0530] [8300] [INFO] hook type is 'radicale.hook.none'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] delay_on_error set to: 1.000 seconds
+[2026-10-11 23:27:59 +0530] [8300] [INFO] max_content_length set to: 100000000 bytes (95.4 Mbytes)
+[2026-10-11 23:27:59 +0530] [8300] [INFO] max_resource_size set to: 10000000 bytes (9.5 Mbytes)
+[2026-10-11 23:27:59 +0530] [8300] [INFO] max_vevent_rrule_occurrence set to: 10000
+[2026-10-11 23:27:59 +0530] [8300] [INFO] log bad put request content: False
+[2026-10-11 23:27:59 +0530] [8300] [NOTICE] log request  header  on notice condition: {}
+[2026-10-11 23:27:59 +0530] [8300] [NOTICE] log request  content on notice condition: {}
+[2026-10-11 23:27:59 +0530] [8300] [NOTICE] log response header  on notice condition: {}
+[2026-10-11 23:27:59 +0530] [8300] [NOTICE] log response content on notice condition: {}
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Default script name to strip from URI if called by reverse proxy is taken from HTTP_X_SCRIPT_NAME or SCRIPT_NAME
+[2026-10-11 23:27:59 +0530] [8300] [INFO] permit delete of collection: True
+[2026-10-11 23:27:59 +0530] [8300] [INFO] permit overwrite of collection: True
+[2026-10-11 23:27:59 +0530] [8300] [INFO] strict preconditions check: False
+[2026-10-11 23:27:59 +0530] [8300] [INFO] validate user value: 'minimal'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] validate path value: 'minimal'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] profiling: 'none'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Listening on '127.0.0.1:5233'
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Maximum parallel connections: 8
+[2026-10-11 23:27:59 +0530] [8300] [INFO] Radicale server ready
+[2026-10-11 23:27:59 +0530] [8300/Thread-1 (process_request_thread)] [INFO] GET request for '/' received from 127.0.0.1 using 'curl/8.4.0'
+[2026-10-11 23:27:59 +0530] [8300/Thread-1 (process_request_thread)] [INFO] GET response status for '/' in 0.000 seconds plain 19 bytes: 302 Found
+[2026-10-11 23:27:59 +0530] [8300/Thread-2 (process_request_thread)] [INFO] MKCALENDAR request for '/test/expiry/' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-2 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:27:59 +0530] [8300/Thread-2 (process_request_thread)] [NOTICE] MKCALENDAR response status for '/test/expiry/' in 0.004 seconds: 201 Created
+[2026-10-11 23:27:59 +0530] [8300/Thread-3 (process_request_thread)] [INFO] PUT request for '/test/expiry/known.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-3 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:27:59 +0530] [8300/Thread-3 (process_request_thread)] [INFO] PUT response status for '/test/expiry/known.ics' in 0.050 seconds: 201 Created
+[2026-10-11 23:27:59 +0530] [8300/Thread-4 (process_request_thread)] [INFO] PUT request for '/test/expiry/edited.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-4 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:27:59 +0530] [8300/Thread-4 (process_request_thread)] [INFO] PUT response status for '/test/expiry/edited.ics' in 0.042 seconds: 201 Created
+[2026-10-11 23:27:59 +0530] [8300/Thread-5 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-5 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:27:59 +0530] [8300/Thread-5 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.057 seconds gzip 362 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:27:59 +0530] [8300/Thread-6 (process_request_thread)] [INFO] DELETE request for '/test/expiry/known.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-6 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:27:59 +0530] [8300/Thread-6 (process_request_thread)] [INFO] DELETE response status for '/test/expiry/known.ics' in 0.004 seconds gzip 153 bytes: 200 OK
+[2026-10-11 23:27:59 +0530] [8300/Thread-7 (process_request_thread)] [INFO] PUT request for '/test/expiry/edited.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-7 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:27:59 +0530] [8300/Thread-7 (process_request_thread)] [INFO] PUT response status for '/test/expiry/edited.ics' in 0.044 seconds: 204 No Content
+[2026-10-11 23:27:59 +0530] [8300/Thread-8 (process_request_thread)] [INFO] PUT request for '/test/expiry/later0.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-8 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:27:59 +0530] [8300/Thread-8 (process_request_thread)] [INFO] PUT response status for '/test/expiry/later0.ics' in 0.049 seconds: 201 Created
+[2026-10-11 23:27:59 +0530] [8300/Thread-9 (process_request_thread)] [INFO] PUT request for '/test/expiry/later1.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-9 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:27:59 +0530] [8300/Thread-9 (process_request_thread)] [INFO] PUT response status for '/test/expiry/later1.ics' in 0.044 seconds: 201 Created
+[2026-10-11 23:27:59 +0530] [8300/Thread-10 (process_request_thread)] [INFO] PUT request for '/test/expiry/later2.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:27:59 +0530] [8300/Thread-10 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:00 +0530] [8300/Thread-10 (process_request_thread)] [INFO] PUT response status for '/test/expiry/later2.ics' in 0.045 seconds: 201 Created
+[2026-10-11 23:28:00 +0530] [8300/Thread-11 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:28:00 +0530] [8300/Thread-11 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:00 +0530] [8300/Thread-11 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.182 seconds gzip 471 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:28:04 +0530] [8300/Thread-12 (process_request_thread)] [INFO] PUT request for '/test/expiry/tick-06ff5728-a391-44ed-8a1f-6555a9cbee9c.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:28:04 +0530] [8300/Thread-12 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:04 +0530] [8300/Thread-12 (process_request_thread)] [INFO] PUT response status for '/test/expiry/tick-06ff5728-a391-44ed-8a1f-6555a9cbee9c.ics' in 0.055 seconds: 201 Created
+[2026-10-11 23:28:04 +0530] [8300/Thread-13 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:28:04 +0530] [8300/Thread-13 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:04 +0530] [8300/Thread-13 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.049 seconds gzip 518 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:28:08 +0530] [8300/Thread-14 (process_request_thread)] [INFO] PUT request for '/test/expiry/tick-c5d7b8b5-215a-4e22-a7ab-501b773741f7.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:28:08 +0530] [8300/Thread-14 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:08 +0530] [8300/Thread-14 (process_request_thread)] [INFO] PUT response status for '/test/expiry/tick-c5d7b8b5-215a-4e22-a7ab-501b773741f7.ics' in 0.067 seconds: 201 Created
+[2026-10-11 23:28:08 +0530] [8300/Thread-15 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:28:08 +0530] [8300/Thread-15 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:08 +0530] [8300/Thread-15 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.051 seconds gzip 583 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:28:12 +0530] [8300/Thread-16 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:28:12 +0530] [8300/Thread-16 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:12 +0530] [8300/Thread-16 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/expiry/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Token not found: 'http://radicale.org/ns/sync/dfd92a5d43c309493be04b3860be7f255105e801dc5cbbace3ad26327255e5d9'
+[2026-10-11 23:28:13 +0530] [8300/Thread-16 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 1.279 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:28:13 +0530] [8300/Thread-17 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:13 +0530] [8300/Thread-17 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for anonymous user
+[2026-10-11 23:28:14 +0530] [8300/Thread-17 (process_request_thread)] [NOTICE] REPORT response status for '/test/expiry/' with depth '0' in 0.610 seconds gzip 62 bytes: 401 Unauthorized
+[2026-10-11 23:28:14 +0530] [8300/Thread-18 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:14 +0530] [8300/Thread-18 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:14 +0530] [8300/Thread-18 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/expiry/' (user 'test' from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'): Token not found: 'http://radicale.org/ns/sync/dfd92a5d43c309493be04b3860be7f255105e801dc5cbbace3ad26327255e5d9'
+[2026-10-11 23:28:15 +0530] [8300/Thread-18 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 1.299 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:28:15 +0530] [8300/Thread-19 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:15 +0530] [8300/Thread-19 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:15 +0530] [8300/Thread-19 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.015 seconds gzip 583 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:28:16 +0530] [8300/Thread-20 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:16 +0530] [8300/Thread-20 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for anonymous user
+[2026-10-11 23:28:17 +0530] [8300/Thread-20 (process_request_thread)] [NOTICE] REPORT response status for '/test/expiry/' with depth '0' in 0.533 seconds gzip 62 bytes: 401 Unauthorized
+[2026-10-11 23:28:17 +0530] [8300/Thread-21 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:17 +0530] [8300/Thread-21 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:17 +0530] [8300/Thread-21 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/expiry/' (user 'test' from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'): Token not found: 'http://radicale.org/ns/sync/dfd92a5d43c309493be04b3860be7f255105e801dc5cbbace3ad26327255e5d9'
+[2026-10-11 23:28:18 +0530] [8300/Thread-21 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 1.394 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:28:18 +0530] [8300/Thread-22 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:18 +0530] [8300/Thread-22 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:18 +0530] [8300/Thread-22 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.016 seconds gzip 583 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:28:18 +0530] [8300/Thread-23 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:18 +0530] [8300/Thread-23 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:18 +0530] [8300/Thread-23 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/expiry/' (user 'test' from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'): Token not found: 'http://radicale.org/ns/sync/dfd92a5d43c309493be04b3860be7f255105e801dc5cbbace3ad26327255e5d9'
+[2026-10-11 23:28:20 +0530] [8300/Thread-23 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '1' in 1.402 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:28:20 +0530] [8300/Thread-24 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:20 +0530] [8300/Thread-24 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:20 +0530] [8300/Thread-24 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '1' in 0.016 seconds gzip 466 bytes: 207 Multi-Status
+[2026-10-11 23:28:20 +0530] [8300/Thread-25 (process_request_thread)] [INFO] PROPFIND request for '/test/expiry/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:20 +0530] [8300/Thread-25 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:20 +0530] [8300/Thread-25 (process_request_thread)] [INFO] PROPFIND response status for '/test/expiry/' with depth '1' in 0.014 seconds gzip 554 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:28:20 +0530] [8300/Thread-26 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:20 +0530] [8300/Thread-26 (process_request_thread)] [INFO] Successful login: 'test' (htpasswd)
+[2026-10-11 23:28:20 +0530] [8300/Thread-26 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/expiry/' (user 'test' from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'): Token not found: 'http://radicale.org/ns/sync/dfd92a5d43c309493be04b3860be7f255105e801dc5cbbace3ad26327255e5d9'
+[2026-10-11 23:28:21 +0530] [8300/Thread-26 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '1' in 1.230 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:28:21 +0530] [8300/Thread-27 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:21 +0530] [8300/Thread-27 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for anonymous user
+[2026-10-11 23:28:22 +0530] [8300/Thread-27 (process_request_thread)] [NOTICE] REPORT response status for '/test/expiry/' with depth '0' in 1.403 seconds gzip 62 bytes: 401 Unauthorized
+[2026-10-11 23:28:22 +0530] [8300/Thread-28 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:22 +0530] [8300/Thread-28 (process_request_thread)] [INFO] Successful login: 'intruder' (htpasswd)
+[2026-10-11 23:28:22 +0530] [8300/Thread-28 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for 'intruder'
+[2026-10-11 23:28:24 +0530] [8300/Thread-28 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 1.274 seconds gzip 62 bytes: 403 Forbidden
+[2026-10-11 23:28:24 +0530] [8300/Thread-29 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:24 +0530] [8300/Thread-29 (process_request_thread)] [INFO] Successful login: 'intruder' (htpasswd)
+[2026-10-11 23:28:24 +0530] [8300/Thread-29 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for 'intruder'
+[2026-10-11 23:28:24 +0530] [8300/Thread-29 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '0' in 0.834 seconds gzip 62 bytes: 403 Forbidden
+[2026-10-11 23:28:24 +0530] [8300/Thread-30 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:24 +0530] [8300/Thread-30 (process_request_thread)] [INFO] Successful login: 'intruder' (htpasswd)
+[2026-10-11 23:28:24 +0530] [8300/Thread-30 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for 'intruder'
+[2026-10-11 23:28:26 +0530] [8300/Thread-30 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '1' in 1.133 seconds gzip 62 bytes: 403 Forbidden
+[2026-10-11 23:28:26 +0530] [8300/Thread-31 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:26 +0530] [8300/Thread-31 (process_request_thread)] [INFO] Successful login: 'intruder' (htpasswd)
+[2026-10-11 23:28:26 +0530] [8300/Thread-31 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for 'intruder'
+[2026-10-11 23:28:27 +0530] [8300/Thread-31 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '1' in 0.871 seconds gzip 62 bytes: 403 Forbidden
+[2026-10-11 23:28:27 +0530] [8300/Thread-32 (process_request_thread)] [INFO] REPORT request for '/test/expiry/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:28:27 +0530] [8300/Thread-32 (process_request_thread)] [INFO] Successful login: 'intruder' (htpasswd)
+[2026-10-11 23:28:27 +0530] [8300/Thread-32 (process_request_thread)] [NOTICE] Access to '/test/expiry/' denied for 'intruder'
+[2026-10-11 23:28:28 +0530] [8300/Thread-32 (process_request_thread)] [INFO] REPORT response status for '/test/expiry/' with depth '1' in 1.299 seconds gzip 62 bytes: 403 Forbidden

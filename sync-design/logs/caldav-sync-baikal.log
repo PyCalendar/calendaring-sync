@@ -503,135 +503,6 @@
 <<<  <d:sync-token>http://sabre.io/ns/sync/11</d:sync-token>
 <<< </d:multistatus>
 
-===== 7 page 0, nresults=2 =====
->>> REPORT /dav.php/calendars/test/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/1</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< Content-Type: application/xml; charset=utf-8
-<<< <?xml version="1.0"?>
-<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/a.ics</d:href>
-<<<   <d:propstat>
-<<<    <d:prop>
-<<<     <d:getetag>&quot;072564c770f6fee93ef2fba3ec79385e&quot;</d:getetag>
-<<<    </d:prop>
-<<<    <d:status>HTTP/1.1 200 OK</d:status>
-<<<   </d:propstat>
-<<<  </d:response>
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/</d:href>
-<<<   <d:status>HTTP/1.1 507 Insufficient Storage</d:status>
-<<<  </d:response>
-<<<  <d:sync-token>http://sabre.io/ns/sync/3</d:sync-token>
-<<< </d:multistatus>
-
-===== 7 page 1, nresults=2 =====
->>> REPORT /dav.php/calendars/test/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/3</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< Content-Type: application/xml; charset=utf-8
-<<< <?xml version="1.0"?>
-<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/d.ics</d:href>
-<<<   <d:propstat>
-<<<    <d:prop>
-<<<     <d:getetag>&quot;80edb1ae9429190e9d4a4c96aa18b610&quot;</d:getetag>
-<<<    </d:prop>
-<<<    <d:status>HTTP/1.1 200 OK</d:status>
-<<<   </d:propstat>
-<<<  </d:response>
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/c.ics</d:href>
-<<<   <d:propstat>
-<<<    <d:prop>
-<<<     <d:getetag>&quot;5718f9d897765a3381e9c3a8210d4017&quot;</d:getetag>
-<<<    </d:prop>
-<<<    <d:status>HTTP/1.1 200 OK</d:status>
-<<<   </d:propstat>
-<<<  </d:response>
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/</d:href>
-<<<   <d:status>HTTP/1.1 507 Insufficient Storage</d:status>
-<<<  </d:response>
-<<<  <d:sync-token>http://sabre.io/ns/sync/5</d:sync-token>
-<<< </d:multistatus>
-
-===== 7 page 2, nresults=2 =====
->>> REPORT /dav.php/calendars/test/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/5</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< Content-Type: application/xml; charset=utf-8
-<<< <?xml version="1.0"?>
-<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/a.ics</d:href>
-<<<   <d:propstat>
-<<<    <d:prop>
-<<<     <d:getetag>&quot;072564c770f6fee93ef2fba3ec79385e&quot;</d:getetag>
-<<<    </d:prop>
-<<<    <d:status>HTTP/1.1 200 OK</d:status>
-<<<   </d:propstat>
-<<<  </d:response>
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/b.ics</d:href>
-<<<   <d:status>HTTP/1.1 404 Not Found</d:status>
-<<<  </d:response>
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/</d:href>
-<<<   <d:status>HTTP/1.1 507 Insufficient Storage</d:status>
-<<<  </d:response>
-<<<  <d:sync-token>http://sabre.io/ns/sync/7</d:sync-token>
-<<< </d:multistatus>
-
-===== 7 page 3, nresults=2 =====
->>> REPORT /dav.php/calendars/test/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/7</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< Content-Type: application/xml; charset=utf-8
-<<< <?xml version="1.0"?>
-<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/e.ics</d:href>
-<<<   <d:status>HTTP/1.1 404 Not Found</d:status>
-<<<  </d:response>
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/c.ics</d:href>
-<<<   <d:status>HTTP/1.1 404 Not Found</d:status>
-<<<  </d:response>
-<<<  <d:sync-token>http://sabre.io/ns/sync/10</d:sync-token>
-<<< </d:multistatus>
-
-===== 7 follow-up from the last page's token =====
->>> REPORT /dav.php/calendars/test/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/10</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< Content-Type: application/xml; charset=utf-8
-<<< <?xml version="1.0"?>
-<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
-<<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/c.ics</d:href>
-<<<   <d:propstat>
-<<<    <d:prop>
-<<<     <d:getetag>&quot;5718f9d897765a3381e9c3a8210d4017&quot;</d:getetag>
-<<<    </d:prop>
-<<<    <d:status>HTTP/1.1 200 OK</d:status>
-<<<   </d:propstat>
-<<<  </d:response>
-<<<  <d:sync-token>http://sabre.io/ns/sync/11</d:sync-token>
-<<< </d:multistatus>
-
 ===== 7 live state =====
 >>> REPORT /dav.php/calendars/test/probe/
 >>> Depth: 0
@@ -668,6 +539,186 @@
 <<<    <d:status>HTTP/1.1 200 OK</d:status>
 <<<   </d:propstat>
 <<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/11</d:sync-token>
+<<< </d:multistatus>
+
+===== 7 from an old token, page 0, nresults=2 =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/1</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/a.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;072564c770f6fee93ef2fba3ec79385e&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/</d:href>
+<<<   <d:status>HTTP/1.1 507 Insufficient Storage</d:status>
+<<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/3</d:sync-token>
+<<< </d:multistatus>
+
+===== 7 from an old token, page 1, nresults=2 =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/3</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/d.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;80edb1ae9429190e9d4a4c96aa18b610&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/c.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;5718f9d897765a3381e9c3a8210d4017&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/</d:href>
+<<<   <d:status>HTTP/1.1 507 Insufficient Storage</d:status>
+<<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/5</d:sync-token>
+<<< </d:multistatus>
+
+===== 7 from an old token, page 2, nresults=2 =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/5</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/a.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;072564c770f6fee93ef2fba3ec79385e&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/b.ics</d:href>
+<<<   <d:status>HTTP/1.1 404 Not Found</d:status>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/</d:href>
+<<<   <d:status>HTTP/1.1 507 Insufficient Storage</d:status>
+<<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/7</d:sync-token>
+<<< </d:multistatus>
+
+===== 7 from an old token, page 3, nresults=2 =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/7</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/e.ics</d:href>
+<<<   <d:status>HTTP/1.1 404 Not Found</d:status>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/c.ics</d:href>
+<<<   <d:status>HTTP/1.1 404 Not Found</d:status>
+<<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/10</d:sync-token>
+<<< </d:multistatus>
+
+===== 7 from an old token, follow-up from the last page's token =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/10</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/c.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;5718f9d897765a3381e9c3a8210d4017&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/11</d:sync-token>
+<<< </d:multistatus>
+
+===== 7 from an empty token, page 0, nresults=2 =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/a.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;072564c770f6fee93ef2fba3ec79385e&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/d.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;80edb1ae9429190e9d4a4c96aa18b610&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/c.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;5718f9d897765a3381e9c3a8210d4017&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/11</d:sync-token>
+<<< </d:multistatus>
+
+===== 7 from an empty token, follow-up from the last page's token =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/11</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
 <<<  <d:sync-token>http://sabre.io/ns/sync/11</d:sync-token>
 <<< </d:multistatus>
 
@@ -759,7 +810,7 @@
 >>> GET /dav.php/calendars/test/probe/f.ics
 <<< 200 OK
 <<< Content-Type: text/calendar; charset=utf-8; component=vevent
-<<< ETag: "17261dfd4a6e0ef9de43369e176733b1"
+<<< ETag: "c3e8230fdcd944f49bef68fb431b5887"
 <<< BEGIN:VCALENDAR
 
 <<< VERSION:2.0
@@ -776,7 +827,7 @@
 
 <<< SUMMARY:no DTSTAMP
 
-<<< DTSTAMP:20261010T062537Z
+<<< DTSTAMP:20261011T182907Z
 
 <<< END:VEVENT
 
@@ -889,7 +940,7 @@
 <<< </d:error>
 
 ===== 9 PUT If-Match on missing =====
->>> PUT /dav.php/calendars/test/probe/e959f00b-3969-4045-9eda-b6b45c800b20.ics
+>>> PUT /dav.php/calendars/test/probe/95199618-03d9-45a1-8a3f-e43a880d41d9.ics
 >>> Content-Type: text/calendar; charset=utf-8
 >>> If-Match: "x"
 >>> BEGIN:VCALENDAR
@@ -990,7 +1041,7 @@
 <<< </d:error>
 
 ===== 10 create with a UUID href =====
->>> PUT /dav.php/calendars/test/probe/4d75d34c-2d71-4062-83a8-007df65d0bd4.ics
+>>> PUT /dav.php/calendars/test/probe/d968f6ee-2fea-4f1b-bdec-de1606abc892.ics
 >>> Content-Type: text/calendar; charset=utf-8
 >>> If-None-Match: *
 >>> BEGIN:VCALENDAR
@@ -1001,7 +1052,7 @@
 
 >>> BEGIN:VEVENT
 
->>> UID:4d75d34c-2d71-4062-83a8-007df65d0bd4.ics
+>>> UID:d968f6ee-2fea-4f1b-bdec-de1606abc892.ics
 
 >>> DTSTAMP:20261010T000000Z
 
@@ -1018,7 +1069,7 @@
 >>> 
 <<< 201 Created
 <<< Content-Type: text/html; charset=UTF-8
-<<< ETag: "2ccc08e6d3a68b84b321fdfbee649e4e"
+<<< ETag: "186950aad19ff61d1192670cecd369fc"
 
 ===== 10 report after the UUID create =====
 >>> REPORT /dav.php/calendars/test/probe/
@@ -1042,7 +1093,7 @@
 <<<   <d:href>/dav.php/calendars/test/probe/f.ics</d:href>
 <<<   <d:propstat>
 <<<    <d:prop>
-<<<     <d:getetag>&quot;17261dfd4a6e0ef9de43369e176733b1&quot;</d:getetag>
+<<<     <d:getetag>&quot;c3e8230fdcd944f49bef68fb431b5887&quot;</d:getetag>
 <<<    </d:prop>
 <<<    <d:status>HTTP/1.1 200 OK</d:status>
 <<<   </d:propstat>
@@ -1057,10 +1108,10 @@
 <<<   </d:propstat>
 <<<  </d:response>
 <<<  <d:response>
-<<<   <d:href>/dav.php/calendars/test/probe/4d75d34c-2d71-4062-83a8-007df65d0bd4.ics</d:href>
+<<<   <d:href>/dav.php/calendars/test/probe/d968f6ee-2fea-4f1b-bdec-de1606abc892.ics</d:href>
 <<<   <d:propstat>
 <<<    <d:prop>
-<<<     <d:getetag>&quot;2ccc08e6d3a68b84b321fdfbee649e4e&quot;</d:getetag>
+<<<     <d:getetag>&quot;186950aad19ff61d1192670cecd369fc&quot;</d:getetag>
 <<<    </d:prop>
 <<<    <d:status>HTTP/1.1 200 OK</d:status>
 <<<   </d:propstat>
@@ -1242,6 +1293,143 @@
 <<<  <d:sync-token>http://sabre.io/ns/sync/21</d:sync-token>
 <<< </d:multistatus>
 
+===== 12 DAV:sync-token property =====
+>>> PROPFIND /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:sync-token/></D:prop></D:propfind>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav"><d:response><d:href>/dav.php/calendars/test/probe/</d:href><d:propstat><d:prop><d:sync-token>http://sabre.io/ns/sync/21</d:sync-token></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>
+
+===== 12 members and ETags =====
+>>> PROPFIND /dav.php/calendars/test/probe/
+>>> Depth: 1
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:getetag/></D:prop></D:propfind>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav"><d:response><d:href>/dav.php/calendars/test/probe/</d:href><d:propstat><d:prop><d:getetag/></d:prop><d:status>HTTP/1.1 404 Not Found</d:status></d:propstat></d:response><d:response><d:href>/dav.php/calendars/test/probe/a.ics</d:href><d:propstat><d:prop><d:getetag>&quot;e9792263dc93b607717f9d0bc76e672f&quot;</d:getetag></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response><d:response><d:href>/dav.php/calendars/test/probe/c.ics</d:href><d:propstat><d:prop><d:getetag>&quot;5718f9d897765a3381e9c3a8210d4017&quot;</d:getetag></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response><d:response><d:href>/dav.php/calendars/test/probe/f.ics</d:href><d:propstat><d:prop><d:getetag>&quot;c3e8230fdcd944f49bef68fb431b5887&quot;</d:getetag></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response><d:response><d:href>/dav.php/calendars/test/probe/g.ics</d:href><d:propstat><d:prop><d:getetag>&quot;9cf593aa9b2fc617ee6eed5be7bfc271&quot;</d:getetag></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response><d:response><d:href>/dav.php/calendars/test/probe/d968f6ee-2fea-4f1b-bdec-de1606abc892.ics</d:href><d:propstat><d:prop><d:getetag>&quot;186950aad19ff61d1192670cecd369fc&quot;</d:getetag></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response><d:response><d:href>/dav.php/calendars/test/probe/keep.ics</d:href><d:propstat><d:prop><d:getetag>&quot;db1c6f19414346b812419a8851cc7d50&quot;</d:getetag></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>
+
+===== 12 live state =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/a.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;e9792263dc93b607717f9d0bc76e672f&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/c.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;5718f9d897765a3381e9c3a8210d4017&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/f.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;c3e8230fdcd944f49bef68fb431b5887&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/g.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;9cf593aa9b2fc617ee6eed5be7bfc271&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/d968f6ee-2fea-4f1b-bdec-de1606abc892.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;186950aad19ff61d1192670cecd369fc&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/keep.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;db1c6f19414346b812419a8851cc7d50&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/21</d:sync-token>
+<<< </d:multistatus>
+
+===== 12 change keep after the property was read =====
+>>> PUT /dav.php/calendars/test/probe/keep.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:keep
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:v3
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 204 No Content
+<<< Content-Type: text/html; charset=UTF-8
+<<< ETag: "e45e34d3434b6699fbe30dd2927334b2"
+
+===== 12 report from the property's token =====
+>>> REPORT /dav.php/calendars/test/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://sabre.io/ns/sync/21</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0"?>
+<<< <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+<<<  <d:response>
+<<<   <d:href>/dav.php/calendars/test/probe/keep.ics</d:href>
+<<<   <d:propstat>
+<<<    <d:prop>
+<<<     <d:getetag>&quot;e45e34d3434b6699fbe30dd2927334b2&quot;</d:getetag>
+<<<    </d:prop>
+<<<    <d:status>HTTP/1.1 200 OK</d:status>
+<<<   </d:propstat>
+<<<  </d:response>
+<<<  <d:sync-token>http://sabre.io/ns/sync/22</d:sync-token>
+<<< </d:multistatus>
+
 RESULT [Baikal] 1 sync-collection in supported-report-set: True; ['calendar-multiget', 'calendar-query', 'expand-property', 'free-busy-query', 'principal-match', 'principal-property-search', 'principal-search-property-set', 'sync-collection']
 RESULT [Baikal] 2 initial listing: [('a.ics', '200'), ('b.ics', '200'), ('c.ics', '200')]
 RESULT [Baikal] 2 incremental: [('a.ics', '200'), ('d.ics', '200'), ('b.ics', '404')]
@@ -1252,7 +1440,8 @@ RESULT [Baikal] 5 token not a URI: 403, valid-sync-token: True, members []
 RESULT [Baikal] 5 token real token with two characters replaced: 403, valid-sync-token: True, members []
 RESULT [Baikal] 5 token real token with its last character changed: 207, valid-sync-token: False, members [('a.ics', '200'), ('d.ics', '200'), ('c.ics', '200'), ('b.ics', '404'), ('e.ics', '404')]
 RESULT [Baikal] 6 empty token after deletions: removed members listed: []; collection listed: False
-RESULT [Baikal] 7 DAV:limit: 507 sent: True; pages 4; paged + follow-up equals live: True; missing []
+RESULT [Baikal] 7 DAV:limit from an old token: 507 sent: True; pages 4; paged + follow-up equals live: True; missing []
+RESULT [Baikal] 7 DAV:limit from an empty token: 507 sent: False; pages 1; paged + follow-up equals live: True; missing []
 RESULT [Baikal] 8 identical PUT: ETag unchanged: True
 RESULT [Baikal] 8 PUT stored differently: stored equals sent: False; ETag in the PUT answer: None
 RESULT [Baikal] 9 PUT If-Match wrong: 412
@@ -1268,3 +1457,6 @@ RESULT [Baikal] PASS 11 multiget is 207: 207
 RESULT [Baikal] PASS 11 multiget returns the newer ETag with the newer content: report-time "d2ccd0a7a2e20b543244ce7824982743", fetched "db1c6f19414346b812419a8851cc7d50", live "db1c6f19414346b812419a8851cc7d50"
 RESULT [Baikal] 11 multiget for a member deleted after the report: omitted from the response
 RESULT [Baikal] PASS 11 the removal arrives in the next report: ok
+RESULT [Baikal] PASS 12 DAV:sync-token property is defined: http://sabre.io/ns/sync/21
+RESULT [Baikal] PASS 12 PROPFIND lists every member: missing []
+RESULT [Baikal] PASS 12 a change after the property arrives in the next report: ok

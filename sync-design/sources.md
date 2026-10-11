@@ -21,9 +21,10 @@ The server and library code behind behaviors the logs show, linked at the versio
 
 - `DAV:limit` cuts the list with `itertools.islice` and the response still carries the newest token: [`xandikos/sync.py` lines 108 to 144](https://github.com/jelmer/xandikos/blob/v0.4.8/xandikos/sync.py#L108-L144).
 
-## python-caldav 3.4.0 (unchanged on master at fa5ead6)
+## python-caldav master at 1a75f45
 
-- A 403 becomes `AuthorizationError` with only the URL and reason: [`caldav/davclient.py` lines 864 to 866](https://github.com/python-caldav/caldav/blob/v3.4.0/caldav/davclient.py#L864-L866) and [`caldav/base_client.py` lines 342 to 357](https://github.com/python-caldav/caldav/blob/v3.4.0/caldav/base_client.py#L342-L357).
-- A multistatus entry with any status other than 200, 201, 207 or 404 raises, so a 507 page fails: [`caldav/response.py` lines 92 to 100](https://github.com/python-caldav/caldav/blob/v3.4.0/caldav/response.py#L92-L100).
-- `save()` increments `SEQUENCE` by default: [`caldav/calendarobjectresource.py` lines 1523 to 1527](https://github.com/python-caldav/caldav/blob/v3.4.0/caldav/calendarobjectresource.py#L1523-L1527).
-- `delete()` sends no precondition: [`caldav/davobject.py` line 647](https://github.com/python-caldav/caldav/blob/v3.4.0/caldav/davobject.py#L647).
+- `get_objects_by_sync_token()` follows truncated pages up to `sync_max_pages`: [`caldav/collection.py` lines 2460 to 2492](https://github.com/python-caldav/caldav/blob/1a75f457aab85e00a8dbafe69ac47aedc9c58e6b/caldav/collection.py#L2460-L2492).
+- With the fallback on, a failed report becomes a full listing ([`caldav/collection.py` lines 2493 to 2499](https://github.com/python-caldav/caldav/blob/1a75f457aab85e00a8dbafe69ac47aedc9c58e6b/caldav/collection.py#L2493-L2499)) under a `fake-` token ([line 2407](https://github.com/python-caldav/caldav/blob/1a75f457aab85e00a8dbafe69ac47aedc9c58e6b/caldav/collection.py#L2407)).
+- `AuthorizationError` keeps the body and the `DAV:error` preconditions; other errors don't: [`caldav/lib/error.py` lines 151 to 174](https://github.com/python-caldav/caldav/blob/1a75f457aab85e00a8dbafe69ac47aedc9c58e6b/caldav/lib/error.py#L151-L174).
+- `save()` still increments `SEQUENCE` by default: [`caldav/calendarobjectresource.py` line 1379](https://github.com/python-caldav/caldav/blob/1a75f457aab85e00a8dbafe69ac47aedc9c58e6b/caldav/calendarobjectresource.py#L1379).
+- `delete()` takes `if_match`: [`caldav/calendarobjectresource.py` line 1187](https://github.com/python-caldav/caldav/blob/1a75f457aab85e00a8dbafe69ac47aedc9c58e6b/caldav/calendarobjectresource.py#L1187).

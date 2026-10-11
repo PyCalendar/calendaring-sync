@@ -1,38 +1,38 @@
 
 ===== current state =====
 >>> CalendarEvent/get {"ids": []}
-<<< CalendarEvent/get {"accountId": "b", "state": "sfy", "list": [], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "sgq", "list": [], "notFound": []}
 
 ===== calendars =====
 >>> Calendar/get {"ids": null}
-<<< Calendar/get {"accountId": "b", "state": "se2", "list": [{"id": "b", "name": "Stalwart Calendar (testuser@example.org)", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": true, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "c", "name": "client", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "d", "name": "probe", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "e", "name": "expiry", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}], "notFound": []}
+<<< Calendar/get {"accountId": "b", "state": "sfu", "list": [{"id": "b", "name": "Stalwart Calendar (testuser@example.org)", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": true, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "c", "name": "client", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "d", "name": "probe", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "e", "name": "expiry", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}], "notFound": []}
 
 ===== create round 0 =====
 >>> CalendarEvent/set {"create": {"e0": {"@type": "Event", "uid": "expiry-0-0", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e1": {"@type": "Event", "uid": "expiry-0-1", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e2": {"@type": "Event", "uid": "expiry-0-2", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sfy", "newState": "sf2", "created": {"e0": {"id": "bd"}, "e1": {"id": "be"}, "e2": {"id": "bf"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sgq", "newState": "sgu", "created": {"e2": {"id": "bh"}, "e0": {"id": "bf"}, "e1": {"id": "bg"}}}
 
 ===== destroy round 0 =====
->>> CalendarEvent/set {"destroy": ["bd", "be", "bf"]}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sf2", "newState": "sga", "destroyed": ["bd", "be", "bf"]}
+>>> CalendarEvent/set {"destroy": ["bh", "bf", "bg"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sgu", "newState": "sgy", "destroyed": ["bh", "bf", "bg"]}
 
 ===== create round 1 =====
 >>> CalendarEvent/set {"create": {"e0": {"@type": "Event", "uid": "expiry-1-0", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e1": {"@type": "Event", "uid": "expiry-1-1", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e2": {"@type": "Event", "uid": "expiry-1-2", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sga", "newState": "sge", "created": {"e1": {"id": "bh"}, "e2": {"id": "bi"}, "e0": {"id": "bg"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sgy", "newState": "sg2", "created": {"e1": {"id": "bj"}, "e2": {"id": "bk"}, "e0": {"id": "bi"}}}
 
 ===== destroy round 1 =====
->>> CalendarEvent/set {"destroy": ["bh", "bi", "bg"]}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sge", "newState": "sgi", "destroyed": ["bh", "bi", "bg"]}
+>>> CalendarEvent/set {"destroy": ["bj", "bk", "bi"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sg2", "newState": "sha", "destroyed": ["bj", "bk", "bi"]}
 
 ===== create round 2 =====
 >>> CalendarEvent/set {"create": {"e0": {"@type": "Event", "uid": "expiry-2-0", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e1": {"@type": "Event", "uid": "expiry-2-1", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e2": {"@type": "Event", "uid": "expiry-2-2", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sgi", "newState": "sgm", "created": {"e2": {"id": "bl"}, "e0": {"id": "bj"}, "e1": {"id": "bk"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sha", "newState": "she", "created": {"e0": {"id": "bl"}, "e1": {"id": "bm"}, "e2": {"id": "bn"}}}
 
 ===== destroy round 2 =====
->>> CalendarEvent/set {"destroy": ["bl", "bj", "bk"]}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sgm", "newState": "sgq", "destroyed": ["bl", "bj", "bk"]}
+>>> CalendarEvent/set {"destroy": ["bl", "bm", "bn"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "she", "newState": "shi", "destroyed": ["bl", "bm", "bn"]}
 
 ===== changes from the saved state, before expiry =====
->>> CalendarEvent/changes {"sinceState": "sfy"}
-<<< CalendarEvent/changes {"accountId": "b", "oldState": "sfy", "newState": "sgq", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": []}
+>>> CalendarEvent/changes {"sinceState": "sgq"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "sgq", "newState": "shi", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": []}
 
 RESULT [Stalwart] before expiry, /changes from the saved state: CalendarEvent/changes answered

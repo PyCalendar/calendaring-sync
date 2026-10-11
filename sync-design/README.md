@@ -11,7 +11,7 @@ Evidence for these pages on `main`:
 - [`docs/explanation/adapters.rst`](https://github.com/pycalendar/calendaring-sync/blob/main/docs/explanation/adapters.rst)
 - [`docs/reference/server-compatibility.rst`](https://github.com/pycalendar/calendaring-sync/blob/main/docs/reference/server-compatibility.rst)
 
-Tested on 2026-10-10 with Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 (and `latest` for JMAP capabilities), Baïkal 0.10.1, python-caldav 3.4.0, and calendaring-jmap `main` at 004c6b4.
+Tested on 2026-10-11 with Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 (and `latest` for JMAP capabilities), Baïkal 0.10.1, python-caldav `master` at 1a75f45, and calendaring-jmap `main` at 004c6b4.
 
 ## Logs
 
@@ -19,10 +19,10 @@ Tested on 2026-10-10 with Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart
 |---|---|
 | `caldav-sync-<server>.log` | The CalDAV rows of the server compatibility page |
 | `jmap-sync-<server>.log` | The JMAP rows of the server compatibility page |
-| `caldav-client-<server>.log` | What python-caldav does with the same responses |
+| `caldav-client-<server>.log` | What python-caldav does with the same responses and with conditional writes |
 | `jmap-client-<server>.log` | What calendaring-jmap does with the same responses |
 | `expiry-*.log` | How servers answer an expired token or state |
-| `retry-radicale.log` | The retry with an empty token after a 403 |
+| `retry-radicale.log` | An expired token and a real refusal, told apart |
 | `unsupported-sync-collection.log` | python-caldav on a server without `sync-collection` |
 | `jmap-capabilities-stalwart-latest.log` | JMAP Tasks on the latest Stalwart image |
 | `model.log` | The design's rules, checked on a SQLite model |
@@ -32,7 +32,7 @@ The probes send the calendar data in `fixtures/`. Each log has the requests and 
 
 ## Reproduce
 
-Requirements: Python 3.11+ with `requests`, `caldav==3.4.0`, `radicale==3.8.3`, `xandikos==0.4.8` and calendaring-jmap from `main`; Docker; Bash and curl; checkouts of [calendaring-jmap](https://github.com/pycalendar/calendaring-jmap) (for its Cyrus and Stalwart fixtures) and calendaring-sync (for the citation check).
+Requirements: Python 3.11+ with `requests`, python-caldav and calendaring-jmap from their default branches, `radicale==3.8.3` and `xandikos==0.4.8`; Docker; Bash and curl; checkouts of [calendaring-jmap](https://github.com/pycalendar/calendaring-jmap) (for its Cyrus and Stalwart fixtures) and calendaring-sync (for the citation check).
 
 ```sh
 PYTHON=/path/to/python CALENDARING_JMAP=/path/to/calendaring-jmap CALENDARING_SYNC=/path/to/calendaring-sync ./run.sh
