@@ -211,4 +211,4 @@ If a calendar or account disappears from the server, the adapter raises an error
 Why storage is synchronous
 ==========================
 
-Storage is a typed interface, ``StateStore``, with an in-memory implementation for tests and a SQLite one for real use. One store holds many scopes. A key-value interface couldn't apply a change set and advance a token in one transaction, and an asynchronous store would push synchronous callers through an event loop. Adapters come in synchronous and asynchronous variants sharing one base class; the asynchronous ones call the core directly, since each store call is one short transaction.
+Storage is a typed interface, ``StateStore``, with an in-memory implementation for tests and a SQLite one for real use. One store holds many scopes. A key-value interface couldn't apply a change set and advance a token in one transaction, and an asynchronous store would push synchronous callers through an event loop. Adapters come in synchronous and asynchronous variants that share their logic; the asynchronous ones call the core directly, since each store call is one short transaction.

@@ -8,7 +8,7 @@ Server compatibility
 .. meta::
    :description: How each tested server behaves where sync depends on it, and what calendaring-sync's adapters do about each difference.
 
-Each table lists the servers an adapter was checked against on 2026-10-10, with the version tested in its column heading. Each row records what that version did and what the adapter does about it; a later release may behave differently. The probes and logs behind every row are on the `evidence branch <https://github.com/pycalendar/calendaring-sync/tree/evidence/sync-design>`_, with the steps to reproduce them. :doc:`../explanation/adapters` explains each rule.
+Each table lists the servers an adapter was checked against on 2026-10-11, with the version tested in its column heading. Each row records what that version did and what the adapter does about it; a later release may behave differently. The probes and logs behind every row are on the `evidence branch <https://github.com/pycalendar/calendaring-sync/tree/evidence/sync-design>`_, with the steps to reproduce them. :doc:`../explanation/adapters` explains each rule.
 
 CalDAV
 ======
@@ -31,13 +31,20 @@ CalDAV
      - Yes
      - Yes
      - Checked before the first sync
+   * - ``DAV:sync-token`` property (:rfc:`6578#section-4`)
+     - Defined
+     - Defined
+     - Defined
+     - Defined
+     - Defined
+     - Read before every full listing
    * - Report with an empty token, after deletions (:rfc:`6578#section-3.4`: no removed members)
      - Lists removed members as 404
      - As specified
      - As specified
      - Also lists the collection itself
      - As specified
-     - Applies removals in a listing; skips the collection's href
+     - Lists with ``PROPFIND``, never an empty token
    * - Member created and deleted between two reports (:rfc:`6578#section-3.5.2`: reported as removed)
      - Reported as removed
      - Not reported
@@ -51,14 +58,14 @@ CalDAV
      - Once, as changed
      - Twice: removed, then changed
      - Once, as changed
-     - An href reported twice is fetched, and the fetch decides
+     - The later entry counts, and the fetch decides
    * - Token the server never issued (:rfc:`6578#section-3.2`: ``valid-sync-token``)
      - 403 with ``valid-sync-token``
      - 412 with ``valid-sync-token`` for a well-formed token; 500 otherwise
      - 403 with ``valid-sync-token``
      - 207 with a full listing and no error
      - 403 with ``valid-sync-token``
-     - Recognizes the element, not the status; retries with an empty token; treats a listing that names the collection as a fresh start
+     - Resets the scope on any failed report for an issued token, unless access was refused; schedule full listings on Stalwart
    * - Token whose history the server has discarded
      - 403 with ``valid-sync-token``
      - Not tested
@@ -70,9 +77,9 @@ CalDAV
      - Ignores the limit
      - Returns the first results and its newest token, with no 507; the rest are lost
      - 507 with a checkpoint
-     - 507 with a checkpoint
+     - 507 with a checkpoint; from an empty token, the checkpoint skips the remaining members
      - 507 with a checkpoint; ignores the limit on an empty token
-     - Never sends ``DAV:limit``; handles a 507 the server applies itself
+     - Never sends ``DAV:limit``; follows a 507 the server applies itself
    * - PUT the server stores differently (:rfc:`4791#section-5.3.4`: no strong ETag in the answer)
      - Adds ``DTSTAMP``, reorders properties, returns an ETag
      - Reorders properties, returns an ETag
