@@ -3,11 +3,11 @@
 >>> REPORT /dav/cal/testuser%40example.org/expiry/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:29</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:2f</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/default/OKXbYdiio1</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/default/b1gp1DhaRR</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/default/LYhxvrKX6P</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:sync-token>urn:stalwart:davsync:34</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/default/fTn8DyATdY</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/default/yIBuiTYUE1</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/default/pCmYo6VrXj</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:sync-token>urn:stalwart:davsync:3a</D:sync-token></D:multistatus>
 
-RESULT [Stalwart] after expiry, the saved token: 207, valid-sync-token: False, members [('OKXbYdiio1', '404'), ('b1gp1DhaRR', '404'), ('LYhxvrKX6P', '404')]
+RESULT [Stalwart] after expiry, the saved token: 207, valid-sync-token: False, members [('fTn8DyATdY', '404'), ('yIBuiTYUE1', '404'), ('pCmYo6VrXj', '404')]
 RESULT [Stalwart] after expiry, changes still reported: known.ics removal: False; edited.ics: False
 RESULT [Stalwart] python-caldav with the saved token: no exception

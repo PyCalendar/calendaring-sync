@@ -1,6 +1,6 @@
 
 ===== changes from the saved state, after expiry =====
->>> CalendarEvent/changes {"sinceState": "124"}
+>>> CalendarEvent/changes {"sinceState": "137"}
 <<< error {"type": "cannotCalculateChanges", "description": "outdated sinceState"}
 
 RESULT [Cyrus] after expiry, /changes from the saved state: error cannotCalculateChanges outdated sinceState

@@ -1,6 +1,6 @@
 
 ===== tick: create =====
->>> PUT /test/expiry/tick-a10e71b2-cc9e-468b-bf48-e17cd955cda1.ics
+>>> PUT /test/expiry/tick-c5d7b8b5-215a-4e22-a7ab-501b773741f7.ics
 >>> Content-Type: text/calendar; charset=utf-8
 >>> BEGIN:VCALENDAR
 
@@ -10,7 +10,7 @@
 
 >>> BEGIN:VEVENT
 
->>> UID:tick-a10e71b2-cc9e-468b-bf48-e17cd955cda1.ics
+>>> UID:tick-c5d7b8b5-215a-4e22-a7ab-501b773741f7.ics
 
 >>> DTSTAMP:20261010T000000Z
 
@@ -26,7 +26,7 @@
 
 >>> 
 <<< 201 Created
-<<< ETag: "90d1619e08a0800ed9e92c64dae7d4a6341fcb0f1d04a52a637d898117ec8f6c"
+<<< ETag: "8e7966fb4bd30e3ad2d9a154a4c885f17a23bbc6d7bb27c60b72d5dac5b57d45"
 
 ===== tick: sync, so the server issues a new token =====
 >>> REPORT /test/expiry/
@@ -36,6 +36,6 @@
 <<< 207 Multi-Status
 <<< Content-Type: text/xml; charset=utf-8
 <<< <?xml version='1.0' encoding='utf-8'?>
-<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/9a41f9f4b2c41589af0b3cde7bddff1dd80e1242e5efba5859d5f64c2cd0bb9d</sync-token><response><href>/test/expiry/edited.ics</href><propstat><prop><getetag>"b1c50ab0d0459c533f27c1a2e25694d21a162e8f83244be29cefb154cf787258"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/later0.ics</href><propstat><prop><getetag>"19a5ec532f0644483c00fa01e79988dde29de708095c8fba31f36ef466f9bb7e"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/later1.ics</href><propstat><prop><getetag>"4393d2666529d8abde4c2d8e6c142b634c88290fa16894cd3453b98081f925ad"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/later2.ics</href><propstat><prop><getetag>"6532eea3b6c54dd89bd08a068ee1792481a6a45d9a45595677d2229b2cebd1e0"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/tick-83d524b2-6db5-4a8f-be6a-8495eb62e760.ics</href><propstat><prop><getetag>"29857d98be0c52c85573be2e8023a8e78a8321a294126e65a3f00f7d569e2012"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/tick-a10e71b2-cc9e-468b-bf48-e17cd955cda1.ics</href><propstat><prop><getetag>"90d1619e08a0800ed9e92c64dae7d4a6341fcb0f1d04a52a637d898117ec8f6c"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
+<<< <multistatus xmlns="DAV:"><sync-token>http://radicale.org/ns/sync/4e1b7b6f4e22505d217cd68008a8848d4b01166c325937057dab4ea9637b6c77</sync-token><response><href>/test/expiry/edited.ics</href><propstat><prop><getetag>"b1c50ab0d0459c533f27c1a2e25694d21a162e8f83244be29cefb154cf787258"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/later0.ics</href><propstat><prop><getetag>"19a5ec532f0644483c00fa01e79988dde29de708095c8fba31f36ef466f9bb7e"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/later1.ics</href><propstat><prop><getetag>"4393d2666529d8abde4c2d8e6c142b634c88290fa16894cd3453b98081f925ad"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/later2.ics</href><propstat><prop><getetag>"6532eea3b6c54dd89bd08a068ee1792481a6a45d9a45595677d2229b2cebd1e0"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/tick-06ff5728-a391-44ed-8a1f-6555a9cbee9c.ics</href><propstat><prop><getetag>"41f1611d6a6abdb53860dd872b74926cefb782999c027ff5e58319172fe273ac"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/test/expiry/tick-c5d7b8b5-215a-4e22-a7ab-501b773741f7.ics</href><propstat><prop><getetag>"8e7966fb4bd30e3ad2d9a154a4c885f17a23bbc6d7bb27c60b72d5dac5b57d45"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>
 
 RESULT [Radicale] tick: create 201, new token issued: True

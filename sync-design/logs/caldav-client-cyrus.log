@@ -1,11 +1,16 @@
 
-RESULT [Cyrus] python-caldav version: 3.4.0
-RESULT [Cyrus] unknown token, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://localhost:8802/dav/calendars/user/user1/client/', 'reason': 'Forbidden'}
-RESULT [Cyrus] unknown token, DAVClient.report(): raised AuthorizationError {'url': 'http://localhost:8802/dav/calendars/user/user1/client/', 'reason': 'Forbidden'}
-RESULT [Cyrus] unknown token, default fallback: returned ('fake-d41d8cd98f00b204e9800998ecf8427e', 0)
+RESULT [Cyrus] python-caldav version: 3.4.1.dev28+g1a75f457a
+RESULT [Cyrus] unknown token, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://localhost:8802/dav/calendars/user/user1/client/', 'reason': 'Forbidden', 'preconditions': "['{DAV:}valid-sync-token', '{DAV:}responsedescription']", 'body': 'b\'<?xml version="1.0" encoding="utf-8"?>\\n<D:error xmlns:D="DAV:">\\n  <D:valid-sync-token/>\\n  <D:responsedescription>Invalid sync-token</D:'}
+RESULT [Cyrus] unknown 40-hex-digit token, get_objects_by_sync_token(disable_fallback=True): raised AuthorizationError {'url': 'http://localhost:8802/dav/calendars/user/user1/client/', 'reason': 'Forbidden', 'preconditions': "['{DAV:}valid-sync-token', '{DAV:}responsedescription']", 'body': 'b\'<?xml version="1.0" encoding="utf-8"?>\\n<D:error xmlns:D="DAV:">\\n  <D:valid-sync-token/>\\n  <D:responsedescription>Invalid sync-token</D:'}
+RESULT [Cyrus] unknown token, DAVClient.report(): raised AuthorizationError {'url': 'http://localhost:8802/dav/calendars/user/user1/client/', 'reason': 'Forbidden', 'preconditions': "['{DAV:}valid-sync-token', '{DAV:}responsedescription']", 'body': 'b\'<?xml version="1.0" encoding="utf-8"?>\\n<D:error xmlns:D="DAV:">\\n  <D:valid-sync-token/>\\n  <D:responsedescription>Invalid sync-token</D:'}
+RESULT [Cyrus] unknown token, default fallback: returned ('fake-d41d8cd98f00b204e9800998ecf8427e', 0, False)
 RESULT [Cyrus] a removed member as returned: (href, getetag, data is None): [('client-removed.ics', None, True)]
-RESULT [Cyrus] DAV:limit 1 through DAVClient.report(): status 207, 507 present: True, token data:,1791613476-81-85
-RESULT [Cyrus] real 507 page, get_objects_by_sync_token(disable_fallback=True): raised ResponseError {'url': 'HTTP/1.1 507 Insufficient Storage'}
-RESULT [Cyrus] real 507 page, default fallback: returned ('fake-6ee587fa20a26ed7292c252ea5578c01', 3)
-RESULT [Cyrus] real 507 page, DAVResponse.parse_sync_collection(): raised ResponseError {'url': 'HTTP/1.1 507 Insufficient Storage'}
+RESULT [Cyrus] full listing through get_objects_by_sync_token(): the collection itself among the members: False
+RESULT [Cyrus] DAV:limit 1 through DAVClient.report(): status 207, 507 present: True, token data:,1791743271-83-87
+RESULT [Cyrus] DAV:limit 1, get_objects_by_sync_token(disable_fallback=True): (token, objects, truncated): returned ('data:,1791743271-87', 3, False)
+RESULT [Cyrus] same calendar unlimited: (token, objects, truncated): returned ('data:,1791743271-87', 3, False)
 RESULT [Cyrus] calendar-multiget through DAVClient.report(depth=None), no Depth header: status 207, entries 2 for 2 hrefs
+RESULT [Cyrus] SEQUENCE stored: after create, after save(increase_seqno=False), after save(): ('1', '1', '2')
+RESULT [Cyrus] save(increase_seqno=False) of an object someone else saved since: raised ETagMismatchError {'url': '412 Precondition Failed\n\n'}
+RESULT [Cyrus] delete(if_match=<ETag before someone else's save>): raised ETagMismatchError {'url': '412 Precondition Failed\n\n'}
+RESULT [Cyrus] delete(if_match=<last ETag>) on an object already deleted: raised NotFoundError {'url': "404 Not Found\n\n<!DOCTYPE html>\n<html style='color-scheme:dark light'>\n  <head>\n    <title>404 Not Found</title>\n  </head>\n  <body>\n    <h1>N"}

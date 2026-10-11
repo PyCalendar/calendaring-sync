@@ -99,9 +99,9 @@ def sync_objects(calendar, **kwargs) -> "SynchronizableCalendarObjectCollection"
     )
 
 
-def save_event(calendar, data) -> "Event":
-    """Calendar.save_event() on a synchronous client."""
-    return cast("Event", calendar.save_event(data))
+def add_event(calendar, data) -> "Event":
+    """Calendar.add_event() on a synchronous client."""
+    return cast("Event", calendar.add_event(data))
 
 
 def tree(response) -> "_Element":

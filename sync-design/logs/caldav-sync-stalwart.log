@@ -7,7 +7,7 @@
 >>> MKCALENDAR /dav/cal/testuser%40example.org/probe/
 <<< 201 Created
 <<< content-type: application/xml; charset=utf-8
-<<< etag: "1205306703"
+<<< etag: "1710456662"
 <<< <?xml version="1.0" encoding="UTF-8"?><D:mkcol-response xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"></D:mkcol-response>
 
 ===== 1 supported-report-set =====
@@ -26,7 +26,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1205306703&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:3</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:3</D:sync-token></D:multistatus>
 
 ===== 2 create a =====
 >>> PUT /dav/cal/testuser%40example.org/probe/a.ics
@@ -55,7 +55,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "2224079625"
+<<< etag: "151516207"
 
 ===== 2 create b =====
 >>> PUT /dav/cal/testuser%40example.org/probe/b.ics
@@ -84,7 +84,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "787141621"
+<<< etag: "1945354425"
 
 ===== 2 create c =====
 >>> PUT /dav/cal/testuser%40example.org/probe/c.ics
@@ -113,7 +113,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "4185822013"
+<<< etag: "3179841345"
 
 ===== 2b empty token, three members =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -122,7 +122,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2224079625&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/b.ics</D:href><D:propstat><D:prop><D:getetag>&quot;787141621&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1205306703&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;4185822013&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:6</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;151516207&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3179841345&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/b.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1945354425&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:6</D:sync-token></D:multistatus>
 
 ===== 2 create d =====
 >>> PUT /dav/cal/testuser%40example.org/probe/d.ics
@@ -151,7 +151,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "629408040"
+<<< etag: "42497162"
 
 ===== 2 modify a =====
 >>> PUT /dav/cal/testuser%40example.org/probe/a.ics
@@ -180,7 +180,7 @@
 
 >>> 
 <<< 204 No Content
-<<< etag: "566342053"
+<<< etag: "1984872532"
 
 ===== 2 delete b =====
 >>> DELETE /dav/cal/testuser%40example.org/probe/b.ics
@@ -193,7 +193,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:6</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/b.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;566342053&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;629408040&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:9</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/b.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42497162&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:9</D:sync-token></D:multistatus>
 
 ===== 3 create e =====
 >>> PUT /dav/cal/testuser%40example.org/probe/e.ics
@@ -222,7 +222,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "1348349123"
+<<< etag: "2804099475"
 
 ===== 3 delete e =====
 >>> DELETE /dav/cal/testuser%40example.org/probe/e.ics
@@ -268,7 +268,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "3771611490"
+<<< etag: "3450639812"
 
 ===== 4 report after c was deleted and re-created =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -277,7 +277,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:b</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3771611490&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
 
 ===== 5 token: well-formed URI =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -286,7 +286,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>http://example.invalid/never-issued</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1205306703&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;629408040&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3771611490&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;566342053&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42497162&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
 
 ===== 5 token: not a URI =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -295,7 +295,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>not a uri</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1205306703&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;629408040&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3771611490&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;566342053&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42497162&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
 
 ===== 5 token: real token with two characters replaced =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -304,7 +304,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsynczz</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1205306703&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;629408040&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3771611490&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;566342053&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42497162&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
 
 ===== 5 token: real token with its last character changed =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -313,7 +313,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:1</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1205306703&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;629408040&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3771611490&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;566342053&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42497162&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
 
 ===== 6 empty token after deletions =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -322,34 +322,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1205306703&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;629408040&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3771611490&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;566342053&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
-
-===== 7 page 0, nresults=2 =====
->>> REPORT /dav/cal/testuser%40example.org/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:3</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;629408040&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;566342053&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:status>HTTP/1.1 507 Insufficient Storage</D:status><D:error><D:number-of-matches-within-limits/></D:error><D:responsedescription>The number of matches exceeds the limit of 2</D:responsedescription></D:response><D:sync-token>urn:stalwart:davsync:3:1</D:sync-token></D:multistatus>
-
-===== 7 page 1, nresults=2 =====
->>> REPORT /dav/cal/testuser%40example.org/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:3:1</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3771611490&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
-
-===== 7 follow-up from the last page's token =====
->>> REPORT /dav/cal/testuser%40example.org/probe/
->>> Depth: 0
->>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:d</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
-<<< 207 Multi-Status
-<<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42497162&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
 
 ===== 7 live state =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -358,13 +331,67 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1205306703&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;629408040&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3771611490&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;566342053&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42497162&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+
+===== 7 from an old token, page 0, nresults=2 =====
+>>> REPORT /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:3</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42497162&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:status>HTTP/1.1 507 Insufficient Storage</D:status><D:error><D:number-of-matches-within-limits/></D:error><D:responsedescription>The number of matches exceeds the limit of 2</D:responsedescription></D:response><D:sync-token>urn:stalwart:davsync:3:1</D:sync-token></D:multistatus>
+
+===== 7 from an old token, page 1, nresults=2 =====
+>>> REPORT /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:3:1</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+
+===== 7 from an old token, follow-up from the last page's token =====
+>>> REPORT /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:d</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+
+===== 7 from an empty token, page 0, nresults=2 =====
+>>> REPORT /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1984872532&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:status>HTTP/1.1 507 Insufficient Storage</D:status><D:error><D:number-of-matches-within-limits/></D:error><D:responsedescription>The number of matches exceeds the limit of 2</D:responsedescription></D:response><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+
+===== 7 from an empty token, page 1, nresults=2 =====
+>>> REPORT /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:d</D:sync-token><D:sync-level>1</D:sync-level><D:limit><D:nresults>2</D:nresults></D:limit><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
+
+===== 7 from an empty token, follow-up from the last page's token =====
+>>> REPORT /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:d</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:sync-token>urn:stalwart:davsync:d</D:sync-token></D:multistatus>
 
 ===== 8 GET a =====
 >>> GET /dav/cal/testuser%40example.org/probe/a.ics
 <<< 200 OK
 <<< content-type: text/calendar; charset=utf-8
-<<< etag: "566342053"
+<<< etag: "1984872532"
 <<< BEGIN:VCALENDAR
 
 <<< VERSION:2.0
@@ -440,13 +467,13 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "1844133045"
+<<< etag: "3588107636"
 
 ===== 8 GET f =====
 >>> GET /dav/cal/testuser%40example.org/probe/f.ics
 <<< 200 OK
 <<< content-type: text/calendar; charset=utf-8
-<<< etag: "1844133045"
+<<< etag: "3588107636"
 <<< BEGIN:VCALENDAR
 
 <<< VERSION:2.0
@@ -499,7 +526,7 @@
 ===== 9 PUT If-Match right =====
 >>> PUT /dav/cal/testuser%40example.org/probe/a.ics
 >>> Content-Type: text/calendar; charset=utf-8
->>> If-Match: "566342053"
+>>> If-Match: "1984872532"
 >>> BEGIN:VCALENDAR
 
 >>> VERSION:2.0
@@ -524,7 +551,7 @@
 
 >>> 
 <<< 204 No Content
-<<< etag: "2548227080"
+<<< etag: "4211757191"
 
 ===== 9 PUT If-None-Match * on existing =====
 >>> PUT /dav/cal/testuser%40example.org/probe/a.ics
@@ -556,7 +583,7 @@
 <<< 412 Precondition Failed
 
 ===== 9 PUT If-Match on missing =====
->>> PUT /dav/cal/testuser%40example.org/probe/6a8de1ac-88cc-4b2b-8ba3-dd007d274d8f.ics
+>>> PUT /dav/cal/testuser%40example.org/probe/cff90ca6-8fc1-4a36-acf0-97b768050a1d.ics
 >>> Content-Type: text/calendar; charset=utf-8
 >>> If-Match: "x"
 >>> BEGIN:VCALENDAR
@@ -622,16 +649,16 @@
 
 ===== 9 DELETE If-Match right =====
 >>> DELETE /dav/cal/testuser%40example.org/probe/d.ics
->>> If-Match: "629408040"
+>>> If-Match: "42497162"
 <<< 204 No Content
 
 ===== 9 DELETE If-Match on gone =====
 >>> DELETE /dav/cal/testuser%40example.org/probe/d.ics
->>> If-Match: "629408040"
+>>> If-Match: "42497162"
 <<< 404 Not Found
 
 ===== 10 create with a UUID href =====
->>> PUT /dav/cal/testuser%40example.org/probe/04993a74-533c-44f1-8bdd-227e99c8d023.ics
+>>> PUT /dav/cal/testuser%40example.org/probe/3854bb59-d7f7-4e6b-9c03-e3f113b20775.ics
 >>> Content-Type: text/calendar; charset=utf-8
 >>> If-None-Match: *
 >>> BEGIN:VCALENDAR
@@ -642,7 +669,7 @@
 
 >>> BEGIN:VEVENT
 
->>> UID:04993a74-533c-44f1-8bdd-227e99c8d023.ics
+>>> UID:3854bb59-d7f7-4e6b-9c03-e3f113b20775.ics
 
 >>> DTSTAMP:20261010T000000Z
 
@@ -658,7 +685,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "1060914906"
+<<< etag: "1643492762"
 
 ===== 10 report after the UUID create =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -667,7 +694,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:d</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/04993a74-533c-44f1-8bdd-227e99c8d023.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1060914906&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/f.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1844133045&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2548227080&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:11</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/d.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/f.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3588107636&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;4211757191&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/3854bb59-d7f7-4e6b-9c03-e3f113b20775.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1643492762&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:11</D:sync-token></D:multistatus>
 
 ===== 11 create keep =====
 >>> PUT /dav/cal/testuser%40example.org/probe/keep.ics
@@ -696,7 +723,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "4219656530"
+<<< etag: "187111628"
 
 ===== 11 create gone =====
 >>> PUT /dav/cal/testuser%40example.org/probe/gone.ics
@@ -725,7 +752,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "1312010954"
+<<< etag: "3351618249"
 
 ===== 11 report =====
 >>> REPORT /dav/cal/testuser%40example.org/probe/
@@ -734,7 +761,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:11</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;4219656530&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/gone.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1312010954&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:13</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/gone.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3351618249&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;187111628&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:13</D:sync-token></D:multistatus>
 
 ===== 11 change keep after the report =====
 >>> PUT /dav/cal/testuser%40example.org/probe/keep.ics
@@ -763,7 +790,7 @@
 
 >>> 
 <<< 204 No Content
-<<< etag: "2732062114"
+<<< etag: "3297075836"
 
 ===== 11 delete gone after the report =====
 >>> DELETE /dav/cal/testuser%40example.org/probe/gone.ics
@@ -775,7 +802,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><C:calendar-multiget xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><D:prop><D:getetag/><C:calendar-data/></D:prop><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:href>/dav/cal/testuser%40example.org/probe/gone.ics</D:href></C:calendar-multiget>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/gone.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2732062114&quot;</D:getetag><A:calendar-data><![CDATA[BEGIN:VCALENDAR
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/gone.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3297075836&quot;</D:getetag><A:calendar-data><![CDATA[BEGIN:VCALENDAR
 
 <<< VERSION:2.0
 
@@ -806,21 +833,87 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:13</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/gone.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2732062114&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:15</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/gone.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3297075836&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:15</D:sync-token></D:multistatus>
+
+===== 12 DAV:sync-token property =====
+>>> PROPFIND /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:sync-token/></D:prop></D:propfind>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:sync-token>urn:stalwart:davsync:15</D:sync-token></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>
+
+===== 12 members and ETags =====
+>>> PROPFIND /dav/cal/testuser%40example.org/probe/
+>>> Depth: 1
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0"?><D:propfind xmlns:D="DAV:"><D:prop><D:getetag/></D:prop></D:propfind>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/f.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3588107636&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3297075836&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;4211757191&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/3854bb59-d7f7-4e6b-9c03-e3f113b20775.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1643492762&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>
+
+===== 12 live state =====
+>>> REPORT /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/</D:href><D:propstat><D:prop><D:getetag>&quot;1710456662&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/f.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3588107636&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3297075836&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;4211757191&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/3854bb59-d7f7-4e6b-9c03-e3f113b20775.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1643492762&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/probe/c.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3450639812&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:15</D:sync-token></D:multistatus>
+
+===== 12 change keep after the property was read =====
+>>> PUT /dav/cal/testuser%40example.org/probe/keep.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:keep
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:v3
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 204 No Content
+<<< etag: "1388479432"
+
+===== 12 report from the property's token =====
+>>> REPORT /dav/cal/testuser%40example.org/probe/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:15</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/probe/keep.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1388479432&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:16</D:sync-token></D:multistatus>
 
 RESULT [Stalwart] 1 sync-collection in supported-report-set: True; ['acl-principal-prop-set', 'calendar-multiget', 'calendar-query', 'expand-property', 'free-busy-query', 'principal-match', 'sync-collection']
-RESULT [Stalwart] 2 initial listing: [('a.ics', '200'), ('b.ics', '200'), ('<collection>', '200'), ('c.ics', '200')]
-RESULT [Stalwart] 2 incremental: [('b.ics', '404'), ('a.ics', '200'), ('d.ics', '200')]
+RESULT [Stalwart] 2 initial listing: [('a.ics', '200'), ('<collection>', '200'), ('c.ics', '200'), ('b.ics', '200')]
+RESULT [Stalwart] 2 incremental: [('b.ics', '404'), ('d.ics', '200'), ('a.ics', '200')]
 RESULT [Stalwart] 3 created and deleted between reports: []: not reported
 RESULT [Stalwart] 4 deleted and re-created: entries for c.ics: ['404', '200']
-RESULT [Stalwart] 5 token well-formed URI: 207, valid-sync-token: False, members [('<collection>', '200'), ('d.ics', '200'), ('c.ics', '200'), ('a.ics', '200')]
-RESULT [Stalwart] 5 token not a URI: 207, valid-sync-token: False, members [('<collection>', '200'), ('d.ics', '200'), ('c.ics', '200'), ('a.ics', '200')]
-RESULT [Stalwart] 5 token real token with two characters replaced: 207, valid-sync-token: False, members [('<collection>', '200'), ('d.ics', '200'), ('c.ics', '200'), ('a.ics', '200')]
-RESULT [Stalwart] 5 token real token with its last character changed: 207, valid-sync-token: False, members [('<collection>', '200'), ('d.ics', '200'), ('c.ics', '200'), ('a.ics', '200')]
+RESULT [Stalwart] 5 token well-formed URI: 207, valid-sync-token: False, members [('a.ics', '200'), ('<collection>', '200'), ('d.ics', '200'), ('c.ics', '200')]
+RESULT [Stalwart] 5 token not a URI: 207, valid-sync-token: False, members [('a.ics', '200'), ('<collection>', '200'), ('d.ics', '200'), ('c.ics', '200')]
+RESULT [Stalwart] 5 token real token with two characters replaced: 207, valid-sync-token: False, members [('a.ics', '200'), ('<collection>', '200'), ('d.ics', '200'), ('c.ics', '200')]
+RESULT [Stalwart] 5 token real token with its last character changed: 207, valid-sync-token: False, members [('a.ics', '200'), ('<collection>', '200'), ('d.ics', '200'), ('c.ics', '200')]
 RESULT [Stalwart] 6 empty token after deletions: removed members listed: []; collection listed: True
-RESULT [Stalwart] 7 DAV:limit: 507 sent: True; pages 2; paged + follow-up equals live: True; missing []
+RESULT [Stalwart] 7 DAV:limit from an old token: 507 sent: True; pages 2; paged + follow-up equals live: True; missing []
+RESULT [Stalwart] 7 DAV:limit from an empty token: 507 sent: True; pages 2; paged + follow-up equals live: False; missing ['c.ics', 'd.ics']
 RESULT [Stalwart] 8 identical PUT: ETag unchanged: True
-RESULT [Stalwart] 8 PUT stored differently: stored equals sent: True; ETag in the PUT answer: "1844133045"
+RESULT [Stalwart] 8 PUT stored differently: stored equals sent: True; ETag in the PUT answer: "3588107636"
 RESULT [Stalwart] 9 PUT If-Match wrong: 412
 RESULT [Stalwart] 9 PUT If-Match right: 204
 RESULT [Stalwart] 9 PUT If-None-Match * on existing: 412
@@ -831,6 +924,9 @@ RESULT [Stalwart] 9 DELETE If-Match right: 204
 RESULT [Stalwart] 9 DELETE If-Match on gone: 404
 RESULT [Stalwart] PASS 10 unreserved href round-trips in the sync report: ok
 RESULT [Stalwart] PASS 11 multiget is 207: 207
-RESULT [Stalwart] PASS 11 multiget returns the newer ETag with the newer content: report-time "4219656530", fetched "2732062114", live "2732062114"
+RESULT [Stalwart] PASS 11 multiget returns the newer ETag with the newer content: report-time "187111628", fetched "3297075836", live "3297075836"
 RESULT [Stalwart] 11 multiget for a member deleted after the report: entry with status ['404']
 RESULT [Stalwart] PASS 11 the removal arrives in the next report: ok
+RESULT [Stalwart] PASS 12 DAV:sync-token property is defined: urn:stalwart:davsync:15
+RESULT [Stalwart] PASS 12 PROPFIND lists every member: missing []
+RESULT [Stalwart] PASS 12 a change after the property arrives in the next report: ok

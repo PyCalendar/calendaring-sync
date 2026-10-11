@@ -1,294 +1,355 @@
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Logging level set to: 'INFO'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Logging of backtrace is disabled in this loglevel
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Logging level set to: 'INFO'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Loaded default config
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Loaded command line arguments
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Starting Radicale (python=3.14.0 radicale=3.8.3 vobject=0.9.9 passlib=1.9.3 defusedxml=0.7.1 bcrypt=n/a argon2-cffi=n/a pika=1.4.4 ldap=n/a ldap3=n/a pam=n/a) as user=sasha on Windows-11-10.0.26300-SP0
-[2026-10-10 11:52:42 +0530] [13096] [WARNING] No user authentication is selected: '[auth] type=none' (INSECURE)
-[2026-10-10 11:52:42 +0530] [13096] [INFO] auth type is 'radicale.auth.none'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] auth.strip_domain: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] auth.lc_username: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] auth.uc_username: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] auth.urldecode_username: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] auth.delay: 1.000000 seconds
-[2026-10-10 11:52:42 +0530] [13096] [INFO] auth.cache_logins: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] No user groups lookup method is selected
-[2026-10-10 11:52:42 +0530] [13096] [INFO] group type is 'radicale.group.none'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] storage type is 'radicale.storage.multifilesystem'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location: '<data>\\radicale'
-[2026-10-10 11:52:42 +0530] [13096] [WARNING] Storage location: '<data>\\radicale' does not exist, creating now
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location permissions: path='<data>\\radicale' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder: '<data>\\radicale\\collection-root'
-[2026-10-10 11:52:42 +0530] [13096] [WARNING] Storage location subfolder: '<data>\\radicale\\collection-root' does not exist, creating now
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder permissions: path='<data>\\radicale\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder softlink support: True
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder supports unicode: True
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder supports trailing whitespace: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder supports problematic chars: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache subfolder usage for 'item': False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache subfolder usage for 'history': False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache subfolder usage for 'sync-token': False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache use mtime and size for 'item': False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage item mtime resolution test result: 100 ns
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
-[2026-10-10 11:52:42 +0530] [13096] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] rights type is 'radicale.rights.authenticated'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] web type is 'radicale.web.internal'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing type is 'radicale.sharing.none'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] rights type is 'radicale.rights.authenticated'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] storage type is 'radicale.storage.multifilesystem'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location: '<data>\\radicale'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location permissions: path='<data>\\radicale' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder: '<data>\\radicale\\collection-root'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder permissions: path='<data>\\radicale\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder softlink support: True
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder supports unicode: True
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder supports trailing whitespace: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage location subfolder supports problematic chars: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache subfolder usage for 'item': False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache subfolder usage for 'history': False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache subfolder usage for 'sync-token': False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache use mtime and size for 'item': False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage item mtime resolution test result: 100 ns
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
-[2026-10-10 11:52:42 +0530] [13096] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] No user groups lookup method is selected
-[2026-10-10 11:52:42 +0530] [13096] [INFO] group type is 'radicale.group.none'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.collection_by_map  : False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.collection_by_token: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.permit_create_token: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.permit_create_map  : False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.default_permissions_create_token: 'rp'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.default_permissions_create_map  : 'r'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.permit_properties_overlay: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.enforce_properties_overlay: True
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.conversion_bday_summary_template: '[{n:f} {n:g}|{fn}|{nickname}] ({year}) (BDAY)'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.conversion_bday_description_template: 'BDAY={year}-{month}-{day}'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.conversion_bday_alarm_trigger_template: ''
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.conversion_bday_categories: 'Birthday'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.conversion_bday_age_max: 99
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing.database_type: none
-[2026-10-10 11:52:42 +0530] [13096] [INFO] sharing disabled as no feature is enabled
-[2026-10-10 11:52:42 +0530] [13096] [INFO] hook type is 'radicale.hook.none'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] delay_on_error set to: 1.000 seconds
-[2026-10-10 11:52:42 +0530] [13096] [INFO] max_content_length set to: 100000000 bytes (95.4 Mbytes)
-[2026-10-10 11:52:42 +0530] [13096] [INFO] max_resource_size set to: 10000000 bytes (9.5 Mbytes)
-[2026-10-10 11:52:42 +0530] [13096] [INFO] max_vevent_rrule_occurrence set to: 10000
-[2026-10-10 11:52:42 +0530] [13096] [INFO] log bad put request content: False
-[2026-10-10 11:52:42 +0530] [13096] [NOTICE] log request  header  on notice condition: {}
-[2026-10-10 11:52:42 +0530] [13096] [NOTICE] log request  content on notice condition: {}
-[2026-10-10 11:52:42 +0530] [13096] [NOTICE] log response header  on notice condition: {}
-[2026-10-10 11:52:42 +0530] [13096] [NOTICE] log response content on notice condition: {}
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Default script name to strip from URI if called by reverse proxy is taken from HTTP_X_SCRIPT_NAME or SCRIPT_NAME
-[2026-10-10 11:52:42 +0530] [13096] [INFO] permit delete of collection: True
-[2026-10-10 11:52:42 +0530] [13096] [INFO] permit overwrite of collection: True
-[2026-10-10 11:52:42 +0530] [13096] [INFO] strict preconditions check: False
-[2026-10-10 11:52:42 +0530] [13096] [INFO] validate user value: 'minimal'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] validate path value: 'minimal'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] profiling: 'none'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Listening on '127.0.0.1:5232'
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Maximum parallel connections: 8
-[2026-10-10 11:52:42 +0530] [13096] [INFO] Radicale server ready
-[2026-10-10 11:52:42 +0530] [13096/Thread-1 (process_request_thread)] [INFO] GET request for '/' received from 127.0.0.1 using 'curl/8.4.0'
-[2026-10-10 11:52:42 +0530] [13096/Thread-1 (process_request_thread)] [INFO] GET response status for '/' in 0.000 seconds plain 19 bytes: 302 Found
-[2026-10-10 11:52:42 +0530] [13096/Thread-2 (process_request_thread)] [INFO] MKCALENDAR request for '/test/client/' received from 127.0.0.1 using 'curl/8.4.0'
-[2026-10-10 11:52:42 +0530] [13096/Thread-2 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:42 +0530] [13096/Thread-2 (process_request_thread)] [NOTICE] MKCALENDAR response status for '/test/client/' in 0.026 seconds: 201 Created
-[2026-10-10 11:52:43 +0530] [13096/Thread-3 (process_request_thread)] [INFO] DELETE request for '/test/probe/' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-3 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-3 (process_request_thread)] [NOTICE] DELETE response status for '/test/probe/' in 0.001 seconds gzip 62 bytes: 404 Not Found
-[2026-10-10 11:52:43 +0530] [13096/Thread-4 (process_request_thread)] [INFO] MKCALENDAR request for '/test/probe/' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-4 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-4 (process_request_thread)] [NOTICE] MKCALENDAR response status for '/test/probe/' in 0.007 seconds: 201 Created
-[2026-10-10 11:52:43 +0530] [13096/Thread-5 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-5 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-5 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/' with depth '0' in 0.022 seconds gzip 302 bytes: 207 Multi-Status
-[2026-10-10 11:52:43 +0530] [13096/Thread-6 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-6 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-6 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.007 seconds gzip 178 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:43 +0530] [13096/Thread-7 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-7 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-7 (process_request_thread)] [INFO] PUT response status for '/test/probe/a.ics' in 0.015 seconds: 201 Created
-[2026-10-10 11:52:43 +0530] [13096/Thread-8 (process_request_thread)] [INFO] PUT request for '/test/probe/b.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-8 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-8 (process_request_thread)] [INFO] PUT response status for '/test/probe/b.ics' in 0.012 seconds: 201 Created
-[2026-10-10 11:52:43 +0530] [13096/Thread-9 (process_request_thread)] [INFO] PUT request for '/test/probe/c.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-9 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-9 (process_request_thread)] [INFO] PUT response status for '/test/probe/c.ics' in 0.014 seconds: 201 Created
-[2026-10-10 11:52:43 +0530] [13096/Thread-10 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-10 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-10 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.152 seconds gzip 397 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:43 +0530] [13096/Thread-11 (process_request_thread)] [INFO] PUT request for '/test/probe/d.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-11 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-11 (process_request_thread)] [INFO] PUT response status for '/test/probe/d.ics' in 0.015 seconds: 201 Created
-[2026-10-10 11:52:43 +0530] [13096/Thread-12 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-12 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-12 (process_request_thread)] [INFO] PUT response status for '/test/probe/a.ics' in 0.017 seconds: 204 No Content
-[2026-10-10 11:52:43 +0530] [13096/Thread-13 (process_request_thread)] [INFO] DELETE request for '/test/probe/b.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-13 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:43 +0530] [13096/Thread-13 (process_request_thread)] [INFO] DELETE response status for '/test/probe/b.ics' in 0.007 seconds gzip 149 bytes: 200 OK
-[2026-10-10 11:52:43 +0530] [13096/Thread-14 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:43 +0530] [13096/Thread-14 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-14 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.159 seconds gzip 372 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:44 +0530] [13096/Thread-15 (process_request_thread)] [INFO] PUT request for '/test/probe/e.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:44 +0530] [13096/Thread-15 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-15 (process_request_thread)] [INFO] PUT response status for '/test/probe/e.ics' in 0.011 seconds: 201 Created
-[2026-10-10 11:52:44 +0530] [13096/Thread-16 (process_request_thread)] [INFO] DELETE request for '/test/probe/e.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:44 +0530] [13096/Thread-16 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-16 (process_request_thread)] [INFO] DELETE response status for '/test/probe/e.ics' in 0.040 seconds gzip 148 bytes: 200 OK
-[2026-10-10 11:52:44 +0530] [13096/Thread-17 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:44 +0530] [13096/Thread-17 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-17 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.085 seconds gzip 236 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:44 +0530] [13096/Thread-18 (process_request_thread)] [INFO] DELETE request for '/test/probe/c.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:44 +0530] [13096/Thread-18 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-18 (process_request_thread)] [INFO] DELETE response status for '/test/probe/c.ics' in 0.008 seconds gzip 149 bytes: 200 OK
-[2026-10-10 11:52:44 +0530] [13096/Thread-19 (process_request_thread)] [INFO] PUT request for '/test/probe/c.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:44 +0530] [13096/Thread-19 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-19 (process_request_thread)] [INFO] PUT response status for '/test/probe/c.ics' in 0.052 seconds: 201 Created
-[2026-10-10 11:52:44 +0530] [13096/Thread-20 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:44 +0530] [13096/Thread-20 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-20 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.080 seconds gzip 299 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:44 +0530] [13096/Thread-21 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:44 +0530] [13096/Thread-21 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-21 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/probe/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Malformed token: 'http://example.invalid/never-issued'
-[2026-10-10 11:52:44 +0530] [13096/Thread-21 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.650 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:52:44 +0530] [13096/Thread-22 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:44 +0530] [13096/Thread-22 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:44 +0530] [13096/Thread-22 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/probe/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Malformed token: 'not a uri'
-[2026-10-10 11:52:45 +0530] [13096/Thread-22 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.775 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:52:45 +0530] [13096/Thread-23 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:45 +0530] [13096/Thread-23 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:45 +0530] [13096/Thread-23 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/probe/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Malformed token: 'http://radicale.org/ns/sync/be68ef9af8b60de5db82e6ea4d3cead8a4af49b09157b09477b348c6f4690fzz'
-[2026-10-10 11:52:47 +0530] [13096/Thread-23 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 1.312 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:52:47 +0530] [13096/Thread-24 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:47 +0530] [13096/Thread-24 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:47 +0530] [13096/Thread-24 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/probe/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Token not found: 'http://radicale.org/ns/sync/be68ef9af8b60de5db82e6ea4d3cead8a4af49b09157b09477b348c6f4690f21'
-[2026-10-10 11:52:48 +0530] [13096/Thread-24 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 1.052 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:52:48 +0530] [13096/Thread-25 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-25 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-25 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.005 seconds gzip 420 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-26 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-26 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-26 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.007 seconds gzip 420 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-27 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-27 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-27 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.003 seconds gzip 179 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-28 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-28 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-28 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.004 seconds gzip 420 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-29 (process_request_thread)] [INFO] GET request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-29 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-29 (process_request_thread)] [INFO] GET response status for '/test/probe/a.ics' in 0.002 seconds gzip 175 bytes: 200 OK
-[2026-10-10 11:52:48 +0530] [13096/Thread-30 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-30 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-30 (process_request_thread)] [INFO] PUT response status for '/test/probe/a.ics' in 0.030 seconds: 204 No Content
-[2026-10-10 11:52:48 +0530] [13096/Thread-31 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/a.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-31 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-31 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/a.ics' with depth '0' in 0.002 seconds gzip 228 bytes (getetag): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-32 (process_request_thread)] [INFO] PUT request for '/test/probe/f.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-32 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-32 (process_request_thread)] [INFO] PUT response status for '/test/probe/f.ics' in 0.045 seconds: 201 Created
-[2026-10-10 11:52:48 +0530] [13096/Thread-33 (process_request_thread)] [INFO] GET request for '/test/probe/f.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-33 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-33 (process_request_thread)] [INFO] GET response status for '/test/probe/f.ics' in 0.002 seconds gzip 180 bytes: 200 OK
-[2026-10-10 11:52:48 +0530] [13096/Thread-34 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/a.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-34 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-34 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/a.ics' with depth '0' in 0.002 seconds gzip 228 bytes (getetag): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-35 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-35 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-35 (process_request_thread)] [WARNING] Precondition failed on PUT request for '/test/probe/a.ics' (HTTP_IF_MATCH: "wrong", item has different etag: "758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4")
-[2026-10-10 11:52:48 +0530] [13096/Thread-35 (process_request_thread)] [NOTICE] PUT response status for '/test/probe/a.ics' in 0.004 seconds gzip 40 bytes: 412 Precondition Failed
-[2026-10-10 11:52:48 +0530] [13096/Thread-36 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-36 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-36 (process_request_thread)] [INFO] PUT response status for '/test/probe/a.ics' in 0.012 seconds: 204 No Content
-[2026-10-10 11:52:48 +0530] [13096/Thread-37 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-37 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-37 (process_request_thread)] [WARNING] Precondition failed on PUT request for '/test/probe/a.ics' (HTTP_IF_NONE_MATCH: *, creation requested but item found with etag: "e6a272c3d277f22b3580a70b6904b0a64a959d2ea5a3b631a57c6022f2986816")
-[2026-10-10 11:52:48 +0530] [13096/Thread-37 (process_request_thread)] [NOTICE] PUT response status for '/test/probe/a.ics' in 0.004 seconds gzip 40 bytes: 412 Precondition Failed
-[2026-10-10 11:52:48 +0530] [13096/Thread-38 (process_request_thread)] [INFO] PUT request for '/test/probe/7143378a-49f4-4b35-8167-d0f0a3bb7790.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-38 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-38 (process_request_thread)] [WARNING] Precondition failed on PUT request for '/test/probe/7143378a-49f4-4b35-8167-d0f0a3bb7790.ics' (HTTP_IF_MATCH: "x", item not existing)
-[2026-10-10 11:52:48 +0530] [13096/Thread-38 (process_request_thread)] [NOTICE] PUT response status for '/test/probe/7143378a-49f4-4b35-8167-d0f0a3bb7790.ics' in 0.003 seconds gzip 40 bytes: 412 Precondition Failed
-[2026-10-10 11:52:48 +0530] [13096/Thread-39 (process_request_thread)] [INFO] PUT request for '/test/probe/g.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-39 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-39 (process_request_thread)] [NOTICE] PUT response status for '/test/probe/g.ics' in 0.003 seconds gzip 132 bytes: 409 Conflict
-[2026-10-10 11:52:48 +0530] [13096/Thread-40 (process_request_thread)] [INFO] DELETE request for '/test/probe/d.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-40 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-40 (process_request_thread)] [NOTICE] DELETE response status for '/test/probe/d.ics' in 0.002 seconds gzip 40 bytes: 412 Precondition Failed
-[2026-10-10 11:52:48 +0530] [13096/Thread-41 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/d.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-41 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-41 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/d.ics' with depth '0' in 0.002 seconds gzip 226 bytes (getetag): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-42 (process_request_thread)] [INFO] DELETE request for '/test/probe/d.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-42 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-42 (process_request_thread)] [INFO] DELETE response status for '/test/probe/d.ics' in 0.005 seconds gzip 149 bytes: 200 OK
-[2026-10-10 11:52:48 +0530] [13096/Thread-43 (process_request_thread)] [INFO] DELETE request for '/test/probe/d.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-43 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-43 (process_request_thread)] [NOTICE] DELETE response status for '/test/probe/d.ics' in 0.001 seconds gzip 62 bytes: 404 Not Found
-[2026-10-10 11:52:48 +0530] [13096/Thread-44 (process_request_thread)] [INFO] PUT request for '/test/probe/a2166509-9d7f-4c67-b6f7-1582f0df49f4.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-44 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-44 (process_request_thread)] [INFO] PUT response status for '/test/probe/a2166509-9d7f-4c67-b6f7-1582f0df49f4.ics' in 0.070 seconds: 201 Created
-[2026-10-10 11:52:48 +0530] [13096/Thread-45 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-45 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-45 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.205 seconds gzip 439 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-46 (process_request_thread)] [INFO] PUT request for '/test/probe/keep.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-46 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-46 (process_request_thread)] [INFO] PUT response status for '/test/probe/keep.ics' in 0.012 seconds: 201 Created
-[2026-10-10 11:52:48 +0530] [13096/Thread-47 (process_request_thread)] [INFO] PUT request for '/test/probe/gone.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-47 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-47 (process_request_thread)] [INFO] PUT response status for '/test/probe/gone.ics' in 0.013 seconds: 201 Created
-[2026-10-10 11:52:48 +0530] [13096/Thread-48 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-48 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-48 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.125 seconds gzip 358 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-49 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/keep.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-49 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-49 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/keep.ics' with depth '0' in 0.003 seconds gzip 228 bytes (getetag): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-50 (process_request_thread)] [INFO] PUT request for '/test/probe/keep.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-50 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-50 (process_request_thread)] [INFO] PUT response status for '/test/probe/keep.ics' in 0.016 seconds: 204 No Content
-[2026-10-10 11:52:48 +0530] [13096/Thread-51 (process_request_thread)] [INFO] DELETE request for '/test/probe/gone.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-51 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-51 (process_request_thread)] [INFO] DELETE response status for '/test/probe/gone.ics' in 0.005 seconds gzip 152 bytes: 200 OK
-[2026-10-10 11:52:48 +0530] [13096/Thread-52 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/keep.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-52 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-52 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/keep.ics' with depth '0' in 0.002 seconds gzip 228 bytes (getetag): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-53 (process_request_thread)] [INFO] REPORT request for '/test/probe/' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-53 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:48 +0530] [13096/Thread-53 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' in 0.005 seconds gzip 444 bytes (getetag): 207 Multi-Status
-[2026-10-10 11:52:48 +0530] [13096/Thread-54 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
-[2026-10-10 11:52:48 +0530] [13096/Thread-54 (process_request_thread)] [INFO] Successful login: 'test' (none)
-[2026-10-10 11:52:49 +0530] [13096/Thread-54 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.137 seconds gzip 326 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:50 +0530] [13096/Thread-55 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:50 +0530] [13096/Thread-55 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/client/' (user '' from 127.0.0.1 using 'python-caldav/3.4.0'): Malformed token: 'http://example.invalid/never-issued'
-[2026-10-10 11:52:50 +0530] [13096/Thread-55 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.535 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:52:50 +0530] [13096/Thread-56 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:50 +0530] [13096/Thread-56 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/client/' (user '' from 127.0.0.1 using 'python-caldav/3.4.0'): Malformed token: 'http://example.invalid/never-issued'
-[2026-10-10 11:52:51 +0530] [13096/Thread-56 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '0' in 1.017 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:52:51 +0530] [13096/Thread-57 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:51 +0530] [13096/Thread-57 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/client/' (user '' from 127.0.0.1 using 'python-caldav/3.4.0'): Malformed token: 'http://example.invalid/never-issued'
-[2026-10-10 11:52:52 +0530] [13096/Thread-57 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.653 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
-[2026-10-10 11:52:52 +0530] [13096/Thread-58 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-58 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.001 seconds gzip 87 bytes: 207 Multi-Status
-[2026-10-10 11:52:52 +0530] [13096/Thread-59 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-59 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.005 seconds gzip 178 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:52 +0530] [13096/Thread-60 (process_request_thread)] [INFO] PUT request for '/test/client/client-removed.ics' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-60 (process_request_thread)] [INFO] PUT response status for '/test/client/client-removed.ics' in 0.012 seconds: 201 Created
-[2026-10-10 11:52:52 +0530] [13096/Thread-61 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-61 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.024 seconds gzip 307 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:52 +0530] [13096/Thread-62 (process_request_thread)] [INFO] DELETE request for '/test/client/client-removed.ics' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-62 (process_request_thread)] [INFO] DELETE response status for '/test/client/client-removed.ics' in 0.005 seconds gzip 156 bytes: 200 OK
-[2026-10-10 11:52:52 +0530] [13096/Thread-63 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-63 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.062 seconds gzip 244 bytes (getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:52 +0530] [13096/Thread-64 (process_request_thread)] [INFO] PUT request for '/test/client/client-0.ics' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-64 (process_request_thread)] [INFO] PUT response status for '/test/client/client-0.ics' in 0.014 seconds: 201 Created
-[2026-10-10 11:52:52 +0530] [13096/Thread-65 (process_request_thread)] [INFO] PUT request for '/test/client/client-1.ics' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-65 (process_request_thread)] [INFO] PUT response status for '/test/client/client-1.ics' in 0.013 seconds: 201 Created
-[2026-10-10 11:52:52 +0530] [13096/Thread-66 (process_request_thread)] [INFO] PUT request for '/test/client/client-2.ics' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-66 (process_request_thread)] [INFO] PUT response status for '/test/client/client-2.ics' in 0.011 seconds: 201 Created
-[2026-10-10 11:52:52 +0530] [13096/Thread-67 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-67 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '0' in 0.098 seconds gzip 425 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:52 +0530] [13096/Thread-68 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-68 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.004 seconds gzip 425 bytes (sync-token getetag sync-collection): 207 Multi-Status
-[2026-10-10 11:52:52 +0530] [13096/Thread-69 (process_request_thread)] [INFO] REPORT request for '/test/client/' received from 127.0.0.1 using 'python-caldav/3.4.0'
-[2026-10-10 11:52:52 +0530] [13096/Thread-69 (process_request_thread)] [INFO] REPORT response status for '/test/client/' in 0.002 seconds gzip 427 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Logging level set to: 'INFO'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Logging of backtrace is disabled in this loglevel
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Logging level set to: 'INFO'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Loaded default config
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Loaded command line arguments
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Starting Radicale (python=3.14.0 radicale=3.8.3 vobject=0.9.9 passlib=1.9.3 defusedxml=0.7.1 bcrypt=n/a argon2-cffi=n/a pika=1.4.4 ldap=n/a ldap3=n/a pam=n/a) as user=<user> on Windows-11-10.0.26300-SP0
+[2026-10-11 23:56:19 +0530] [25024] [WARNING] No user authentication is selected: '[auth] type=none' (INSECURE)
+[2026-10-11 23:56:19 +0530] [25024] [INFO] auth type is 'radicale.auth.none'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] auth.strip_domain: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] auth.lc_username: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] auth.uc_username: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] auth.urldecode_username: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] auth.delay: 1.000000 seconds
+[2026-10-11 23:56:19 +0530] [25024] [INFO] auth.cache_logins: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] No user groups lookup method is selected
+[2026-10-11 23:56:19 +0530] [25024] [INFO] group type is 'radicale.group.none'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] storage type is 'radicale.storage.multifilesystem'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location: '<data>\\radicale'
+[2026-10-11 23:56:19 +0530] [25024] [WARNING] Storage location: '<data>\\radicale' does not exist, creating now
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location permissions: path='<data>\\radicale' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder: '<data>\\radicale\\collection-root'
+[2026-10-11 23:56:19 +0530] [25024] [WARNING] Storage location subfolder: '<data>\\radicale\\collection-root' does not exist, creating now
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder permissions: path='<data>\\radicale\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder softlink support: True
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder supports unicode: True
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder supports trailing whitespace: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder supports problematic chars: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache subfolder usage for 'item': False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache subfolder usage for 'history': False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache subfolder usage for 'sync-token': False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache use mtime and size for 'item': False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage item mtime resolution test result: 100 ns
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
+[2026-10-11 23:56:19 +0530] [25024] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] rights type is 'radicale.rights.authenticated'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] web type is 'radicale.web.internal'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing type is 'radicale.sharing.none'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] rights type is 'radicale.rights.authenticated'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] storage type is 'radicale.storage.multifilesystem'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location: '<data>\\radicale'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location permissions: path='<data>\\radicale' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder: '<data>\\radicale\\collection-root'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder permissions: path='<data>\\radicale\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder softlink support: True
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder supports unicode: True
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder supports trailing whitespace: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage location subfolder supports problematic chars: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache subfolder usage for 'item': False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache subfolder usage for 'history': False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache subfolder usage for 'sync-token': False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache use mtime and size for 'item': False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage item mtime resolution test result: 100 ns
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
+[2026-10-11 23:56:19 +0530] [25024] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] No user groups lookup method is selected
+[2026-10-11 23:56:19 +0530] [25024] [INFO] group type is 'radicale.group.none'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.collection_by_map  : False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.collection_by_token: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.permit_create_token: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.permit_create_map  : False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.default_permissions_create_token: 'rp'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.default_permissions_create_map  : 'r'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.permit_properties_overlay: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.enforce_properties_overlay: True
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.conversion_bday_summary_template: '[{n:f} {n:g}|{fn}|{nickname}] ({year}) (BDAY)'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.conversion_bday_description_template: 'BDAY={year}-{month}-{day}'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.conversion_bday_alarm_trigger_template: ''
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.conversion_bday_categories: 'Birthday'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.conversion_bday_age_max: 99
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing.database_type: none
+[2026-10-11 23:56:19 +0530] [25024] [INFO] sharing disabled as no feature is enabled
+[2026-10-11 23:56:19 +0530] [25024] [INFO] hook type is 'radicale.hook.none'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] delay_on_error set to: 1.000 seconds
+[2026-10-11 23:56:19 +0530] [25024] [INFO] max_content_length set to: 100000000 bytes (95.4 Mbytes)
+[2026-10-11 23:56:19 +0530] [25024] [INFO] max_resource_size set to: 10000000 bytes (9.5 Mbytes)
+[2026-10-11 23:56:19 +0530] [25024] [INFO] max_vevent_rrule_occurrence set to: 10000
+[2026-10-11 23:56:19 +0530] [25024] [INFO] log bad put request content: False
+[2026-10-11 23:56:19 +0530] [25024] [NOTICE] log request  header  on notice condition: {}
+[2026-10-11 23:56:19 +0530] [25024] [NOTICE] log request  content on notice condition: {}
+[2026-10-11 23:56:19 +0530] [25024] [NOTICE] log response header  on notice condition: {}
+[2026-10-11 23:56:19 +0530] [25024] [NOTICE] log response content on notice condition: {}
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Default script name to strip from URI if called by reverse proxy is taken from HTTP_X_SCRIPT_NAME or SCRIPT_NAME
+[2026-10-11 23:56:19 +0530] [25024] [INFO] permit delete of collection: True
+[2026-10-11 23:56:19 +0530] [25024] [INFO] permit overwrite of collection: True
+[2026-10-11 23:56:19 +0530] [25024] [INFO] strict preconditions check: False
+[2026-10-11 23:56:19 +0530] [25024] [INFO] validate user value: 'minimal'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] validate path value: 'minimal'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] profiling: 'none'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Listening on '127.0.0.1:5232'
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Maximum parallel connections: 8
+[2026-10-11 23:56:19 +0530] [25024] [INFO] Radicale server ready
+[2026-10-11 23:56:19 +0530] [25024/Thread-1 (process_request_thread)] [INFO] GET request for '/' received from 127.0.0.1 using 'curl/8.4.0'
+[2026-10-11 23:56:19 +0530] [25024/Thread-1 (process_request_thread)] [INFO] GET response status for '/' in 0.000 seconds plain 19 bytes: 302 Found
+[2026-10-11 23:56:19 +0530] [25024/Thread-2 (process_request_thread)] [INFO] MKCALENDAR request for '/test/client/' received from 127.0.0.1 using 'curl/8.4.0'
+[2026-10-11 23:56:19 +0530] [25024/Thread-2 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:19 +0530] [25024/Thread-2 (process_request_thread)] [NOTICE] MKCALENDAR response status for '/test/client/' in 0.004 seconds: 201 Created
+[2026-10-11 23:56:19 +0530] [25024/Thread-3 (process_request_thread)] [INFO] DELETE request for '/test/probe/' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:19 +0530] [25024/Thread-3 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:19 +0530] [25024/Thread-3 (process_request_thread)] [NOTICE] DELETE response status for '/test/probe/' in 0.001 seconds gzip 62 bytes: 404 Not Found
+[2026-10-11 23:56:19 +0530] [25024/Thread-4 (process_request_thread)] [INFO] MKCALENDAR request for '/test/probe/' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:19 +0530] [25024/Thread-4 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:19 +0530] [25024/Thread-4 (process_request_thread)] [NOTICE] MKCALENDAR response status for '/test/probe/' in 0.003 seconds: 201 Created
+[2026-10-11 23:56:19 +0530] [25024/Thread-5 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:19 +0530] [25024/Thread-5 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:19 +0530] [25024/Thread-5 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/' with depth '0' in 0.018 seconds gzip 302 bytes: 207 Multi-Status
+[2026-10-11 23:56:19 +0530] [25024/Thread-6 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:19 +0530] [25024/Thread-6 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:19 +0530] [25024/Thread-6 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.004 seconds gzip 178 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:19 +0530] [25024/Thread-7 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:19 +0530] [25024/Thread-7 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-7 (process_request_thread)] [INFO] PUT response status for '/test/probe/a.ics' in 0.022 seconds: 201 Created
+[2026-10-11 23:56:20 +0530] [25024/Thread-8 (process_request_thread)] [INFO] PUT request for '/test/probe/b.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-8 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-8 (process_request_thread)] [INFO] PUT response status for '/test/probe/b.ics' in 0.038 seconds: 201 Created
+[2026-10-11 23:56:20 +0530] [25024/Thread-9 (process_request_thread)] [INFO] PUT request for '/test/probe/c.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-9 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-9 (process_request_thread)] [INFO] PUT response status for '/test/probe/c.ics' in 0.061 seconds: 201 Created
+[2026-10-11 23:56:20 +0530] [25024/Thread-10 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-10 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-10 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.131 seconds gzip 397 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:20 +0530] [25024/Thread-11 (process_request_thread)] [INFO] PUT request for '/test/probe/d.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-11 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-11 (process_request_thread)] [INFO] PUT response status for '/test/probe/d.ics' in 0.024 seconds: 201 Created
+[2026-10-11 23:56:20 +0530] [25024/Thread-12 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-12 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-12 (process_request_thread)] [INFO] PUT response status for '/test/probe/a.ics' in 0.010 seconds: 204 No Content
+[2026-10-11 23:56:20 +0530] [25024/Thread-13 (process_request_thread)] [INFO] DELETE request for '/test/probe/b.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-13 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-13 (process_request_thread)] [INFO] DELETE response status for '/test/probe/b.ics' in 0.004 seconds gzip 149 bytes: 200 OK
+[2026-10-11 23:56:20 +0530] [25024/Thread-14 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-14 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-14 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.104 seconds gzip 371 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:20 +0530] [25024/Thread-15 (process_request_thread)] [INFO] PUT request for '/test/probe/e.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-15 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-15 (process_request_thread)] [INFO] PUT response status for '/test/probe/e.ics' in 0.043 seconds: 201 Created
+[2026-10-11 23:56:20 +0530] [25024/Thread-16 (process_request_thread)] [INFO] DELETE request for '/test/probe/e.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-16 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-16 (process_request_thread)] [INFO] DELETE response status for '/test/probe/e.ics' in 0.039 seconds gzip 148 bytes: 200 OK
+[2026-10-11 23:56:20 +0530] [25024/Thread-17 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-17 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-17 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.069 seconds gzip 237 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:20 +0530] [25024/Thread-18 (process_request_thread)] [INFO] DELETE request for '/test/probe/c.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-18 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-18 (process_request_thread)] [INFO] DELETE response status for '/test/probe/c.ics' in 0.005 seconds gzip 149 bytes: 200 OK
+[2026-10-11 23:56:20 +0530] [25024/Thread-19 (process_request_thread)] [INFO] PUT request for '/test/probe/c.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-19 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-19 (process_request_thread)] [INFO] PUT response status for '/test/probe/c.ics' in 0.084 seconds: 201 Created
+[2026-10-11 23:56:20 +0530] [25024/Thread-20 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-20 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-20 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.062 seconds gzip 302 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:20 +0530] [25024/Thread-21 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:20 +0530] [25024/Thread-21 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:20 +0530] [25024/Thread-21 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/probe/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Malformed token: 'http://example.invalid/never-issued'
+[2026-10-11 23:56:22 +0530] [25024/Thread-21 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 1.396 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:56:22 +0530] [25024/Thread-22 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:22 +0530] [25024/Thread-22 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:22 +0530] [25024/Thread-22 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/probe/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Malformed token: 'not a uri'
+[2026-10-11 23:56:23 +0530] [25024/Thread-22 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 1.249 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:56:23 +0530] [25024/Thread-23 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:23 +0530] [25024/Thread-23 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:23 +0530] [25024/Thread-23 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/probe/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Malformed token: 'http://radicale.org/ns/sync/fdb200a45faecc619a5b2c810e748dae865410d1f24196ded51e88955f001czz'
+[2026-10-11 23:56:24 +0530] [25024/Thread-23 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 1.279 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:56:24 +0530] [25024/Thread-24 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:24 +0530] [25024/Thread-24 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:24 +0530] [25024/Thread-24 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/probe/' (user 'test' from 127.0.0.1 using 'python-requests/2.34.2'): Token not found: 'http://radicale.org/ns/sync/fdb200a45faecc619a5b2c810e748dae865410d1f24196ded51e88955f001c11'
+[2026-10-11 23:56:25 +0530] [25024/Thread-24 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 1.216 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:56:25 +0530] [25024/Thread-25 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-25 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-25 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.004 seconds gzip 421 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:25 +0530] [25024/Thread-26 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-26 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-26 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.003 seconds gzip 421 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:25 +0530] [25024/Thread-27 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-27 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-27 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.031 seconds gzip 421 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:25 +0530] [25024/Thread-28 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-28 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-28 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.002 seconds gzip 179 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:25 +0530] [25024/Thread-29 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-29 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-29 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.004 seconds gzip 421 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:25 +0530] [25024/Thread-30 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-30 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-30 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.002 seconds gzip 179 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:25 +0530] [25024/Thread-31 (process_request_thread)] [INFO] GET request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-31 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-31 (process_request_thread)] [INFO] GET response status for '/test/probe/a.ics' in 0.001 seconds gzip 175 bytes: 200 OK
+[2026-10-11 23:56:25 +0530] [25024/Thread-32 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-32 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-32 (process_request_thread)] [INFO] PUT response status for '/test/probe/a.ics' in 0.008 seconds: 204 No Content
+[2026-10-11 23:56:25 +0530] [25024/Thread-33 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/a.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-33 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:25 +0530] [25024/Thread-33 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/a.ics' with depth '0' in 0.001 seconds gzip 228 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:25 +0530] [25024/Thread-34 (process_request_thread)] [INFO] PUT request for '/test/probe/f.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:25 +0530] [25024/Thread-34 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-34 (process_request_thread)] [INFO] PUT response status for '/test/probe/f.ics' in 0.054 seconds: 201 Created
+[2026-10-11 23:56:26 +0530] [25024/Thread-35 (process_request_thread)] [INFO] GET request for '/test/probe/f.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-35 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-35 (process_request_thread)] [INFO] GET response status for '/test/probe/f.ics' in 0.002 seconds gzip 181 bytes: 200 OK
+[2026-10-11 23:56:26 +0530] [25024/Thread-36 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/a.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-36 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-36 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/a.ics' with depth '0' in 0.002 seconds gzip 228 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-37 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-37 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-37 (process_request_thread)] [WARNING] Precondition failed on PUT request for '/test/probe/a.ics' (HTTP_IF_MATCH: "wrong", item has different etag: "758b90a6fe1f4500a9d29d9f9158fa3d493bafb1fa4f83b9563f9a5aa2c0aec4")
+[2026-10-11 23:56:26 +0530] [25024/Thread-37 (process_request_thread)] [NOTICE] PUT response status for '/test/probe/a.ics' in 0.002 seconds gzip 40 bytes: 412 Precondition Failed
+[2026-10-11 23:56:26 +0530] [25024/Thread-38 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-38 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-38 (process_request_thread)] [INFO] PUT response status for '/test/probe/a.ics' in 0.050 seconds: 204 No Content
+[2026-10-11 23:56:26 +0530] [25024/Thread-39 (process_request_thread)] [INFO] PUT request for '/test/probe/a.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-39 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-39 (process_request_thread)] [WARNING] Precondition failed on PUT request for '/test/probe/a.ics' (HTTP_IF_NONE_MATCH: *, creation requested but item found with etag: "e6a272c3d277f22b3580a70b6904b0a64a959d2ea5a3b631a57c6022f2986816")
+[2026-10-11 23:56:26 +0530] [25024/Thread-39 (process_request_thread)] [NOTICE] PUT response status for '/test/probe/a.ics' in 0.003 seconds gzip 40 bytes: 412 Precondition Failed
+[2026-10-11 23:56:26 +0530] [25024/Thread-40 (process_request_thread)] [INFO] PUT request for '/test/probe/56dacdb8-5810-47f1-a74d-5a3c50ae46b1.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-40 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-40 (process_request_thread)] [WARNING] Precondition failed on PUT request for '/test/probe/56dacdb8-5810-47f1-a74d-5a3c50ae46b1.ics' (HTTP_IF_MATCH: "x", item not existing)
+[2026-10-11 23:56:26 +0530] [25024/Thread-40 (process_request_thread)] [NOTICE] PUT response status for '/test/probe/56dacdb8-5810-47f1-a74d-5a3c50ae46b1.ics' in 0.002 seconds gzip 40 bytes: 412 Precondition Failed
+[2026-10-11 23:56:26 +0530] [25024/Thread-41 (process_request_thread)] [INFO] PUT request for '/test/probe/g.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-41 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-41 (process_request_thread)] [NOTICE] PUT response status for '/test/probe/g.ics' in 0.002 seconds gzip 132 bytes: 409 Conflict
+[2026-10-11 23:56:26 +0530] [25024/Thread-42 (process_request_thread)] [INFO] DELETE request for '/test/probe/d.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-42 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-42 (process_request_thread)] [NOTICE] DELETE response status for '/test/probe/d.ics' in 0.001 seconds gzip 40 bytes: 412 Precondition Failed
+[2026-10-11 23:56:26 +0530] [25024/Thread-43 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/d.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-43 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-43 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/d.ics' with depth '0' in 0.002 seconds gzip 226 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-44 (process_request_thread)] [INFO] DELETE request for '/test/probe/d.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-44 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-44 (process_request_thread)] [INFO] DELETE response status for '/test/probe/d.ics' in 0.003 seconds gzip 149 bytes: 200 OK
+[2026-10-11 23:56:26 +0530] [25024/Thread-45 (process_request_thread)] [INFO] DELETE request for '/test/probe/d.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-45 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-45 (process_request_thread)] [NOTICE] DELETE response status for '/test/probe/d.ics' in 0.001 seconds gzip 62 bytes: 404 Not Found
+[2026-10-11 23:56:26 +0530] [25024/Thread-46 (process_request_thread)] [INFO] PUT request for '/test/probe/515f2fe7-72bb-4571-a5ed-dd4660d007be.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-46 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-46 (process_request_thread)] [INFO] PUT response status for '/test/probe/515f2fe7-72bb-4571-a5ed-dd4660d007be.ics' in 0.049 seconds: 201 Created
+[2026-10-11 23:56:26 +0530] [25024/Thread-47 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-47 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-47 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.148 seconds gzip 439 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-48 (process_request_thread)] [INFO] PUT request for '/test/probe/keep.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-48 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-48 (process_request_thread)] [INFO] PUT response status for '/test/probe/keep.ics' in 0.056 seconds: 201 Created
+[2026-10-11 23:56:26 +0530] [25024/Thread-49 (process_request_thread)] [INFO] PUT request for '/test/probe/gone.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-49 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-49 (process_request_thread)] [INFO] PUT response status for '/test/probe/gone.ics' in 0.011 seconds: 201 Created
+[2026-10-11 23:56:26 +0530] [25024/Thread-50 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-50 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-50 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.089 seconds gzip 356 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-51 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/keep.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-51 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-51 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/keep.ics' with depth '0' in 0.002 seconds gzip 228 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-52 (process_request_thread)] [INFO] PUT request for '/test/probe/keep.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-52 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-52 (process_request_thread)] [INFO] PUT response status for '/test/probe/keep.ics' in 0.042 seconds: 204 No Content
+[2026-10-11 23:56:26 +0530] [25024/Thread-53 (process_request_thread)] [INFO] DELETE request for '/test/probe/gone.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-53 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-53 (process_request_thread)] [INFO] DELETE response status for '/test/probe/gone.ics' in 0.004 seconds gzip 152 bytes: 200 OK
+[2026-10-11 23:56:26 +0530] [25024/Thread-54 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/keep.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-54 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-54 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/keep.ics' with depth '0' in 0.002 seconds gzip 228 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-55 (process_request_thread)] [INFO] REPORT request for '/test/probe/' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-55 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-55 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' in 0.002 seconds gzip 444 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-56 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-56 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-56 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.101 seconds gzip 325 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-57 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-57 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-57 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/' with depth '0' in 0.003 seconds gzip 244 bytes (sync-token): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-58 (process_request_thread)] [INFO] PROPFIND request for '/test/probe/' with depth '1' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-58 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-58 (process_request_thread)] [INFO] PROPFIND response status for '/test/probe/' with depth '1' in 0.003 seconds gzip 477 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-59 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-59 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-59 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.004 seconds gzip 539 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:26 +0530] [25024/Thread-60 (process_request_thread)] [INFO] PUT request for '/test/probe/keep.ics' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-60 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-60 (process_request_thread)] [INFO] PUT response status for '/test/probe/keep.ics' in 0.048 seconds: 204 No Content
+[2026-10-11 23:56:26 +0530] [25024/Thread-61 (process_request_thread)] [INFO] REPORT request for '/test/probe/' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2'
+[2026-10-11 23:56:26 +0530] [25024/Thread-61 (process_request_thread)] [INFO] Successful login: 'test' (none)
+[2026-10-11 23:56:26 +0530] [25024/Thread-61 (process_request_thread)] [INFO] REPORT response status for '/test/probe/' with depth '0' in 0.072 seconds gzip 303 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:27 +0530] [25024/Thread-62 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:27 +0530] [25024/Thread-62 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/client/' (user '' from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'): Malformed token: 'http://example.invalid/never-issued'
+[2026-10-11 23:56:29 +0530] [25024/Thread-62 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 1.468 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:56:29 +0530] [25024/Thread-63 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:29 +0530] [25024/Thread-63 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/client/' (user '' from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'): Malformed token: '0000000000000000000000000000000000000000'
+[2026-10-11 23:56:30 +0530] [25024/Thread-63 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 1.083 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:56:30 +0530] [25024/Thread-64 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:30 +0530] [25024/Thread-64 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/client/' (user '' from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'): Malformed token: 'http://example.invalid/never-issued'
+[2026-10-11 23:56:31 +0530] [25024/Thread-64 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '0' in 1.251 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:56:31 +0530] [25024/Thread-65 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:31 +0530] [25024/Thread-65 (process_request_thread)] [WARNING] Client provided invalid sync token for path '/test/client/' (user '' from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'): Malformed token: 'http://example.invalid/never-issued'
+[2026-10-11 23:56:32 +0530] [25024/Thread-65 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 1.046 seconds gzip 104 bytes (getetag sync-collection): 403 Forbidden
+[2026-10-11 23:56:32 +0530] [25024/Thread-66 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-66 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.001 seconds gzip 87 bytes: 207 Multi-Status
+[2026-10-11 23:56:32 +0530] [25024/Thread-67 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-67 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.003 seconds gzip 178 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:32 +0530] [25024/Thread-68 (process_request_thread)] [INFO] PUT request for '/test/client/client-removed.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-68 (process_request_thread)] [INFO] PUT response status for '/test/client/client-removed.ics' in 0.034 seconds: 201 Created
+[2026-10-11 23:56:32 +0530] [25024/Thread-69 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-69 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.015 seconds gzip 306 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:32 +0530] [25024/Thread-70 (process_request_thread)] [INFO] DELETE request for '/test/client/client-removed.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-70 (process_request_thread)] [INFO] DELETE response status for '/test/client/client-removed.ics' in 0.003 seconds gzip 156 bytes: 200 OK
+[2026-10-11 23:56:32 +0530] [25024/Thread-71 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-71 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.021 seconds gzip 244 bytes (getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:32 +0530] [25024/Thread-72 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-72 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.002 seconds gzip 244 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:32 +0530] [25024/Thread-73 (process_request_thread)] [INFO] PUT request for '/test/client/client-0.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-73 (process_request_thread)] [INFO] PUT response status for '/test/client/client-0.ics' in 0.068 seconds: 201 Created
+[2026-10-11 23:56:32 +0530] [25024/Thread-74 (process_request_thread)] [INFO] PUT request for '/test/client/client-1.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-74 (process_request_thread)] [INFO] PUT response status for '/test/client/client-1.ics' in 0.010 seconds: 201 Created
+[2026-10-11 23:56:32 +0530] [25024/Thread-75 (process_request_thread)] [INFO] PUT request for '/test/client/client-2.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:32 +0530] [25024/Thread-75 (process_request_thread)] [INFO] PUT response status for '/test/client/client-2.ics' in 0.028 seconds: 201 Created
+[2026-10-11 23:56:33 +0530] [25024/Thread-76 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-76 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '0' in 0.040 seconds gzip 425 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:33 +0530] [25024/Thread-77 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-77 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.003 seconds gzip 425 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:33 +0530] [25024/Thread-78 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-78 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.003 seconds gzip 425 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:33 +0530] [25024/Thread-79 (process_request_thread)] [INFO] REPORT request for '/test/client/' with depth '1' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-79 (process_request_thread)] [INFO] REPORT response status for '/test/client/' with depth '1' in 0.004 seconds gzip 425 bytes (sync-token getetag sync-collection): 207 Multi-Status
+[2026-10-11 23:56:33 +0530] [25024/Thread-80 (process_request_thread)] [INFO] REPORT request for '/test/client/' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-80 (process_request_thread)] [INFO] REPORT response status for '/test/client/' in 0.003 seconds gzip 427 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:33 +0530] [25024/Thread-81 (process_request_thread)] [INFO] PUT request for '/test/client/client-sequence.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-81 (process_request_thread)] [INFO] PUT response status for '/test/client/client-sequence.ics' in 0.011 seconds: 201 Created
+[2026-10-11 23:56:33 +0530] [25024/Thread-82 (process_request_thread)] [INFO] GET request for '/test/client/client-sequence.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-82 (process_request_thread)] [INFO] GET response status for '/test/client/client-sequence.ics' in 0.001 seconds gzip 188 bytes: 200 OK
+[2026-10-11 23:56:33 +0530] [25024/Thread-83 (process_request_thread)] [INFO] PUT request for '/test/client/client-sequence.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-83 (process_request_thread)] [INFO] PUT response status for '/test/client/client-sequence.ics' in 0.045 seconds: 204 No Content
+[2026-10-11 23:56:33 +0530] [25024/Thread-84 (process_request_thread)] [INFO] GET request for '/test/client/client-sequence.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-84 (process_request_thread)] [INFO] GET response status for '/test/client/client-sequence.ics' in 0.002 seconds gzip 188 bytes: 200 OK
+[2026-10-11 23:56:33 +0530] [25024/Thread-85 (process_request_thread)] [INFO] PUT request for '/test/client/client-sequence.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-85 (process_request_thread)] [INFO] PUT response status for '/test/client/client-sequence.ics' in 0.011 seconds: 204 No Content
+[2026-10-11 23:56:33 +0530] [25024/Thread-86 (process_request_thread)] [INFO] GET request for '/test/client/client-sequence.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-86 (process_request_thread)] [INFO] GET response status for '/test/client/client-sequence.ics' in 0.001 seconds gzip 188 bytes: 200 OK
+[2026-10-11 23:56:33 +0530] [25024/Thread-87 (process_request_thread)] [INFO] PUT request for '/test/client/client-delete.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-87 (process_request_thread)] [INFO] PUT response status for '/test/client/client-delete.ics' in 0.038 seconds: 201 Created
+[2026-10-11 23:56:33 +0530] [25024/Thread-88 (process_request_thread)] [INFO] PROPFIND request for '/test/client/client-delete.ics' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-88 (process_request_thread)] [INFO] PROPFIND response status for '/test/client/client-delete.ics' with depth '0' in 0.001 seconds gzip 230 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:33 +0530] [25024/Thread-89 (process_request_thread)] [INFO] GET request for '/test/client/client-delete.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-89 (process_request_thread)] [INFO] GET response status for '/test/client/client-delete.ics' in 0.001 seconds gzip 178 bytes: 200 OK
+[2026-10-11 23:56:33 +0530] [25024/Thread-90 (process_request_thread)] [INFO] PUT request for '/test/client/client-delete.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-90 (process_request_thread)] [INFO] PUT response status for '/test/client/client-delete.ics' in 0.093 seconds: 204 No Content
+[2026-10-11 23:56:33 +0530] [25024/Thread-91 (process_request_thread)] [INFO] PUT request for '/test/client/client-delete.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-91 (process_request_thread)] [WARNING] Precondition failed on PUT request for '/test/client/client-delete.ics' (HTTP_IF_MATCH: "89024acb333a6e143e34670cf8db1ab11c17bf0a9bcebe2dbdcf9000ac47ea59", item has different etag: "0b21f848243a0958368afdf9aecc395b79423beb6b06f39587880493355db969")
+[2026-10-11 23:56:33 +0530] [25024/Thread-91 (process_request_thread)] [NOTICE] PUT response status for '/test/client/client-delete.ics' in 0.002 seconds gzip 40 bytes: 412 Precondition Failed
+[2026-10-11 23:56:33 +0530] [25024/Thread-92 (process_request_thread)] [INFO] DELETE request for '/test/client/client-delete.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-92 (process_request_thread)] [NOTICE] DELETE response status for '/test/client/client-delete.ics' in 0.001 seconds gzip 40 bytes: 412 Precondition Failed
+[2026-10-11 23:56:33 +0530] [25024/Thread-93 (process_request_thread)] [INFO] PROPFIND request for '/test/client/client-delete.ics' with depth '0' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-93 (process_request_thread)] [INFO] PROPFIND response status for '/test/client/client-delete.ics' with depth '0' in 0.001 seconds gzip 231 bytes (getetag): 207 Multi-Status
+[2026-10-11 23:56:33 +0530] [25024/Thread-94 (process_request_thread)] [INFO] DELETE request for '/test/client/client-delete.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-94 (process_request_thread)] [INFO] DELETE response status for '/test/client/client-delete.ics' in 0.013 seconds gzip 156 bytes: 200 OK
+[2026-10-11 23:56:33 +0530] [25024/Thread-95 (process_request_thread)] [INFO] DELETE request for '/test/client/client-delete.ics' received from 127.0.0.1 using 'python-caldav/3.4.1.dev28+g1a75f457a'
+[2026-10-11 23:56:33 +0530] [25024/Thread-95 (process_request_thread)] [NOTICE] DELETE response status for '/test/client/client-delete.ics' in 0.001 seconds gzip 62 bytes: 404 Not Found

@@ -3,7 +3,7 @@
 >>> REPORT /dav/calendars/user/user1/expiry/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>data:,1791613479-115</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>data:,1791743275-128</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 403 Forbidden
 <<< Content-Type: application/xml; charset=utf-8
 <<< <?xml version="1.0" encoding="utf-8"?>
@@ -13,4 +13,4 @@
 <<< </D:error>
 
 RESULT [Cyrus] after expiry, the saved token: 403, valid-sync-token: True, members []
-RESULT [Cyrus] python-caldav with the saved token: AuthorizationError {'url': 'http://localhost:8802/dav/calendars/user/user1/expiry/', 'reason': 'Forbidden'}; retry with an empty token: 207
+RESULT [Cyrus] python-caldav with the saved token: AuthorizationError {'url': 'http://localhost:8802/dav/calendars/user/user1/expiry/', 'reason': 'Forbidden', 'preconditions': ['{DAV:}valid-sync-token', '{DAV:}responsedescription'], 'body': b'<?xml version="1.0" encoding="utf-8"?>\n<D:error xmlns:D="DAV:">\n  <D:valid-sync-token/>\n  <D:responsedescription>Stale sync-token</D:responsedescription>\n</D:error>\n'}; retry with an empty token: 207

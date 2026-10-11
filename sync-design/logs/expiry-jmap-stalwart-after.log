@@ -1,6 +1,6 @@
 
 ===== changes from the saved state, after expiry =====
->>> CalendarEvent/changes {"sinceState": "sfy"}
+>>> CalendarEvent/changes {"sinceState": "sgq"}
 <<< error {"type": "cannotCalculateChanges", "description": "The server cannot calculate the changes between the old and new states."}
 
 RESULT [Stalwart] after expiry, /changes from the saved state: error cannotCalculateChanges The server cannot calculate the changes between the old and new states.

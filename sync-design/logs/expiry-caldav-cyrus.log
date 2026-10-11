@@ -88,7 +88,7 @@
 <<<       <D:status>HTTP/1.1 200 OK</D:status>
 <<<     </D:propstat>
 <<<   </D:response>
-<<<   <D:sync-token>data:,1791613479-115</D:sync-token>
+<<<   <D:sync-token>data:,1791743275-128</D:sync-token>
 <<< </D:multistatus>
 
 ===== delete known =====
@@ -215,7 +215,7 @@
 >>> REPORT /dav/calendars/user/user1/expiry/
 >>> Depth: 0
 >>> Content-Type: application/xml; charset=utf-8
->>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>data:,1791613479-115</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>data:,1791743275-128</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< Content-Type: application/xml; charset=utf-8
 <<< <?xml version="1.0" encoding="utf-8"?>
@@ -260,7 +260,7 @@
 <<<       <D:status>HTTP/1.1 200 OK</D:status>
 <<<     </D:propstat>
 <<<   </D:response>
-<<<   <D:sync-token>data:,1791613479-124</D:sync-token>
+<<<   <D:sync-token>data:,1791743275-137</D:sync-token>
 <<< </D:multistatus>
 
 RESULT [Cyrus] before expiry, incremental from the saved token: [('known.ics', '404'), ('edited.ics', '200'), ('later0.ics', '200'), ('later1.ics', '200'), ('later2.ics', '200')]

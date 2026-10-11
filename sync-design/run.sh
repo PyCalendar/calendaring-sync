@@ -189,16 +189,19 @@ for s in "${sections[@]}"; do
     "${s//-/_}"
 done
 
-# Logs name this checkout's own data/ directory; keep them independent of where it was cloned.
+# Logs name this checkout's own data/ directory and the local user; keep them independent of
+# where it was cloned and who ran it.
 "$PY" -B -E -s - "$LOGS" "$DATA" <<'EOF'
 import pathlib, re, sys
 logs, data = sys.argv[1], sys.argv[2]
 variants = {data, data.replace("/", "\\"), data.replace("/", "\\\\"), data.replace("\\", "\\\\")}
 site_packages = re.compile(r"[^\s\"']*[\\/]site-packages(?=[\\/])")
+local_user = re.compile(r"\bas user=\S+")
 for log in pathlib.Path(logs).glob("*.log"):
     text = log.read_text(encoding="utf-8", errors="replace")
     for v in sorted(variants, key=len, reverse=True):
         text = text.replace(v, "<data>")
     text = site_packages.sub("<site-packages>", text)
+    text = local_user.sub("as user=<user>", text)
     log.write_text(text, encoding="utf-8")
 EOF
