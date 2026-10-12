@@ -3,7 +3,7 @@
 >>> MKCALENDAR /dav/cal/testuser%40example.org/expiry/
 <<< 201 Created
 <<< content-type: application/xml; charset=utf-8
-<<< etag: "2341215161"
+<<< etag: "3577370568"
 <<< <?xml version="1.0" encoding="UTF-8"?><D:mkcol-response xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"></D:mkcol-response>
 
 ===== create known =====
@@ -33,7 +33,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "2642228466"
+<<< etag: "2779705760"
 
 ===== create edited =====
 >>> PUT /dav/cal/testuser%40example.org/expiry/edited.ics
@@ -62,7 +62,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "2250707815"
+<<< etag: "1565444798"
 
 ===== full sync =====
 >>> REPORT /dav/cal/testuser%40example.org/expiry/
@@ -71,7 +71,7 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/expiry/</D:href><D:propstat><D:prop><D:getetag>&quot;2341215161&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/known.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2642228466&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/edited.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2250707815&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:2f</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/expiry/</D:href><D:propstat><D:prop><D:getetag>&quot;3577370568&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/known.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2779705760&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/edited.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1565444798&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:2f</D:sync-token></D:multistatus>
 
 ===== delete known =====
 >>> DELETE /dav/cal/testuser%40example.org/expiry/known.ics
@@ -104,7 +104,7 @@
 
 >>> 
 <<< 204 No Content
-<<< etag: "3897018518"
+<<< etag: "2108801211"
 
 ===== create later0 =====
 >>> PUT /dav/cal/testuser%40example.org/expiry/later0.ics
@@ -133,7 +133,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "2015896988"
+<<< etag: "1678815866"
 
 ===== create later1 =====
 >>> PUT /dav/cal/testuser%40example.org/expiry/later1.ics
@@ -162,7 +162,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "2393806257"
+<<< etag: "3803471391"
 
 ===== create later2 =====
 >>> PUT /dav/cal/testuser%40example.org/expiry/later2.ics
@@ -191,7 +191,7 @@
 
 >>> 
 <<< 201 Created
-<<< etag: "724015818"
+<<< etag: "1558284816"
 
 ===== incremental from the saved token, before expiry =====
 >>> REPORT /dav/cal/testuser%40example.org/expiry/
@@ -200,6 +200,6 @@
 >>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:2f</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
 <<< 207 Multi-Status
 <<< content-type: application/xml; charset=utf-8
-<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/expiry/known.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/edited.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3897018518&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later2.ics</D:href><D:propstat><D:prop><D:getetag>&quot;724015818&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later1.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2393806257&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later0.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2015896988&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:34</D:sync-token></D:multistatus>
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/expiry/known.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/edited.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2108801211&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later2.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1558284816&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later1.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3803471391&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later0.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1678815866&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:34</D:sync-token></D:multistatus>
 
 RESULT [Stalwart] before expiry, incremental from the saved token: [('known.ics', '404'), ('edited.ics', '200'), ('later2.ics', '200'), ('later1.ics', '200'), ('later0.ics', '200')]

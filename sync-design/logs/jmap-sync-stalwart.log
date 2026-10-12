@@ -73,7 +73,7 @@
 
 ===== 6 get a =====
 >>> CalendarEvent/get {"ids": ["r"]}
-<<< CalendarEvent/get {"accountId": "b", "state": "seu", "list": [{"duration": "PT1H", "uid": "probe-a", "start": "2026-10-20T10:00:00", "@type": "Event", "updated": "2026-10-11T18:28:31Z", "timeZone": "Etc/UTC", "title": "a v3", "id": "r", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true}], "notFound": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "seu", "list": [{"title": "a v3", "timeZone": "Etc/UTC", "uid": "probe-a", "@type": "Event", "start": "2026-10-20T10:00:00", "updated": "2026-10-12T06:20:15Z", "duration": "PT1H", "id": "r", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true}], "notFound": []}
 
 ===== 7 create without version =====
 >>> CalendarEvent/set {"create": {"n": {"@type": "Event", "uid": "probe-noversion", "title": "no version", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
@@ -93,7 +93,7 @@
 
 ===== 9 create five =====
 >>> CalendarEvent/set {"create": {"l0": {"@type": "Event", "uid": "probe-list-0", "title": "before 0", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l1": {"@type": "Event", "uid": "probe-list-1", "title": "before 1", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l2": {"@type": "Event", "uid": "probe-list-2", "title": "before 2", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l3": {"@type": "Event", "uid": "probe-list-3", "title": "before 3", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l4": {"@type": "Event", "uid": "probe-list-4", "title": "before 4", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sey", "newState": "se2", "created": {"l2": {"id": "z"}, "l1": {"id": "y"}, "l3": {"id": "7"}, "l4": {"id": "9"}, "l0": {"id": "x"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sey", "newState": "se2", "created": {"l1": {"id": "y"}, "l4": {"id": "9"}, "l0": {"id": "x"}, "l3": {"id": "7"}, "l2": {"id": "z"}}}
 
 ===== current state =====
 >>> CalendarEvent/get {"ids": []}

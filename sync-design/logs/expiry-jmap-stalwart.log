@@ -17,11 +17,11 @@
 
 ===== create round 1 =====
 >>> CalendarEvent/set {"create": {"e0": {"@type": "Event", "uid": "expiry-1-0", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e1": {"@type": "Event", "uid": "expiry-1-1", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e2": {"@type": "Event", "uid": "expiry-1-2", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sgy", "newState": "sg2", "created": {"e1": {"id": "bj"}, "e2": {"id": "bk"}, "e0": {"id": "bi"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sgy", "newState": "sg2", "created": {"e0": {"id": "bi"}, "e1": {"id": "bj"}, "e2": {"id": "bk"}}}
 
 ===== destroy round 1 =====
->>> CalendarEvent/set {"destroy": ["bj", "bk", "bi"]}
-<<< CalendarEvent/set {"accountId": "b", "oldState": "sg2", "newState": "sha", "destroyed": ["bj", "bk", "bi"]}
+>>> CalendarEvent/set {"destroy": ["bi", "bj", "bk"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sg2", "newState": "sha", "destroyed": ["bi", "bj", "bk"]}
 
 ===== create round 2 =====
 >>> CalendarEvent/set {"create": {"e0": {"@type": "Event", "uid": "expiry-2-0", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e1": {"@type": "Event", "uid": "expiry-2-1", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "e2": {"@type": "Event", "uid": "expiry-2-2", "title": "x", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
