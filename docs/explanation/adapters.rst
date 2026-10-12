@@ -73,7 +73,7 @@ Why changes come from python-caldav's sync report
 
 Changes since a token come from python-caldav's ``get_objects_by_sync_token()``, which sends ``sync-collection`` with ``Depth: 0``, the depth that report requires (:rfc:`6578#section-3.2`). When a server truncates a report with a 507 status and a :term:`checkpoint` token (:rfc:`6578#section-3.6`), python-caldav follows the checkpoints until the report is complete, and the adapter hands the core the whole result. The adapter turns python-caldav's fallback off: it would answer a failed report with a full listing under a client-side ``fake-`` token.
 
-A removed member has a 404 status and no ``DAV:propstat``, the element that would carry its properties (:rfc:`6578#section-3.2`), and python-caldav returns it as an object with no ETag and no data. Until python-caldav marks removed members itself, the adapter reads a member without an ETag as removed: every stored calendar object has a strong ETag (:rfc:`4791#section-5.3.4`).
+A removed member has a 404 status and no ``DAV:propstat``, the element that would carry its properties (:rfc:`6578#section-3.2`), and python-caldav lists it in the result's ``deleted_urls``, which the adapter reads removals from.
 
 The adapter never sends ``DAV:limit`` (:rfc:`6578#section-3.7`), which asks the server to return at most a given number of results: a server can apply it by dropping the remaining changes and returning its newest token.
 
@@ -82,7 +82,7 @@ Why only an invalid token resets the scope
 
 A server that won't accept a token answers with the ``DAV:valid-sync-token`` precondition, an error element saying the token isn't valid (:rfc:`6578#section-3.2`), and the client falls back to a full sync, without downloading unchanged cached resources. :rfc:`4791#section-1.3` specifies 403 or 409 for a failed precondition, and a tested server sends 412.
 
-The adapter :term:`resets <reset>` the scope only when the error names ``DAV:valid-sync-token``, whatever its status. Any other failure, such as a refused login or a server that's down, is raised, so a flaky server doesn't cause a full listing on every error. The adapter only sends tokens the server issued, so a 500 means the server failed, not that the token was malformed. python-caldav exposes the precondition on a 403; until it does for other statuses, the adapter reads it from the error text.
+The adapter :term:`resets <reset>` the scope only when the error names ``DAV:valid-sync-token``, whatever its status. Any other failure, such as a refused login or a server that's down, is raised, so a flaky server doesn't cause a full listing on every error. The adapter only sends tokens the server issued, so a 500 means the server failed, not that the token was malformed. python-caldav keeps the precondition on every error, so the adapter reads it from the error's ``preconditions``, whatever the status.
 
 A tested server answers a token it no longer accepts with a report that leaves out older changes and raises no error. The adapter can't tell that from an ordinary report, so it says whether a scope needs regular full listings, from python-caldav's ``sync-token.invalid-token`` feature. Your application sets that feature by naming the server or by probing it with caldav-server-tester, so a new server or an upgrade needs no list of names here. How often to run them is up to your application; a full listing only fetches members whose ETag changed, so a frequent one is cheap.
 
@@ -103,14 +103,14 @@ Why writes are conditional
 
 Updates and deletes send ``If-Match`` with the base ETag (:rfc:`9110#section-13.1.1`), so the server applies them only if the member still has that ETag, and creates send ``If-None-Match: *`` (:rfc:`9110#section-13.1.2`), so a create never replaces an existing member. A mismatch gets status 412, and the edit stays pending for the next :term:`ingest`. Updates use python-caldav's ``save(increase_seqno=False)``, because ``save()`` increments the event's ``SEQUENCE`` revision number by default and the server wouldn't receive the edit you recorded. Deletes use ``delete(if_match=...)``.
 
-A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with an error element, ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); the adapter checks for both before treating a 403, 409 or 412 as a plain precondition failure. python-caldav keeps the error element only on a 403 for now, so on a 409 or 412 the adapter reads it from the error text.
+A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with an error element, ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); python-caldav raises ``UidConflictError`` for either, whatever the status, so the adapter never mistakes it for a plain precondition failure.
 
 A server MUST NOT return a strong ETag for data it stored differently (:rfc:`4791#section-5.3.4`), but tested servers do, so an applied push doesn't keep the ETag it got back.
 
 Why the adapter needs python-caldav 3.5.0
 -----------------------------------------
 
-The adapter relies on four python-caldav changes in 3.5.0: following truncated sync reports, keeping a 403's preconditions, honoring ``increase_seqno`` on every save, and ``delete(if_match=...)``.
+The adapter relies on six python-caldav changes in 3.5.0: following truncated sync reports, listing removed members in ``deleted_urls``, keeping preconditions on every error, ``UidConflictError``, honoring ``increase_seqno`` on every save, and ``delete(if_match=...)``.
 
 JMAP
 ====
