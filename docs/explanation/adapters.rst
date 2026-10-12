@@ -8,30 +8,32 @@ Adapters
 .. meta::
    :description: What every calendaring-sync adapter provides, and how each adapter maps its protocol onto the sync model.
 
-An adapter maps one protocol onto the model in :doc:`design`. Adding an adapter doesn't change the core. The adapters in this package each sit behind their own optional extra, so the core never imports a protocol's client library, and an adapter can also live in another package. Each adapter's section cites the specifications behind its rules, and :doc:`../reference/server-compatibility` records where tested servers depart from them.
+An adapter maps one protocol onto the model in :doc:`design`. Adding an adapter doesn't change the core. The adapters in this package each sit behind their own optional extra, so the core never imports a protocol's client library, and an adapter can also live in another package. Each adapter's section cites the specifications behind its rules, and :doc:`../reference/server-compatibility` records where tested servers depart from them. The :doc:`../reference/glossary` defines the sync terms this page uses.
 
 Why every adapter provides the same things
 ==========================================
 
 The core never branches on protocol, so it asks every adapter for the same things:
 
-- what a scope is, and an object id unique within it
-- a version per object, if the protocol has one; without it, every reported object is fetched and compared by fingerprint
-- changes since a token, if the protocol has them; without them, every sync is a full listing
-- the content's media type, and its own fingerprint function and scheme name if the exact text isn't stable
-- each object's containers and logical key, where the protocol has them
-- change sets built from the protocol's reports: incremental or a full listing, complete or one truncated page
-- each push's outcome (applied, rejected, gone, refused for its logical key, or unknown), and which errors mean the scope must be listed again
+- what a :term:`scope` is, and an :term:`object id` unique within it
+- a :term:`version` per object, if the protocol has one; without it, every reported object is fetched and compared by :term:`fingerprint`
+- changes since a :term:`sync token`, if the protocol has them; without them, every sync is a :term:`full listing`
+- the content's media type, and its own fingerprint function and :term:`fingerprint scheme` name if the exact text isn't stable
+- each object's :term:`containers <container>` and :term:`logical key`, where the protocol has them
+- :term:`change sets <change set>` built from the protocol's answers: incremental or a full listing, complete or one :term:`truncated page`
+- each :term:`push`'s outcome (applied, rejected, gone, refused for its logical key, or unknown), and which errors mean the scope must be :term:`reset`
 
 An adapter's synchronous and asynchronous variants share all of its translation and parsing, and differ only in the client library calls they make.
 
 CalDAV
 ======
 
+CalDAV keeps calendars on a web server, using the WebDAV extensions to HTTP. Each calendar is a calendar collection, a folder at its own web address. Each event or task in a calendar is a member: one iCalendar file, the standard text format for calendar data, at its own address, called its href. The server gives every member an ETag, a short string that changes when the member changes. To learn what changed, a client sends a ``sync-collection`` report with the sync token from its last report, and the server answers with the members changed or removed since then, plus a new token. A ``PROPFIND`` request lists every member with its ETag, and a ``calendar-multiget`` report fetches several members' content in one request. The adapter sends these requests through python-caldav, a Python CalDAV client library.
+
 Why a CalDAV scope is one calendar collection
 ---------------------------------------------
 
-:rfc:`6578` issues one sync token per collection.
+Each collection has its own sync token (:rfc:`6578`), so one collection is one scope.
 
 .. list-table::
    :header-rows: 1
@@ -57,32 +59,32 @@ Why a CalDAV scope is one calendar collection
 Why the adapter checks supported reports first
 ----------------------------------------------
 
-Before a collection's first sync, the adapter reads ``DAV:supported-report-set`` (:rfc:`3253#section-3.1.5`), so a collection without ``sync-collection`` is known before any report fails. Such a collection is synced by a full listing every time, and only changed members are fetched.
+Before a collection's first sync, the adapter reads ``DAV:supported-report-set`` (:rfc:`3253#section-3.1.5`), the list of reports the collection supports, so it knows whether ``sync-collection`` works before any report fails. A collection without it gets a :term:`full listing` every time, and the adapter fetches only changed members.
 
 Why a full listing reads the token first
 ----------------------------------------
 
-A full listing reads the collection's ``DAV:sync-token`` property, which holds the token a report would return at that moment (:rfc:`6578#section-4`), and then lists each member and its ETag with a ``PROPFIND`` of ``Depth: 1`` (:rfc:`4918#section-9.1`). Members whose ETag matches the stored one are reported unchanged, and the rest are fetched. Anything that changes during the listing appears in the next report from that token.
+A :term:`full listing` reads the collection's ``DAV:sync-token`` property, which holds the token a report would return at that moment (:rfc:`6578#section-4`), and then lists each member and its ETag with a ``PROPFIND`` (:rfc:`4918#section-9.1`) of ``Depth: 1``, which covers the collection and the members directly inside it (:rfc:`4918#section-10.2`). Members whose ETag matches the stored one are reported unchanged, and the rest are fetched. Anything that changes during the listing appears in the next report from that token.
 
-The adapter never lists with an empty-token report. A server may truncate any report (:rfc:`6578#section-3.6`), and a tested server truncates an empty-token report at a checkpoint that skips the remaining members, so a listing would infer that objects were removed when they weren't. ``PROPFIND`` has no truncation: its answer lists every member.
+The adapter never lists with a report sent with an empty token, which asks for every member. A server may truncate any report (:rfc:`6578#section-3.6`), and a tested server truncates an empty-token report at a :term:`checkpoint` that skips the remaining members, so a listing would infer that objects were removed when they weren't. A server can cap a ``PROPFIND`` too: a tested server lists at most its configured number of results and marks the cut with a 507 for the collection. That cut is visible and never comes with a token that skips members, but a listing cut short still can't tell a missing member from a removed one. So when a ``PROPFIND`` comes back with a 507, the adapter raises an error instead of ingesting it, and the server's limit has to be raised.
 
 Why changes come from python-caldav's sync report
 -------------------------------------------------
 
-Changes since a token come from python-caldav's ``get_objects_by_sync_token()``, which sends ``sync-collection`` with ``Depth: 0`` (:rfc:`6578#section-3.2`). When a server truncates a report with a 507 and a checkpoint token (:rfc:`6578#section-3.6`), python-caldav follows the checkpoints until the report is complete, and the adapter hands the core the whole result. The adapter turns python-caldav's fallback off: it would answer a failed report with a full listing under a client-side ``fake-`` token.
+Changes since a token come from python-caldav's ``get_objects_by_sync_token()``, which sends ``sync-collection`` with ``Depth: 0``, the depth that report requires (:rfc:`6578#section-3.2`). When a server truncates a report with a 507 status and a :term:`checkpoint` token (:rfc:`6578#section-3.6`), python-caldav follows the checkpoints until the report is complete, and the adapter hands the core the whole result. The adapter turns python-caldav's fallback off: it would answer a failed report with a full listing under a client-side ``fake-`` token.
 
-A removed member has a 404 status and no ``DAV:propstat`` (:rfc:`6578#section-3.2`), and python-caldav returns it as an object with no ETag and no data. Every stored calendar object has a strong ETag (:rfc:`4791#section-5.3.4`), so a member without one was removed.
+A removed member has a 404 status and no ``DAV:propstat``, the element that would carry its properties (:rfc:`6578#section-3.2`), and python-caldav returns it as an object with no ETag and no data. Until python-caldav marks removed members itself, the adapter reads a member without an ETag as removed: every stored calendar object has a strong ETag (:rfc:`4791#section-5.3.4`).
 
-The adapter never sends ``DAV:limit`` (:rfc:`6578#section-3.7`): a server can apply it by dropping the remaining changes and returning its newest token.
+The adapter never sends ``DAV:limit`` (:rfc:`6578#section-3.7`), which asks the server to return at most a given number of results: a server can apply it by dropping the remaining changes and returning its newest token.
 
-Why a failed report resets the scope
-------------------------------------
+Why only an invalid token resets the scope
+------------------------------------------
 
-A server that won't accept a token answers with the ``DAV:valid-sync-token`` precondition (:rfc:`6578#section-3.2`), and the client falls back to a full sync, without downloading unchanged cached resources. :rfc:`4791#section-1.3` specifies 403 or 409 for a failed precondition, but tested servers also send 412, or 500 for a token they can't parse. python-caldav keeps the precondition only on a 403.
+A server that won't accept a token answers with the ``DAV:valid-sync-token`` precondition, an error element saying the token isn't valid (:rfc:`6578#section-3.2`), and the client falls back to a full sync, without downloading unchanged cached resources. :rfc:`4791#section-1.3` specifies 403 or 409 for a failed precondition, and a tested server sends 412.
 
-So any failed report for a token the server issued resets the scope, except a 403 without ``DAV:valid-sync-token``, which means access was refused and is raised. A full listing is always correct, and if it fails as well, its error is raised.
+The adapter :term:`resets <reset>` the scope only when the error names ``DAV:valid-sync-token``, whatever its status. Any other failure, such as a refused login or a server that's down, is raised, so a flaky server doesn't cause a full listing on every error. The adapter only sends tokens the server issued, so a 500 means the server failed, not that the token was malformed. python-caldav exposes the precondition on a 403; until it does for other statuses, the adapter reads it from the error text.
 
-A tested server answers a token it no longer accepts with a report that leaves out older changes and raises no error. The adapter can't tell that from an ordinary report, so on such a server, schedule regular full listings.
+A tested server answers a token it no longer accepts with a report that leaves out older changes and raises no error. The adapter can't tell that from an ordinary report, so it says whether a scope needs regular full listings, from python-caldav's profile of the server, which your application selects by naming the server. How often to run them is up to your application; a full listing only fetches members whose ETag changed, so a frequent one is cheap.
 
 Why content comes from a multiget, with its own ETag
 ----------------------------------------------------
@@ -94,24 +96,33 @@ A member that comes back 404, or is missing from the response although :rfc:`479
 Why writes are conditional
 --------------------------
 
-Updates and deletes send ``If-Match`` with the base ETag (:rfc:`9110#section-13.1.1`), and creates send ``If-None-Match: *`` (:rfc:`9110#section-13.1.2`). A mismatch is a 412, and the edit stays pending for the next ingest. Updates use python-caldav's ``save(increase_seqno=False)``, because ``save()`` increments ``SEQUENCE`` by default and the server wouldn't receive the edit you recorded. Deletes use ``delete(if_match=...)``.
+Updates and deletes send ``If-Match`` with the base ETag (:rfc:`9110#section-13.1.1`), so the server applies them only if the member still has that ETag, and creates send ``If-None-Match: *`` (:rfc:`9110#section-13.1.2`), so a create never replaces an existing member. A mismatch gets status 412, and the edit stays pending for the next :term:`ingest`. Updates use python-caldav's ``save(increase_seqno=False)``, because ``save()`` increments the event's ``SEQUENCE`` revision number by default and the server wouldn't receive the edit you recorded. Deletes use ``delete(if_match=...)``.
 
-A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); the adapter checks for both before treating a 412 as a plain precondition failure.
+A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with an error element, ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); the adapter checks for both before treating a 412 as a plain precondition failure.
 
 A server MUST NOT return a strong ETag for data it stored differently (:rfc:`4791#section-5.3.4`), but tested servers do, so an applied push doesn't keep the ETag it got back.
 
-Why the adapter needs a python-caldav newer than 3.4.0
-------------------------------------------------------
+Why the adapter needs python-caldav 3.5.0
+-----------------------------------------
 
-The adapter relies on four python-caldav changes made after 3.4.0: following truncated sync reports, keeping a 403's preconditions, honoring ``increase_seqno`` on every save, and ``delete(if_match=...)``.
+The adapter relies on four python-caldav changes in 3.5.0: following truncated sync reports, keeping a 403's preconditions, honoring ``increase_seqno`` on every save, and ``delete(if_match=...)``.
 
 JMAP
 ====
 
-Why a JMAP scope is one account and one data type
--------------------------------------------------
+JMAP is a protocol for reading and changing data on a server with JSON requests over HTTP. A server holds one or more accounts, and each account holds records of several types, such as calendars, events, and tasks. Every record has an ``id``. For each record type in an account, the server keeps a ``state`` string that changes whenever any record of that type changes. A client calls methods on a record type, written as the type's name and the method, such as ``CalendarEvent/get``:
 
-A JMAP ``state`` covers all records of one type in one account (:rfc:`8620#section-5.1`), so ``CalendarEvent`` and ``Task`` in one account are two scopes.
+- ``/changes`` returns the ids created, updated, or destroyed since a state you give it, and the new state
+- ``/get`` fetches records by id
+- ``/query`` lists the ids that match a filter
+- ``/set`` creates, updates, and destroys records
+
+Events are JSCalendar objects, a JSON format for calendar data. The adapter makes these calls through calendaring-jmap, a Python JMAP client library.
+
+Why a JMAP scope is one account and one record type
+---------------------------------------------------
+
+A record type is the kind of data a JMAP record holds, such as ``CalendarEvent`` for events or ``Task`` for tasks. A ``state`` string covers all records of one type in one account (:rfc:`8620#section-5.1`), so ``CalendarEvent`` and ``Task`` in one account are two scopes.
 
 .. list-table::
    :header-rows: 1
@@ -120,9 +131,9 @@ A JMAP ``state`` covers all records of one type in one account (:rfc:`8620#secti
    * - calendaring-sync
      - JMAP
    * - Scope
-     - One account and one data type
+     - One account and one record type
    * - Object id
-     - The record's ``id``, unique per type per account (:rfc:`8620#section-1.6.3`)
+     - The record's ``id``, unique per record type per account (:rfc:`8620#section-1.6.3`)
    * - Version
      - None: JMAP has no per-record version
    * - Sync token
@@ -134,19 +145,19 @@ A JMAP ``state`` covers all records of one type in one account (:rfc:`8620#secti
    * - Logical key
      - ``uid`` plus ``recurrenceId``: one account may hold several events with one ``uid`` only when their ``recurrenceId`` values differ (draft-ietf-jmap-calendars-32 section 1.4.1)
 
-Content stays JSCalendar, since converting to iCalendar would lose data on each round trip. Applications that want iCalendar can use calendaring-jmap's converters.
+Content stays JSCalendar, since converting to iCalendar would lose data on each round trip; converting is left to your application.
 
-With no per-record version, every object ``/changes`` reports is fetched and compared by fingerprint, and a full listing fetches everything.
+With no per-record version, every object ``/changes`` reports is fetched and compared by :term:`fingerprint`, and a :term:`full listing` fetches everything.
 
 Why some errors reset the scope
 -------------------------------
 
-On ``cannotCalculateChanges`` the client MUST invalidate its cache for the type (:rfc:`8620#section-5.2`), so the adapter resets the scope. It also resets on two answers seen on a tested server: an ``oldState`` that doesn't echo the ``sinceState`` sent, and ``invalidArguments`` from ``/changes``. The adapter only sends states the server issued and a valid ``maxChanges``, so the state is the only argument that can be wrong.
+On ``cannotCalculateChanges``, the error a server returns when it can't work out the changes since the state given, the client MUST invalidate its cache for the type (:rfc:`8620#section-5.2`), so the adapter :term:`resets <reset>` the scope. It also resets on two answers seen on a tested server: an ``oldState`` that doesn't repeat the ``sinceState`` the adapter sent, and ``invalidArguments`` from ``/changes``. The adapter only sends states the server issued and a valid ``maxChanges``, so the state is the only argument that can be wrong.
 
 Why pages follow the new state
 ------------------------------
 
-When ``hasMoreChanges`` is true, the client may call ``/changes`` again with the ``newState`` it received (:rfc:`8620#section-5.2`). Each page is a truncated change set that advances the scope to its ``newState``.
+When a ``/changes`` answer leaves out some changes, it sets ``hasMoreChanges`` to true, and the client may call ``/changes`` again with the ``newState`` it received (:rfc:`8620#section-5.2`). Each answer is a :term:`truncated page` that advances the scope to its ``newState``.
 
 Objects are fetched with ``/get`` after ``/changes``, so one can be newer than the ``newState`` it came with. The next ``/changes`` reports it again, and the matching fingerprint makes that a no-op.
 
@@ -160,14 +171,14 @@ A server generates a ``uid`` only when a create omits it (draft-ietf-jmap-calend
 Why writes use ifInState
 ------------------------
 
-A ``/set`` with ``ifInState`` fails with ``stateMismatch`` if the type's state has moved (:rfc:`8620#section-5.3`). That state covers the whole account, so a rejection means something changed, not necessarily this object. The edits stay pending for the next ingest.
+A ``/set`` with ``ifInState``, the state the client expects, fails with ``stateMismatch`` if the type's state has moved (:rfc:`8620#section-5.3`). That state covers the whole account, so a rejection means something changed, not necessarily this object. The edits stay pending for the next ingest.
 
 Why events come before tasks
 ----------------------------
 
-Tasks fit the model as their own scope, but no tested JMAP server advertises ``urn:ietf:params:jmap:tasks``, and calendaring-jmap's task sync isn't released yet. The JMAP adapter starts with ``CalendarEvent`` and adds tasks once both are available.
+Tasks fit the model as their own scope, but no tested JMAP server advertises JMAP Tasks (``urn:ietf:params:jmap:tasks``). The JMAP adapter starts with ``CalendarEvent`` and adds tasks once a server supports them.
 
-Why the adapter waits on calendaring-jmap
------------------------------------------
+Why the adapter needs JSCalendar writes
+---------------------------------------
 
-Paging and guarded writes need calendaring-jmap to return ``newState`` on a truncated ``/changes`` response instead of raising, and to support ``ifInState`` on writes. Accounts other than the primary one and a release with the task sync methods are needed too.
+The adapter pushes the JSCalendar you recorded unchanged, so it needs a client call that writes JSCalendar without converting it. Guarded writes need ``ifInState`` on those calls, and paging needs each ``/changes`` page's ``newState``. Without ``ifInState``, a push can overwrite a change made since the last sync. Without paging, a truncated ``/changes`` answer resets the scope instead, which is correct but downloads everything again.
