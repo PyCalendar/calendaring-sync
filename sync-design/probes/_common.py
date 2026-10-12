@@ -19,6 +19,9 @@ if TYPE_CHECKING:
     from caldav.collection import SynchronizableCalendarObjectCollection
     from lxml.etree import _Element
 
+# Logs are UTF-8 whatever the console encoding, since fixtures carry non-ASCII text.
+sys.stdout.reconfigure(encoding="utf-8")
+
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 XML = {"Content-Type": "application/xml; charset=utf-8"}
 ICS = {"Content-Type": "text/calendar; charset=utf-8"}
@@ -54,10 +57,9 @@ def capture(pattern, text, default=None):
     return m.group(1) if m else default
 
 
-def ics(uid, summary, dtstamp=True):
+def ics(uid, summary, fixture="event.ics"):
     """An event from fixtures/, with its uid and summary filled in."""
-    name = "event.ics" if dtstamp else "event-without-dtstamp.ics"
-    with open(FIXTURES / name, encoding="utf-8", newline="") as f:
+    with open(FIXTURES / fixture, encoding="utf-8", newline="") as f:
         return Template(f.read()).substitute(uid=uid, summary=summary)
 
 

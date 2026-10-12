@@ -134,7 +134,7 @@ paged("from an empty token", "")
 r1 = dav.request("8 GET a", "GET", dav.href("a.ics"))
 dav.put("8 PUT a's stored content back unchanged", "a.ics", r1.text)
 result(SERVER, "8 identical PUT", f"ETag unchanged: {r1.headers.get('ETag') == dav.etag('a.ics')}")
-sent = ics("uid-f", "no DTSTAMP", dtstamp=False)
+sent = ics("uid-f", "no DTSTAMP", fixture="event-without-dtstamp.ics")
 rp = dav.put("8 PUT without DTSTAMP", "f.ics", sent)
 rg = dav.request("8 GET f", "GET", dav.href("f.ics"))
 result(

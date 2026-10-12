@@ -1,0 +1,281 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /test/fp/
+<<< 404 Not Found
+<<< Content-Type: text/plain; charset=utf-8
+<<< The requested resource could not be found.
+
+===== reset: MKCALENDAR =====
+>>> MKCALENDAR /test/fp/
+<<< 201 Created
+
+===== PUT event.ics =====
+>>> PUT /test/fp/event-fp.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:fp-event.ics
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:fingerprint
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< ETag: "15a3068ff2a146b13c6f71118d5c8535ee865284ad735040be525378643d0042"
+
+===== GET event.ics =====
+>>> GET /test/fp/event-fp.ics
+<<< 200 OK
+<<< Content-Type: text/calendar; charset=utf-8
+<<< ETag: "15a3068ff2a146b13c6f71118d5c8535ee865284ad735040be525378643d0042"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync evidence//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:fp-event.ics
+
+<<< DTSTART:20261020T100000Z
+
+<<< DTEND:20261020T110000Z
+
+<<< DTSTAMP:20261010T000000Z
+
+<<< SUMMARY:fingerprint
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+===== PUT event-rich.ics =====
+>>> PUT /test/fp/event-rich-fp.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VTIMEZONE
+
+>>> TZID:Europe/Berlin
+
+>>> BEGIN:STANDARD
+
+>>> DTSTART:19701025T030000
+
+>>> RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+
+>>> TZOFFSETFROM:+0200
+
+>>> TZOFFSETTO:+0100
+
+>>> TZNAME:CET
+
+>>> END:STANDARD
+
+>>> BEGIN:DAYLIGHT
+
+>>> DTSTART:19700329T020000
+
+>>> RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+
+>>> TZOFFSETFROM:+0100
+
+>>> TZOFFSETTO:+0200
+
+>>> TZNAME:CEST
+
+>>> END:DAYLIGHT
+
+>>> END:VTIMEZONE
+
+>>> BEGIN:VEVENT
+
+>>> UID:fp-event-rich.ics
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART;TZID=Europe/Berlin:20261020T100000
+
+>>> DTEND;TZID=Europe/Berlin:20261020T110000
+
+>>> RRULE:FREQ=WEEKLY;COUNT=4
+
+>>> SUMMARY:fingerprint
+
+>>> DESCRIPTION:A description long enough that it has to be folded across lines
+
+>>>  \, with non-ASCII text: Grüße\, déjà vu\, 日本語.
+
+>>> ORGANIZER;CN=Organizer:mailto:organizer@example.org
+
+>>> ATTENDEE;CN=First;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION:mailto:first@e
+
+>>>  xample.org
+
+>>> ATTENDEE;CN=Second;ROLE=OPT-PARTICIPANT;PARTSTAT=ACCEPTED:mailto:second@exa
+
+>>>  mple.org
+
+>>> BEGIN:VALARM
+
+>>> ACTION:DISPLAY
+
+>>> DESCRIPTION:Reminder
+
+>>> TRIGGER:-PT15M
+
+>>> END:VALARM
+
+>>> END:VEVENT
+
+>>> BEGIN:VEVENT
+
+>>> UID:fp-event-rich.ics
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> RECURRENCE-ID;TZID=Europe/Berlin:20261027T100000
+
+>>> DTSTART;TZID=Europe/Berlin:20261027T120000
+
+>>> DTEND;TZID=Europe/Berlin:20261027T130000
+
+>>> SUMMARY:fingerprint\, moved
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< ETag: "8a6401f1bfbd07c81db09130f8ddf6879643637f3f5eb859a64a3c7bf5832e3f"
+
+===== GET event-rich.ics =====
+>>> GET /test/fp/event-rich-fp.ics
+<<< 200 OK
+<<< Content-Type: text/calendar; charset=utf-8
+<<< ETag: "8a6401f1bfbd07c81db09130f8ddf6879643637f3f5eb859a64a3c7bf5832e3f"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync evidence//EN
+
+<<< BEGIN:VTIMEZONE
+
+<<< TZID:Europe/Berlin
+
+<<< BEGIN:STANDARD
+
+<<< DTSTART:19701025T030000
+
+<<< RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+
+<<< TZNAME:CET
+
+<<< TZOFFSETFROM:+0200
+
+<<< TZOFFSETTO:+0100
+
+<<< END:STANDARD
+
+<<< BEGIN:DAYLIGHT
+
+<<< DTSTART:19700329T020000
+
+<<< RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+
+<<< TZNAME:CEST
+
+<<< TZOFFSETFROM:+0100
+
+<<< TZOFFSETTO:+0200
+
+<<< END:DAYLIGHT
+
+<<< END:VTIMEZONE
+
+<<< BEGIN:VEVENT
+
+<<< UID:fp-event-rich.ics
+
+<<< DTSTART;TZID=Europe/Berlin:20261020T100000
+
+<<< DTEND;TZID=Europe/Berlin:20261020T110000
+
+<<< ATTENDEE;CN=First;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT:mailto:first@e
+
+<<<  xample.org
+
+<<< ATTENDEE;CN=Second;PARTSTAT=ACCEPTED;ROLE=OPT-PARTICIPANT:mailto:second@exa
+
+<<<  mple.org
+
+<<< DESCRIPTION:A description long enough that it has to be folded across lines
+
+<<<  \, with non-ASCII text: Grüße\, déjà vu\, 日本語.
+
+<<< DTSTAMP:20261010T000000Z
+
+<<< ORGANIZER;CN=Organizer:mailto:organizer@example.org
+
+<<< RRULE:FREQ=WEEKLY;COUNT=4
+
+<<< SUMMARY:fingerprint
+
+<<< BEGIN:VALARM
+
+<<< ACTION:DISPLAY
+
+<<< DESCRIPTION:Reminder
+
+<<< TRIGGER:-PT15M
+
+<<< END:VALARM
+
+<<< END:VEVENT
+
+<<< BEGIN:VEVENT
+
+<<< UID:fp-event-rich.ics
+
+<<< RECURRENCE-ID;TZID=Europe/Berlin:20261027T100000
+
+<<< DTSTART;TZID=Europe/Berlin:20261027T120000
+
+<<< DTEND;TZID=Europe/Berlin:20261027T130000
+
+<<< DTSTAMP:20261010T000000Z
+
+<<< SUMMARY:fingerprint\, moved
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+RESULT [Radicale] event.ics: PUT status: 201
+RESULT [Radicale] event.ics: raw text equal: False
+RESULT [Radicale] PASS event.ics: canonical fingerprint equal: ok
+RESULT [Radicale] event-rich.ics: PUT status: 201
+RESULT [Radicale] event-rich.ics: raw text equal: False
+RESULT [Radicale] PASS event-rich.ics: canonical fingerprint equal: ok

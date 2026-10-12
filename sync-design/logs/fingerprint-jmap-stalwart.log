@@ -1,0 +1,25 @@
+
+===== calendars =====
+>>> Calendar/get {"ids": null}
+<<< Calendar/get {"accountId": "b", "state": "sfq", "list": [{"id": "b", "name": "Stalwart Calendar (testuser@example.org)", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": true, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "c", "name": "client", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "d", "name": "probe", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}, {"id": "e", "name": "fp", "description": null, "color": null, "sortOrder": 0, "isSubscribed": false, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true}}], "notFound": []}
+
+===== create =====
+>>> CalendarEvent/set {"create": {"c": {"@type": "Event", "uid": "fp-jmap", "title": "fingerprint", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sfy", "newState": "sf2", "created": {"c": {"id": "bc"}}}
+
+===== get =====
+>>> CalendarEvent/get {"ids": ["bc"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sf2", "list": [{"title": "fingerprint", "uid": "fp-jmap", "start": "2026-10-20T10:00:00", "duration": "PT1H", "@type": "Event", "updated": "2026-10-12T15:09:45Z", "timeZone": "Etc/UTC", "id": "bc", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true}], "notFound": []}
+
+===== update =====
+>>> CalendarEvent/set {"update": {"bc": {"title": "fingerprint, updated"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sf2", "newState": "sga", "updated": {"bc": null}}
+
+===== get =====
+>>> CalendarEvent/get {"ids": ["bc"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sga", "list": [{"@type": "Event", "title": "fingerprint, updated", "duration": "PT1H", "timeZone": "Etc/UTC", "start": "2026-10-20T10:00:00", "uid": "fp-jmap", "updated": "2026-10-12T15:09:45Z", "id": "bc", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true}], "notFound": []}
+
+RESULT [Stalwart] after create: properties the server added: ['id', 'isDraft', 'isOrigin', 'updated']
+RESULT [Stalwart] PASS after create: fingerprint equal: ok
+RESULT [Stalwart] after an update: properties the server added: ['id', 'isDraft', 'isOrigin', 'updated']
+RESULT [Stalwart] PASS after an update: fingerprint equal: ok
