@@ -47,7 +47,7 @@ Each record also gets a :term:`local key` from the core, so an object you create
 Why identity isn't the calendar UID
 ===================================
 
-A calendar :term:`UID` names a recurring event with all its occurrences, and a server can hold several objects with one UID, for example one for each occurrence that someone got a separate invitation to. Some servers also accept unrelated objects with the same UID. So the :term:`object id` is the identity. The :term:`logical key` has two uses only: finding objects, where a search returns every match, and recognizing your own create when the server's answer to it never arrived.
+A calendar :term:`UID` names a recurring event with all its occurrences, and a server can hold several objects with one UID, for example one for each occurrence that someone got a separate invitation to. Some servers also accept unrelated objects with the same UID. So the :term:`object id` is the identity. The :term:`logical key` has two uses only: finding objects, where a search returns every match, and recognizing your own create when the server's answer to it never arrived, which works only where the adapter says the key is unique.
 
 Why changes are compared by fingerprint
 =======================================
@@ -113,6 +113,7 @@ A session is ``ingesting`` while pages remain and ``ingested`` once the token is
        ingesting --> idle: interrupted
        idle --> ingested: complete change set
        ingested --> pushing: push starts
+       ingested --> idle: nothing to push
        pushing --> idle: pushes done
        note right of ingesting: no pushes while pages remain
        note right of pushing: no ingests until it ends
@@ -127,7 +128,7 @@ Before a push goes out, the core marks it :term:`in flight` in the store, in one
 
 If the process stops while a push is in flight, the push is unknown the next time you open the store. The next complete :term:`ingest` settles each unknown push:
 
-- a create that comes back under the id it chose, or with the logical key it was sent with, reached the server, and the core stores the server's copy
+- a create that comes back under the id it chose reached the server, and the core stores the server's copy; where the server picks the id, a create that comes back with the logical key it was sent with counts the same, but only if the adapter says that key is unique
 - an update that comes back with your content reached the server, and one that comes back different is a conflict, since a server's rewrite and another client's edit look the same
 - a delete that comes back removed reached the server
 - a push the change set doesn't mention didn't reach the server, and its edit is pending again
@@ -137,7 +138,7 @@ Treating an unknown push as failed could create the same object twice.
 Why the server's answer to a write isn't trusted
 ================================================
 
-Some servers rewrite what they store and still answer the write with a version. So an applied push clears the record's :term:`version` instead of keeping the one the server returned. The next incremental change set includes your write, so the core fetches the object once and stores it as the server holds it.
+Some servers rewrite what they store and still answer the write with a version. So an applied push clears the record's :term:`version` instead of keeping the one the server returned. The next incremental change set includes your write, so the core fetches the object once and stores it as the server holds it. Where the adapter guards each push with the object's version, a new edit to a record whose version was cleared waits until an ingest gives it one again, so it never goes out unguarded.
 
 A rejected push isn't a :term:`conflict` by itself, because some protocols only check whether anything in the scope changed since the last sync, not whether this object did. The next ingest decides: if this object changed, it's a conflict, and if not, the adapter pushes the edit again. An edit stays pending until the server applies it, so your content isn't lost.
 
@@ -266,4 +267,4 @@ If a calendar or account disappears from the server, the adapter raises an error
 Why storage is synchronous
 ==========================
 
-Storage is a typed interface, ``StateStore``, with an in-memory implementation for tests and a SQLite one for real use. One :term:`store` holds many scopes. A key-value interface couldn't apply a change set and advance a token in one transaction, and an asynchronous store would push synchronous callers through an event loop. Adapters come in synchronous and asynchronous variants that share their logic; the asynchronous ones call the core directly, since each store call is one short transaction.
+Storage is a typed interface, ``StateStore``, with an in-memory implementation for tests and a SQLite one for real use. One :term:`store` holds many scopes. A key-value interface couldn't apply a change set and advance a token in one transaction, and an asynchronous store would push synchronous callers through an event loop. Adapters come in synchronous and asynchronous variants that share their logic. The asynchronous ones run each store call in a worker thread, since ingesting a large full listing is one long transaction and would otherwise block the event loop.

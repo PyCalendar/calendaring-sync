@@ -41,7 +41,7 @@ CalDAV
      - The later entry counts, and the fetch decides
    * - Token the server never issued (:rfc:`6578#section-3.2`: ``valid-sync-token``)
      - - Radicale, Cyrus, Baïkal: 403 with ``valid-sync-token``
-       - Xandikos: 412 with ``valid-sync-token`` for a well-formed token, 500 otherwise
+       - Xandikos: 412 with ``valid-sync-token`` for a well-formed token, 500 otherwise (`xandikos#743 <https://github.com/jelmer/xandikos/issues/743>`_)
        - Stalwart: 207 with a full listing and no error
      - :term:`Resets <reset>` the scope when the error names ``valid-sync-token``; flags Stalwart for regular full listings
    * - Token whose history the server has discarded

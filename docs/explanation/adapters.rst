@@ -19,7 +19,7 @@ The core never branches on protocol, so it asks every adapter for the same thing
 - a :term:`version` per object, if the protocol has one; without it, every reported object is fetched and compared by :term:`fingerprint`
 - changes since a :term:`sync token`, if the protocol has them; without them, every sync is a :term:`full listing`
 - the content's media type, and its own fingerprint function and :term:`fingerprint scheme` name if the exact text isn't stable
-- each object's :term:`containers <container>` and :term:`logical key`, where the protocol has them
+- each object's :term:`containers <container>` and :term:`logical key`, where the protocol has them, and whether that key is unique
 - :term:`change sets <change set>` built from the protocol's answers: incremental or a full listing, complete or one :term:`truncated page`
 - each :term:`push`'s outcome (applied, rejected, gone, refused for its logical key, or unknown), and which errors mean the scope must be :term:`reset`
 
@@ -54,7 +54,7 @@ Each collection has its own sync token (:rfc:`6578`), so one collection is one s
    * - Containers
      - The collection the member is in
    * - Logical key
-     - The ``UID`` property (:rfc:`5545#section-3.8.4.7`)
+     - The ``UID`` property (:rfc:`5545#section-3.8.4.7`); not unique, since a tested server accepts two members with one UID, so a create is recognized by its href
 
 Why the adapter checks supported reports first
 ----------------------------------------------
@@ -66,7 +66,7 @@ Why a full listing reads the token first
 
 A :term:`full listing` reads the collection's ``DAV:sync-token`` property, which holds the token a report would return at that moment (:rfc:`6578#section-4`), and then lists each member and its ETag with a ``PROPFIND`` (:rfc:`4918#section-9.1`) of ``Depth: 1``, which covers the collection and the members directly inside it (:rfc:`4918#section-10.2`). Members whose ETag matches the stored one are reported unchanged, and the rest are fetched. Anything that changes during the listing appears in the next report from that token.
 
-The adapter never lists with a report sent with an empty token, which asks for every member. A server may truncate any report (:rfc:`6578#section-3.6`), and a tested server truncates an empty-token report at a :term:`checkpoint` that skips the remaining members, so a listing would infer that objects were removed when they weren't. A server can cap a ``PROPFIND`` too: a tested server lists at most its configured number of results and marks the cut with a 507 for the collection. That cut is visible and never comes with a token that skips members, but a listing cut short still can't tell a missing member from a removed one. So when a ``PROPFIND`` comes back with a 507, the adapter raises an error instead of ingesting it, and the server's limit has to be raised.
+The adapter never lists with a report sent with an empty token, which asks for every member. A server may truncate any report (:rfc:`6578#section-3.6`), and a tested server truncates an empty-token report at a :term:`checkpoint` that skips the remaining members, so a listing would infer that objects were removed when they weren't. A server can cap a ``PROPFIND`` too: a tested server lists at most its configured number of results and marks the cut with a 507 for the collection. That cut is visible and never comes with a token that skips members, but a listing cut short still can't tell a missing member from a removed one. So when a ``PROPFIND`` comes back with a 507, the adapter raises an error instead of ingesting it, and the server's limit has to be raised. That leaves a known gap: a calendar larger than the limit can't be synced from such a server. Listing with ``calendar-query`` split into time ranges, each under the limit, could close it later.
 
 Why changes come from python-caldav's sync report
 -------------------------------------------------
@@ -84,7 +84,7 @@ A server that won't accept a token answers with the ``DAV:valid-sync-token`` pre
 
 The adapter :term:`resets <reset>` the scope only when the error names ``DAV:valid-sync-token``, whatever its status. Any other failure, such as a refused login or a server that's down, is raised, so a flaky server doesn't cause a full listing on every error. The adapter only sends tokens the server issued, so a 500 means the server failed, not that the token was malformed. python-caldav exposes the precondition on a 403; until it does for other statuses, the adapter reads it from the error text.
 
-A tested server answers a token it no longer accepts with a report that leaves out older changes and raises no error. The adapter can't tell that from an ordinary report, so it says whether a scope needs regular full listings, from python-caldav's profile of the server, which your application selects by naming the server. How often to run them is up to your application; a full listing only fetches members whose ETag changed, so a frequent one is cheap.
+A tested server answers a token it no longer accepts with a report that leaves out older changes and raises no error. The adapter can't tell that from an ordinary report, so it says whether a scope needs regular full listings, from python-caldav's ``sync-token.invalid-token`` feature. Your application sets that feature by naming the server or by probing it with caldav-server-tester, so a new server or an upgrade needs no list of names here. How often to run them is up to your application; a full listing only fetches members whose ETag changed, so a frequent one is cheap.
 
 Why content comes from a multiget, with its own ETag
 ----------------------------------------------------
@@ -98,7 +98,7 @@ Why writes are conditional
 
 Updates and deletes send ``If-Match`` with the base ETag (:rfc:`9110#section-13.1.1`), so the server applies them only if the member still has that ETag, and creates send ``If-None-Match: *`` (:rfc:`9110#section-13.1.2`), so a create never replaces an existing member. A mismatch gets status 412, and the edit stays pending for the next :term:`ingest`. Updates use python-caldav's ``save(increase_seqno=False)``, because ``save()`` increments the event's ``SEQUENCE`` revision number by default and the server wouldn't receive the edit you recorded. Deletes use ``delete(if_match=...)``.
 
-A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with an error element, ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); the adapter checks for both before treating a 412 as a plain precondition failure.
+A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with an error element, ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); the adapter checks for both before treating a 403, 409 or 412 as a plain precondition failure. python-caldav keeps the error element only on a 403 for now, so on a 409 or 412 the adapter reads it from the error text.
 
 A server MUST NOT return a strong ETag for data it stored differently (:rfc:`4791#section-5.3.4`), but tested servers do, so an applied push doesn't keep the ETag it got back.
 
