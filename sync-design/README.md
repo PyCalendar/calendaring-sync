@@ -11,7 +11,7 @@ Evidence for these pages on `main`:
 - [`docs/explanation/adapters.rst`](https://github.com/pycalendar/calendaring-sync/blob/main/docs/explanation/adapters.rst)
 - [`docs/reference/server-compatibility.rst`](https://github.com/pycalendar/calendaring-sync/blob/main/docs/reference/server-compatibility.rst)
 
-Tested on 2026-10-11 with Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 (and `latest` for JMAP capabilities), Baïkal 0.10.1, python-caldav `master` at 1a75f45, and calendaring-jmap `main` at 004c6b4.
+Tested between 2026-10-10 and 2026-10-12 with Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 (and `latest` for JMAP capabilities), Baïkal 0.10.1, python-caldav `master` at 1a75f45, and calendaring-jmap `main` at 004c6b4.
 
 ## Logs
 
