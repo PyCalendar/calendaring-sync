@@ -1,0 +1,5 @@
+>>> x:WebDav/set {"update": {"singleton": {"maxResults": 5}}}
+<<< x:WebDav/set {"accountId": "d333333", "updated": {"singleton": null}}
+>>> x:Action/set {"create": {"r": {"@type": "ReloadSettings"}}}
+<<< x:Action/set {"accountId": "d333333", "created": {"r": {"id": "bvmy3b7"}}}
+SUMMARY [Stalwart] reload with WebDav.maxResults = 5: ok

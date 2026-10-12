@@ -11,7 +11,7 @@ The server and library code behind behaviors the logs show, linked at the versio
 
 - CalDAV sync reads the change log without checking whether it was truncated: [`crates/dav/src/common/propfind.rs` lines 1223 to 1226](https://github.com/stalwartlabs/stalwart/blob/v0.16.21/crates/dav/src/common/propfind.rs#L1223-L1226). The file contains no `is_truncated` check.
 - JMAP `/changes` answers `cannotCalculateChanges` for a truncated log: [`crates/jmap/src/changes/get.rs` lines 283 to 290](https://github.com/stalwartlabs/stalwart/blob/v0.16.21/crates/jmap/src/changes/get.rs#L283-L290).
-- Stalwart's own test truncates the log the way `servers/stalwart_expire.py` does: [`tests/src/system/purge.rs` lines 38 to 48 and 145 to 152](https://github.com/stalwartlabs/stalwart/blob/v0.16.21/tests/src/system/purge.rs#L38-L48).
+- Stalwart's own test truncates the log the way `servers/stalwart_admin.py expire-purge` does: [`tests/src/system/purge.rs` lines 38 to 48 and 145 to 152](https://github.com/stalwartlabs/stalwart/blob/v0.16.21/tests/src/system/purge.rs#L38-L48).
 
 ## Radicale 3.8.3
 

@@ -3,4 +3,4 @@
 >>> x:Account/get {"ids": ["e", "d", "c", "b"], "properties": ["name"]}
 <<< x:Account/get {"accountId": "d333333", "list": [{"name": "user3", "id": "e"}, {"name": "user2", "id": "d"}, {"name": "user1", "id": "c"}, {"name": "testuser", "id": "b"}], "notFound": []}
 >>> x:Task/set {"create": {"t": {"@type": "AccountMaintenance", "accountId": "b", "maintenanceType": "purge"}}}
-<<< x:Task/set {"accountId": "d333333", "created": {"t": {"id": "jjayfhfbktaa"}}}
+<<< x:Task/set {"accountId": "d333333", "created": {"t": {"id": "jjdjtmh0ktaa"}}}

@@ -132,12 +132,15 @@ stalwart() {
     probe caldav-client-stalwart.log caldav_client.py Stalwart http://localhost:8809/ "http://localhost:8809$home/client/" "$user" testcaldav
     probe jmap-sync-stalwart.log jmap_sync.py Stalwart http://localhost:8809 "$user" testcaldav no
     probe jmap-client-stalwart.log jmap_client.py Stalwart http://localhost:8809/.well-known/jmap "$user" testcaldav
-    "$PY" -B -E -s "$SERVERS/stalwart_expire.py" setup > "$LOGS/server-stalwart-expire-setup.log" 2>&1
+    "$PY" -B -E -s "$SERVERS/stalwart_admin.py" expire-setup > "$LOGS/server-stalwart-expire-setup.log" 2>&1
     probe expiry-caldav-stalwart.log expiry.py caldav Stalwart http://localhost:8809 "$home/expiry/" "$user" testcaldav before "$DATA/stalwart-token"
     probe expiry-jmap-stalwart.log expiry.py jmap Stalwart http://localhost:8809 "$user" testcaldav no before "$DATA/stalwart-state"
-    "$PY" -B -E -s "$SERVERS/stalwart_expire.py" purge > "$LOGS/server-stalwart-expire-purge.log" 2>&1
+    "$PY" -B -E -s "$SERVERS/stalwart_admin.py" expire-purge > "$LOGS/server-stalwart-expire-purge.log" 2>&1
     probe expiry-caldav-stalwart-after.log expiry.py caldav Stalwart http://localhost:8809 "$home/expiry/" "$user" testcaldav after "$DATA/stalwart-token"
     probe expiry-jmap-stalwart-after.log expiry.py jmap Stalwart http://localhost:8809 "$user" testcaldav no after "$DATA/stalwart-state"
+    # Last, since it lowers the result limit for the whole server.
+    "$PY" -B -E -s "$SERVERS/stalwart_admin.py" max-results 5 > "$LOGS/server-stalwart-max-results.log" 2>&1
+    probe listing-cap-stalwart.log listing_cap.py Stalwart http://localhost:8809 "$home/cap/" "$user" testcaldav 5
     fixture stalwart stop
 }
 

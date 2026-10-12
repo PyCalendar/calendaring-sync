@@ -7,7 +7,7 @@ RESULT [Stalwart] unknown token, default fallback: returned ('urn:stalwart:davsy
 RESULT [Stalwart] a removed member as returned: (href, getetag, data is None): [('client-removed.ics', None, True)]
 RESULT [Stalwart] full listing through get_objects_by_sync_token(): the collection itself among the members: False
 RESULT [Stalwart] DAV:limit 1 through DAVClient.report(): status 207, 507 present: True, token urn:stalwart:davsync:1b
-RESULT [Stalwart] DAV:limit 1, get_objects_by_sync_token(disable_fallback=True): (token, objects, truncated): returned ('urn:stalwart:davsync:1b', 1, False)
+RESULT [Stalwart] DAV:limit 1, get_objects_by_sync_token(disable_fallback=True): (token, objects, truncated): returned ('urn:stalwart:davsync:1b', 0, False)
 RESULT [Stalwart] same calendar unlimited: (token, objects, truncated): returned ('urn:stalwart:davsync:1b', 3, False)
 RESULT [Stalwart] calendar-multiget through DAVClient.report(depth=None), no Depth header: status 207, entries 2 for 2 hrefs
 RESULT [Stalwart] SEQUENCE stored: after create, after save(increase_seqno=False), after save(): ('1', '1', '2')

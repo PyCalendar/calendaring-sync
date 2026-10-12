@@ -22,6 +22,7 @@ Tested on 2026-10-11 with Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart
 | `caldav-client-<server>.log` | What python-caldav does with the same responses and with conditional writes |
 | `jmap-client-<server>.log` | What calendaring-jmap does with the same responses |
 | `expiry-*.log` | How servers answer an expired token or state |
+| `listing-cap-stalwart.log` | A full listing of a calendar larger than Stalwart's result limit |
 | `retry-radicale.log` | An expired token and a real refusal, told apart |
 | `unsupported-sync-collection.log` | python-caldav on a server without `sync-collection` |
 | `jmap-capabilities-stalwart-latest.log` | JMAP Tasks on the latest Stalwart image |
@@ -40,4 +41,4 @@ PYTHON=/path/to/python CALENDARING_JMAP=/path/to/calendaring-jmap CALENDARING_SY
 
 Pass section names to run part of it: `radicale`, `xandikos`, `radicale-expiry`, `unsupported`, `cyrus`, `stalwart`, `stalwart-latest`, `baikal`, `model`, `citations`. Every section stops its server when done.
 
-`servers/stalwart_expire.py` expires a Stalwart token the way Stalwart's own purge test does. Its settings reload fails on the fixture's default spam-filter entries, so the script deletes those first, inside the throwaway container.
+`servers/stalwart_admin.py` expires a Stalwart token the way Stalwart's own purge test does, and lowers its result limit for the listing-cap probe. Its settings reload fails on the fixture's default spam-filter entries, so the script deletes those first, inside the throwaway container.

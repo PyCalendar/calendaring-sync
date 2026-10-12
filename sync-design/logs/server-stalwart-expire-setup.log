@@ -1,17 +1,17 @@
 >>> x:DataRetention/set {"update": {"singleton": {"maxChangesHistory": 1}}}
 <<< x:DataRetention/set {"accountId": "d333333", "updated": {"singleton": null}}
 >>> x:Action/set {"create": {"r": {"@type": "ReloadSettings"}}}
-<<< x:Action/set {"accountId": "d333333", "notCreated": {"r": {"type": "validationFailed", "objectId": {"object": "SpamDnsblServer", "id": "jjayd03sbqaa"}, "validationErrors": [{"type": "Invalid", "property": "tag", "value": "Error parsing 'if' expression in condition #3: Invalid variable or constant \"bit_and\""}]}}}
->>> x:SpamDnsblServer/set {"destroy": ["jjayd03sbqaa"]}
-<<< x:SpamDnsblServer/set {"accountId": "d333333", "destroyed": ["jjayd03sbqaa"]}
+<<< x:Action/set {"accountId": "d333333", "notCreated": {"r": {"type": "validationFailed", "objectId": {"object": "SpamDnsblServer", "id": "jjdjsj9ibqaa"}, "validationErrors": [{"type": "Invalid", "property": "tag", "value": "Error parsing 'if' expression in condition #3: Invalid variable or constant \"bit_and\""}]}}}
+>>> x:SpamDnsblServer/set {"destroy": ["jjdjsj9ibqaa"]}
+<<< x:SpamDnsblServer/set {"accountId": "d333333", "destroyed": ["jjdjsj9ibqaa"]}
 >>> x:Action/set {"create": {"r": {"@type": "ReloadSettings"}}}
-<<< x:Action/set {"accountId": "d333333", "notCreated": {"r": {"type": "validationFailed", "objectId": {"object": "SpamDnsblServer", "id": "jjayd03ubqqa"}, "validationErrors": [{"type": "Invalid", "property": "tag", "value": "Error parsing 'if' expression in condition #3: Invalid variable or constant \"bit_and\""}]}}}
->>> x:SpamDnsblServer/set {"destroy": ["jjayd03ubqqa"]}
-<<< x:SpamDnsblServer/set {"accountId": "d333333", "destroyed": ["jjayd03ubqqa"]}
+<<< x:Action/set {"accountId": "d333333", "notCreated": {"r": {"type": "validationFailed", "objectId": {"object": "SpamDnsblServer", "id": "jjdjsj9ibqqa"}, "validationErrors": [{"type": "Invalid", "property": "tag", "value": "Error parsing 'if' expression in condition #3: Invalid variable or constant \"bit_and\""}]}}}
+>>> x:SpamDnsblServer/set {"destroy": ["jjdjsj9ibqqa"]}
+<<< x:SpamDnsblServer/set {"accountId": "d333333", "destroyed": ["jjdjsj9ibqqa"]}
 >>> x:Action/set {"create": {"r": {"@type": "ReloadSettings"}}}
-<<< x:Action/set {"accountId": "d333333", "notCreated": {"r": {"type": "validationFailed", "objectId": {"object": "SpamDnsblServer", "id": "jjayd03ubtaa"}, "validationErrors": [{"type": "Invalid", "property": "tag", "value": "Error parsing 'if' expression in condition #2: Invalid variable or constant \"bit_and\""}]}}}
->>> x:SpamDnsblServer/set {"destroy": ["jjayd03ubtaa"]}
-<<< x:SpamDnsblServer/set {"accountId": "d333333", "destroyed": ["jjayd03ubtaa"]}
+<<< x:Action/set {"accountId": "d333333", "notCreated": {"r": {"type": "validationFailed", "objectId": {"object": "SpamDnsblServer", "id": "jjdjsj9kbtaa"}, "validationErrors": [{"type": "Invalid", "property": "tag", "value": "Error parsing 'if' expression in condition #2: Invalid variable or constant \"bit_and\""}]}}}
+>>> x:SpamDnsblServer/set {"destroy": ["jjdjsj9kbtaa"]}
+<<< x:SpamDnsblServer/set {"accountId": "d333333", "destroyed": ["jjdjsj9kbtaa"]}
 >>> x:Action/set {"create": {"r": {"@type": "ReloadSettings"}}}
-<<< x:Action/set {"accountId": "d333333", "created": {"r": {"id": "bvmxvk3"}}}
-SUMMARY [Stalwart] reload with maxChangesHistory 1: ok
+<<< x:Action/set {"accountId": "d333333", "created": {"r": {"id": "bvmy3bl"}}}
+SUMMARY [Stalwart] reload with DataRetention.maxChangesHistory = 1: ok
