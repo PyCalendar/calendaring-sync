@@ -51,7 +51,8 @@ pre.mermaid svg .nodeLabel p {
   color: var(--pst-color-text-base) !important;
 }
 
-pre.mermaid svg .state-start {
+pre.mermaid svg .state-start,
+pre.mermaid svg g.node[id*="_end-"] path {
   fill: var(--pst-color-primary) !important;
   stroke: var(--pst-color-primary) !important;
 }

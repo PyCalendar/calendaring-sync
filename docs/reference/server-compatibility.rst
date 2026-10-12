@@ -65,7 +65,11 @@ CalDAV
        - Xandikos: reorders properties, returns an ETag
        - Baïkal: adds ``DTSTAMP``, returns no ETag
        - Cyrus, Stalwart: store what was sent
-     - Never keeps the ETag a write returns
+     - Never keeps the ETag a write returns; its :term:`fingerprint` ignores the rewrite
+   * - Character set of calendar data (:rfc:`5545#section-3.1.4`: UTF-8 by default)
+     - - Xandikos: ``text/calendar`` with no charset
+       - Others: ``charset=utf-8``
+     - Reads calendar data as UTF-8 unless the server names another charset
    * - Identical PUT
      - All: same ETag
      - A version-only change
@@ -120,7 +124,7 @@ JMAP
    * - Properties the server adds to a stored event
      - - Cyrus: ``created``, ``isDraft``, ``isOrigin``, ``prodId``, ``sequence``, ``updated``
        - Stalwart: ``isDraft``, ``isOrigin``, ``updated``
-     - Stores the event as the server returns it
+     - Stores the event as the server returns it; its :term:`fingerprint` leaves those properties out or fills in their defaults
    * - Create without ``version`` (draft-ietf-jmap-calendars-32 section 5.9: the server sets it)
      - - Cyrus: refused with ``invalidProperties``
        - Stalwart: accepted

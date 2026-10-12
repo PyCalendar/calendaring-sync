@@ -50,7 +50,7 @@ Each collection has its own sync token (:rfc:`6578`), so one collection is one s
    * - Sync token
      - ``DAV:sync-token``, an opaque URI (:rfc:`6578#section-3.2`)
    * - Content and fingerprint
-     - The iCalendar text (``text/calendar``), and SHA-256 of it
+     - The iCalendar text (``text/calendar``), and SHA-256 of a canonical form: lines unfolded, properties and parameters sorted within each component, components sorted, the parts of each recurrence rule sorted, and ``DTSTAMP``, ``LAST-MODIFIED`` and ``PRODID`` left out
    * - Containers
      - The collection the member is in
    * - Logical key
@@ -92,6 +92,11 @@ Why content comes from a multiget, with its own ETag
 Changed members are fetched with ``calendar-multiget`` (:rfc:`4791#section-7.9`), asking for ``DAV:getetag`` and ``calendar-data`` together, with no ``Depth`` header as that section asks. The stored version is the ETag from this response, not from the sync report: an object can change in between (:rfc:`6578#section-3.1`), and an older ETag would cause a needless fetch on the next sync and a wrong base for the next write.
 
 A member that comes back 404, or is missing from the response although :rfc:`4791#section-7.9` requires an entry for every href, was removed after the report. It's left out of the change set, and the next report carries its removal.
+
+Why the fingerprint leaves out three properties
+-----------------------------------------------
+
+Tested servers rewrite what they store: they add ``DTSTAMP``, reorder properties and parameters, fold lines at other points, and reorder the parts of a recurrence rule, which may come in any order (:rfc:`5545#section-3.3.10`). A server sets ``DTSTAMP`` and ``LAST-MODIFIED`` itself (:rfc:`5545#section-3.8.7.2`, :rfc:`5545#section-3.8.7.3`), and ``PRODID`` names the product that created the object (:rfc:`5545#section-3.7.3`). Leaving those three out and sorting the rest makes a server's copy of your own write fingerprint the same as what you sent, on every tested server. ``UID`` is kept, since it's the logical key, and so is everything else, because any other difference can be a real edit. The adapter reads calendar data as UTF-8 when the server names no charset, since that's the default (:rfc:`5545#section-3.1.4`).
 
 Why writes are conditional
 --------------------------
@@ -139,7 +144,7 @@ A record type is the kind of data a JMAP record holds, such as ``CalendarEvent``
    * - Sync token
      - The type's ``state`` string
    * - Content and fingerprint
-     - The JSCalendar JSON, and SHA-256 of it serialized with sorted keys
+     - The JSCalendar JSON, and SHA-256 of it serialized with sorted keys, without the properties the server sets, and with ``isDraft``, ``useDefaultAlerts`` and ``version`` filled in with their defaults
    * - Containers
      - The event's ``calendarIds``
    * - Logical key
@@ -148,6 +153,11 @@ A record type is the kind of data a JMAP record holds, such as ``CalendarEvent``
 Content stays JSCalendar, since converting to iCalendar would lose data on each round trip; converting is left to your application.
 
 With no per-record version, every object ``/changes`` reports is fetched and compared by :term:`fingerprint`, and a :term:`full listing` fetches everything.
+
+Why the fingerprint leaves out what the server sets
+---------------------------------------------------
+
+The server sets ``id``, ``baseEventId`` and ``isOrigin``, and works out ``utcStart`` and ``utcEnd`` when asked (draft-ietf-jmap-calendars-32 section 5). It also sets ``created``, ``updated`` and ``sequence`` itself (draft-ietf-jmap-calendars-32 section 5.9), and ``prodId`` names the product that last changed the event (:rfc:`8984#section-4.1.4`). The fingerprint leaves all of those out and fills in ``isDraft``, ``useDefaultAlerts`` and ``version`` with their defaults, because a server MUST return ``isDraft`` and ``useDefaultAlerts`` even when you never sent them (draft-ietf-jmap-calendars-32 section 5.7), and a tested server leaves out ``version``. A server's copy of your own write then fingerprints the same as what you sent, on both tested servers. The fingerprint is always taken from a full ``/get``, since a ``/set`` answer only carries some properties.
 
 Why some errors reset the scope
 -------------------------------

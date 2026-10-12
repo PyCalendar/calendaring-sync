@@ -19,6 +19,9 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
    change set
       What an adapter hands the core after asking the server what changed in one :term:`scope`: the objects that changed or were removed, the :term:`sync token` it was fetched from, and the token it leads to.
 
+   change feed
+      The numbered list of every change the core made to the store, which your application reads from its :term:`cursor`.
+
    checkpoint
       The sync token a :term:`truncated page` ends at. The next request continues from it.
 
@@ -37,11 +40,14 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
    core
       calendaring-sync itself: the part that keeps sync state and knows nothing about any server or protocol.
 
+   cursor
+      The number of the last :term:`change feed` entry a part of your application has handled.
+
    drop
       To delete a :term:`scope` and everything the :term:`store` holds for it.
 
    fingerprint
-      A value computed from an object's :term:`content`. Two copies with the same fingerprint hold the same data.
+      A value computed from an object's :term:`content`, leaving out what a server rewrites on its own. Two copies with the same fingerprint differ at most in what a server rewrites.
 
    fingerprint scheme
       The name of the function that computed a scope's fingerprints. Fingerprints from different schemes can't be compared.
@@ -75,6 +81,9 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
    edit
       A change, delete or create you've recorded for an object that hasn't reached the server yet. The next sync pushes it.
 
+   purge
+      To delete removed records from the store for good, up to a point your application chooses.
+
    push
       To send one :term:`pending edit` to the server. :doc:`../explanation/design` describes how a push can end.
 
@@ -94,7 +103,7 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
       One sync of one :term:`scope`: it :term:`ingests <ingest>` every page first, then :term:`pushes <push>` your pending edits.
 
    store
-      Where the core keeps each scope's sync token, its records, your pending edits, and open conflicts.
+      Where the core keeps each scope's sync token, its records, your pending edits, open conflicts, and the :term:`change feed`.
 
    sync token
    token

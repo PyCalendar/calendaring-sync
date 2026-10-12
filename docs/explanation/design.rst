@@ -14,9 +14,9 @@ One sync of one :term:`scope`, such as one calendar, goes like this:
 
 #. As you edit objects, you record each change in calendaring-sync as a :term:`pending edit`.
 #. When your application decides to sync, the adapter asks the server what changed since the scope's :term:`sync token`, and hands the answer to calendaring-sync as a :term:`change set`.
-#. calendaring-sync :term:`ingests <ingest>` the change set in one step: it stores each changed :term:`object`, removes the ones the server deleted, records a :term:`conflict` where the server changed something you also edited, and saves the new sync token.
+#. calendaring-sync :term:`ingests <ingest>` the change set in one step: it stores each changed :term:`object`, removes the ones the server deleted, records a :term:`conflict` where the server changed something you also edited, and saves the new sync token, writing each change to the :term:`change feed`.
 #. The adapter then :term:`pushes <push>` your pending edits to the server, and calendaring-sync records how each push ended.
-#. Your application resolves any conflicts when it's ready, and the next sync pushes the result.
+#. Your application reads the change feed to learn what changed, resolves any conflicts when it's ready, and the next sync pushes the result.
 
 The sections below explain why each part works the way it does. The :doc:`../reference/glossary` defines every sync term, and :doc:`adapters` explains how each protocol fits these steps.
 
@@ -52,7 +52,7 @@ A calendar :term:`UID` names a recurring event with all its occurrences, and a s
 Why changes are compared by fingerprint
 =======================================
 
-A :term:`version` says something changed, not what, and some protocols have no version for each object. So the core stores a :term:`fingerprint` of each object's content: a SHA-256 hash of the text by default, or the adapter's own function where the same data can come back written differently, such as with its fields in another order. A change with the same fingerprint as the stored one only updates the version. The core doesn't report it, and it never starts a :term:`conflict`.
+A :term:`version` says something changed, not what, and some protocols have no version for each object. So the core stores a :term:`fingerprint` of each object's content. An adapter computes it so that what a server rewrites on its own doesn't count: the order of fields, how lines are wrapped, and values the server stamps itself, such as when the object was last saved. A change with the same fingerprint as the stored one only updates the version. The core doesn't report it, and it never starts a :term:`conflict`. The price is that an edit to nothing but those server-stamped values is never pushed.
 
 Each scope remembers its :term:`fingerprint scheme`. If the scheme changes, the next sync of that scope is a :term:`full listing`.
 
@@ -129,7 +129,7 @@ Before a push goes out, the core marks it :term:`in flight` in the store, in one
 If the process stops while a push is in flight, the push is unknown the next time you open the store. The next complete :term:`ingest` settles each unknown push:
 
 - a create that comes back under the id it chose reached the server, and the core stores the server's copy; where the server picks the id, a create that comes back with the logical key it was sent with counts the same, but only if the adapter says that key is unique
-- an update that comes back with your content reached the server, and one that comes back different is a conflict, since a server's rewrite and another client's edit look the same
+- an update that comes back with your fingerprint reached the server, and one that comes back with another fingerprint is a conflict, since someone else changed the object too
 - a delete that comes back removed reached the server
 - a push the change set doesn't mention didn't reach the server, and its edit is pending again
 
@@ -138,7 +138,7 @@ Treating an unknown push as failed could create the same object twice.
 Why the server's answer to a write isn't trusted
 ================================================
 
-Some servers rewrite what they store and still answer the write with a version. So an applied push clears the record's :term:`version` instead of keeping the one the server returned. The next incremental change set includes your write, so the core fetches the object once and stores it as the server holds it. Where the adapter guards each push with the object's version, a new edit to a record whose version was cleared waits until an ingest gives it one again, so it never goes out unguarded.
+Some servers rewrite what they store and still answer the write with a version. So an applied push clears the record's :term:`version` instead of keeping the one the server returned. The next incremental change set includes your write, so the core fetches the object once and stores it as the server holds it. Because the fingerprint ignores what the server rewrites, that copy counts as your own write coming back, not as a remote change. Where the adapter guards each push with the object's version, a new edit to a record whose version was cleared waits until an ingest gives it one again, so it never goes out unguarded.
 
 A rejected push isn't a :term:`conflict` by itself, because some protocols only check whether anything in the scope changed since the last sync, not whether this object did. The next ingest decides: if this object changed, it's a conflict, and if not, the adapter pushes the edit again. An edit stays pending until the server applies it, so your content isn't lost.
 
@@ -157,6 +157,7 @@ Every :term:`record` is in one of five states at a time: synced, pending, in fli
        [*] --> pending: create recorded
        synced --> pending: local edit
        synced --> removed: removed on server
+       removed --> synced: back on server
        pending --> synced: edit undone
        pending --> in_flight: push sent
        pending --> conflict: server changed it too
@@ -167,6 +168,7 @@ Every :term:`record` is in one of five states at a time: synced, pending, in fli
        conflict --> synced: resolved: server's side
        conflict --> pending: resolved: push it
        conflict --> removed: resolved: removal
+       removed --> [*]: purged
 
 The table lists every transition with its conditions, including the ones the diagram leaves out: an unknown push, both sides reaching the same content or both deleting, and a scope :term:`reset`, which leaves every record's state as it is.
 
@@ -213,6 +215,12 @@ The table lists every transition with its conditions, including the ones the dia
    * - conflict
      - Resolved
      - Synced, pending, or removed, depending on the resolution
+   * - removed
+     - Remote change: the server holds an object at that id again
+     - Synced with the new content, as the same record
+   * - removed
+     - Purged by your application
+     - Gone from the store; its feed entries stay until trimmed
    * - any
      - Scope reset
      - Unchanged; pending edits and conflicts survive the listing that follows
@@ -258,6 +266,13 @@ The core stores conflicts instead of raising them: an exception for one object w
 ``resolve_conflicts(resolver)`` passes each open record to your resolver, outside any sync. Each resolution is its own transaction: ``None`` leaves a record open, and an exception stops the loop and keeps the resolutions before it.
 
 A removal on the server against a local edit is always a conflict, never resolved automatically, because that would delete your edit without asking.
+
+Why changes are read from a feed
+================================
+
+Every change the core makes to the store also goes into a :term:`change feed`, in the same transaction: a remote change or removal applied, a conflict stored, updated or resolved, a push's outcome, and a scope dropped. Each entry has a number that only grows. Your application keeps the number of the last entry it handled, its :term:`cursor`, and asks for the entries after it, so it learns what changed even if it stopped right after a sync. Several parts of an application can each keep their own cursor.
+
+A removed record stays in the store, marked removed, until your application :term:`purges <purge>` it, so a removal can always be read. You trim the feed and purge removed records up to a point you choose. A cursor older than the oldest entry kept gets an error, and the application reads its records again from the store instead.
 
 Why a removed scope is yours to drop
 ====================================
