@@ -5,120 +5,169 @@
 Design
 ======
 
-.. code-block:: text
+.. meta::
+   :description: How calendaring-sync keeps sync state between your application and a server, and why it works the way it does.
 
-    Your application
-           |
-           v
-    calendaring-sync
-      sync state, local copy, conflict detection
-           |
-           v
-    Adapters
+calendaring-sync keeps a local copy of the calendar data your application syncs, and remembers how far each sync got. Your application reads and edits that copy, and calendaring-sync works out what to take from the server, what to send back, and where both sides changed the same object. An :term:`adapter` does the talking to the server.
 
-This page explains the model every part of calendaring-sync follows. :doc:`adapters` explains how each protocol maps onto it.
+One sync of one :term:`scope`, such as one calendar, goes like this:
+
+#. As you edit objects, you record each change in calendaring-sync as a :term:`pending edit`.
+#. When your application decides to sync, the adapter asks the server what changed since the scope's :term:`sync token`, and hands the answer to calendaring-sync as a :term:`change set`.
+#. calendaring-sync :term:`ingests <ingest>` the change set in one step: it stores each changed :term:`object`, removes the ones the server deleted, records a :term:`conflict` where the server changed something you also edited, and saves the new sync token.
+#. The adapter then :term:`pushes <push>` your pending edits to the server, and calendaring-sync records how each push ended.
+#. Your application resolves any conflicts when it's ready, and the next sync pushes the result.
+
+The sections below explain why each part works the way it does. The :doc:`../reference/glossary` defines every sync term, and :doc:`adapters` explains how each protocol fits these steps.
 
 Why calendaring-sync doesn't talk to servers
 ============================================
 
-calendaring-sync only keeps sync state: it doesn't send requests, schedule syncs, or run a sync loop. Your application decides when to sync, and an adapter fetches what changed. Keeping network access out of the core means the same state handling works for any server and any protocol an adapter supports.
+calendaring-sync only keeps sync state: it doesn't send requests, schedule syncs, or run a sync loop. Your application decides when to sync, and an :term:`adapter` fetches what changed. Keeping network access out of the :term:`core` means the same state handling works for any server and any protocol an adapter supports.
 
 Why each protocol is an adapter
 ===============================
 
-The core describes sync in its own terms: a sync token for "what changed since last time," a version for "did this object change," and an identity for each object. An adapter maps one protocol's equivalents onto those terms and translates its change reports. Supporting a new protocol means writing a new adapter, not changing the core.
+The :term:`core` describes sync in its own terms, such as a :term:`sync token`, a :term:`version`, and an :term:`object id`. Each :term:`adapter` maps one protocol's equivalents onto those terms, and turns what the server sends into :term:`change sets <change set>`. Supporting a new protocol means writing a new adapter, not changing the core.
 
 Why sync state is kept per scope
 ================================
 
-A scope is whatever one sync token covers, as the adapter defines it: one calendar, or one data type across a whole account. The core keeps one token per scope and one record per object, holding:
+A :term:`sync token` only describes the objects it covers, so the core keeps one token per :term:`scope`. The adapter decides what a scope is: one calendar, or all events in one account. For each object in a scope, the core keeps one :term:`record`, holding:
 
-- the object id, unique within the scope
-- a version, if the protocol has one, compared only for equality
-- a fingerprint of the content
-- the content, exactly as the server sent it
-- the containers the object belongs to, so a removal still says which calendars it affected
-- an optional logical key, such as the iCalendar UID
+- its :term:`object id`
+- its :term:`version`, if the server gives one
+- a :term:`fingerprint` of its content
+- its :term:`content`
+- its :term:`containers <container>`, so a removal still tells you which calendars it affected
+- its :term:`logical key`, if it has one
 
-Each record also gets a local key from the core, so an object you create has an identity before the server assigns one and keeps it if the server renames the object.
+Each record also gets a :term:`local key` from the core, so an object you create has an identity before the server assigns one, and keeps it if the server renames the object.
 
 Why identity isn't the calendar UID
 ===================================
 
-A UID names a whole recurrence set, and a server can hold several objects with one UID, for example one per occurrence a person was invited to on its own. Some servers also accept unrelated objects with the same UID. The object id is the identity; the logical key is only for finding objects, which returns every match, and for recognizing your own create after its result was lost.
+A calendar :term:`UID` names a recurring event with all its occurrences, and a server can hold several objects with one UID, for example one for each occurrence that someone got a separate invitation to. Some servers also accept unrelated objects with the same UID. So the :term:`object id` is the identity. The :term:`logical key` has two uses only: finding objects, where a search returns every match, and recognizing your own create when the server's answer to it never arrived.
 
 Why changes are compared by fingerprint
 =======================================
 
-A version says something changed, not what, and some protocols have no per-object version. The core stores a fingerprint of each object's content: SHA-256 of the text by default, or an adapter's own function where the text isn't stable, such as JSON with keys in any order. A change with the same fingerprint as the stored one only updates the version. It isn't reported, and it never starts a conflict.
+A :term:`version` says something changed, not what, and some protocols have no version for each object. So the core stores a :term:`fingerprint` of each object's content: a SHA-256 hash of the text by default, or the adapter's own function where the same data can come back written differently, such as with its fields in another order. A change with the same fingerprint as the stored one only updates the version. The core doesn't report it, and it never starts a :term:`conflict`.
 
-Each scope stores the name of its fingerprint scheme. If the scheme changes, the scope is listed again from scratch.
+Each scope remembers its :term:`fingerprint scheme`. If the scheme changes, the next sync of that scope is a :term:`full listing`.
 
-The core never parses content. It stores what the server sent and pushes what you recorded.
+The core never reads inside :term:`content`. It stores what the server sent and pushes what you recorded.
 
 Why a change set is applied all at once
 =======================================
 
-An adapter hands the core a change set for one scope. It names the token it was fetched against and the token it leads to, and says whether it's incremental or a full listing, and complete or one truncated page. Each object id maps to one of three outcomes: changed (with version, fingerprint, content, containers and logical key), removed, or unchanged since your version. An object appears once; one created and removed in the same report counts as removed.
+An :term:`adapter` hands the core one :term:`change set` at a time. Each one is either an :term:`incremental change set` or a :term:`full listing`, and either complete or one :term:`truncated page`. Each object appears once, in one of three ways:
 
-Ingesting is one transaction. Every change is applied, stored as a conflict, or ignored, and the token advances in the same transaction. If anything fails, nothing changes, so the token is never ahead of the data.
+- changed, with its version, fingerprint, content, containers, and logical key
+- removed
+- unchanged since your version
 
-A change set fetched against a token the scope no longer has is refused. That's what lets two processes share one store: the second one to ingest gets an error instead of applying the changes twice.
+An object created and removed between two syncs counts as removed.
+
+The core :term:`ingests <ingest>` a change set in one transaction: it applies each change, records a conflict for it, or ignores it, and moves the :term:`sync token` forward in the same transaction. If anything fails, nothing changes, so the token is never ahead of the data.
+
+The core refuses a change set fetched from a token the scope no longer has. That's what lets two processes share one :term:`store`: the second one to ingest gets an error instead of applying the changes twice.
 
 Truncated pages differ by kind:
 
-- an incremental page advances the token to its own checkpoint
-- a full listing advances the token only on its final page, the first point where an object it never mentioned is known to be gone
+- an incremental page moves the token forward to its own :term:`checkpoint`
+- a full listing moves the token only on its final page, the first point where the core knows that an object the listing never mentioned is gone
 
 Removing an object the scope doesn't know does nothing.
 
 Why an invalid token is routine
 ===============================
 
-Servers expire tokens, lose history, and refuse tokens they issued. calendaring-sync treats that as normal: the adapter resets the scope and fetches a full listing. Unchanged versions aren't fetched again, and pending edits and open conflicts survive. An interrupted listing starts over on the next run.
+Servers forget old tokens, lose their change history, and sometimes refuse tokens they issued themselves. calendaring-sync treats that as normal: the adapter :term:`resets <reset>` the scope and fetches a :term:`full listing`. The listing doesn't fetch objects whose :term:`version` hasn't changed, and :term:`pending edits <pending edit>` and open :term:`conflicts <conflict>` survive. An interrupted listing starts over on the next sync.
 
-You can also ask for a full listing at any time, and each scope records when its last sync and last full listing finished. A listing repairs whatever an incremental report missed: objects it doesn't mention are removed, and objects with a different version are fetched. :doc:`../reference/server-compatibility` lists the servers where this matters.
+You can also ask for a full listing at any time, and each scope records when its last sync and last full listing finished. A listing repairs whatever an incremental change set missed: the core removes objects the listing doesn't mention, and fetches objects whose version differs. :doc:`../reference/server-compatibility` lists the servers where this matters.
 
 Why local edits are recorded, not discovered
 ============================================
 
-Your application tells calendaring-sync about each edit as it happens: a change, a delete, or a create, which returns the new record's local key. Repeated edits to one object collapse into one, an edit back to the synced content cancels itself, and you can discard an edit. An object with an open conflict can't be edited until the conflict is resolved.
+You tell calendaring-sync about each :term:`local edit` as you make it: a change, a delete, or a create, which returns the new record's :term:`local key`. Repeated edits to one object collapse into one, an edit back to the :term:`synced content` cancels itself, and you can discard an edit. You can't edit an object with an open :term:`conflict` until you resolve it.
 
-Diffing everything at every sync instead would cost a full comparison each time, and a difference can't say whether the application edited an object or never loaded its latest version.
+Comparing every object at every sync instead would cost a full comparison each time, and a difference can't tell whether your application edited an object or never loaded its latest version.
 
 Why a sync reads before it writes
 =================================
 
-A sync session for one scope ingests every page, then pushes local edits. Pushing is refused while pages remain, since a later page could hold the change that should stop the push. Ingesting after a push in the same session is refused too, since a change set fetched before your write could overwrite it. Each scope has its own session.
+Each :term:`session` ingests every page before it pushes anything. The core refuses a :term:`push` while pages remain, since a later page could hold the change that should stop the push. It also refuses to ingest after a push in the same session, since a change set fetched before your write could overwrite it. Each scope has its own session.
 
-A push is claimed in the store before its request goes out, with one conditional update, so two processes can't send the same edit. Each push has one of five outcomes:
+A session is ``ingesting`` while pages remain and ``ingested`` once the token is final. A change set that arrives complete takes it straight from ``idle`` to ``ingested``, and an interrupted session continues from the stored token on the next sync:
+
+.. mermaid::
+
+   stateDiagram-v2
+       accTitle: Session states
+       accDescr: A session ingests every page before it pushes, then returns to idle.
+       [*] --> idle
+       idle --> ingesting: truncated page
+       ingesting --> ingesting: another page
+       ingesting --> ingested: final page
+       ingesting --> idle: interrupted
+       idle --> ingested: complete change set
+       ingested --> pushing: push starts
+       pushing --> idle: pushes done
+       note right of ingesting: no pushes while pages remain
+       note right of pushing: no ingests until it ends
+
+Before a push goes out, the core marks it :term:`in flight` in the store, in one step that fails if another process got there first, so two processes can't send the same edit. Each push has one of five outcomes:
 
 - applied: the edit becomes the synced content
-- rejected: the server's precondition failed, and the edit stays pending
+- rejected: the server refused the write because something changed since your last sync, and the edit stays pending
 - gone: the object no longer exists on the server
-- refused because another object holds its logical key, which becomes a conflict
+- refused because another object holds its :term:`logical key`, which becomes a conflict
 - unknown: the request may or may not have reached the server
 
-A push whose process stopped before it finished is unknown when the store is next opened. The next complete ingest settles each unknown push:
+If the process stops while a push is in flight, the push is unknown the next time you open the store. The next complete :term:`ingest` settles each unknown push:
 
-- a create that comes back under its chosen id, or with its client-generated logical key, landed, and the server's copy is stored
-- an update that comes back with your content landed; one that comes back different is a conflict, since a server's rewrite and another client's edit look the same
-- a delete that comes back removed landed
-- anything not mentioned didn't land, and is pending again
+- a create that comes back under the id it chose, or with the logical key it was sent with, reached the server, and the core stores the server's copy
+- an update that comes back with your content reached the server, and one that comes back different is a conflict, since a server's rewrite and another client's edit look the same
+- a delete that comes back removed reached the server
+- a push the change set doesn't mention didn't reach the server, and its edit is pending again
 
 Treating an unknown push as failed could create the same object twice.
 
 Why the server's answer to a write isn't trusted
 ================================================
 
-Some servers rewrite what they store and still answer the write with a version. So an applied push clears the record's version instead of keeping the one returned. The next incremental report includes your write, and the object is fetched once and stored as the server holds it.
+Some servers rewrite what they store and still answer the write with a version. So an applied push clears the record's :term:`version` instead of keeping the one the server returned. The next incremental change set includes your write, so the core fetches the object once and stores it as the server holds it.
 
-A rejected push isn't a conflict by itself, because some protocols only check whether anything changed since the last sync, not whether this object did. The next ingest decides: if this object changed, it's a conflict; if not, the edit is pushed again. An edit stays pending until a push is applied, so your content isn't lost.
+A rejected push isn't a :term:`conflict` by itself, because some protocols only check whether anything in the scope changed since the last sync, not whether this object did. The next ingest decides: if this object changed, it's a conflict, and if not, the adapter pushes the edit again. An edit stays pending until the server applies it, so your content isn't lost.
 
 Why an object has five states
 =============================
 
-Every record is in one state at a time:
+Every :term:`record` is in one of five states at a time: synced, pending, in flight, conflict, or removed. The diagram shows the main ways a record moves between them:
+
+.. mermaid::
+
+   stateDiagram-v2
+       accTitle: Object states
+       accDescr: The main ways a record moves between synced, pending, in flight, conflict, and removed.
+       state "in flight" as in_flight
+       [*] --> synced: new on the server
+       [*] --> pending: create recorded
+       synced --> pending: local edit
+       synced --> removed: removed on server
+       pending --> synced: edit undone
+       pending --> in_flight: push sent
+       pending --> conflict: server changed it too
+       in_flight --> synced: applied
+       in_flight --> removed: delete done
+       in_flight --> pending: rejected
+       in_flight --> conflict: gone, or UID taken
+       conflict --> synced: resolved: server's side
+       conflict --> pending: resolved: push it
+       conflict --> removed: resolved: removal
+
+The table lists every transition with its conditions, including the ones the diagram leaves out: an unknown push, both sides reaching the same content or both deleting, and a scope :term:`reset`, which leaves every record's state as it is.
 
 .. list-table::
    :header-rows: 1
@@ -144,7 +193,7 @@ Every record is in one state at a time:
      - In flight
    * - in flight
      - Applied
-     - Synced, with no version until the next ingest
+     - Synced, with no version until the next ingest, or removed if it was a delete
    * - in flight
      - Rejected
      - Pending; the next ingest decides
@@ -167,14 +216,12 @@ Every record is in one state at a time:
      - Scope reset
      - Unchanged; pending edits and conflicts survive the listing that follows
 
-A session goes ``idle``, ``ingesting`` while pages remain, ``ingested`` once the token is final, ``pushing``, then ``idle`` again.
-
 Why conflicts are reported, not resolved
 ========================================
 
-When an object changed both locally and on the server, or was deleted on one side and edited on the other, calendaring-sync reports the conflict and leaves the decision to your code. Only the application knows whether the local edit, the server's version, or a merge is right.
+When a :term:`conflict` comes up, calendaring-sync reports it and leaves the decision to your code. Only your application knows whether the local edit, the server's version, or a merge is right.
 
-Classifying a change depends only on the last synced state, the remote change and the local edit. The result is one of six classes:
+The core classifies each change by looking only at the :term:`synced content`, the server's change, and your edit. The result is one of six classes:
 
 .. list-table::
    :header-rows: 1
@@ -195,20 +242,28 @@ Classifying a change depends only on the last synced state, the remote change an
    * - ``CONFLICT``
      - Both sides acted; a conflict record is stored
 
-A conflict record has a kind: both modified, removed on the server but edited locally, deleted locally but edited on the server, both created at the same reserved id before your create was sent, or refused because another object holds the UID. It keeps the synced, local and remote sides. Later remote changes update the remote side, and if it becomes equal to your edit, the conflict resolves itself.
+Each :term:`conflict record` has one of five kinds:
 
-Conflicts are stored rather than raised: an exception for one object would abort every other change in the sync, and a resolver called during a sync would run again on every retry. You resolve a record with your edit, the server's version, merged content, or a delete, and the result is pushed with the remote version as its base. A create refused for its UID can't be pushed again as is, so it can be discarded, pushed as an update to the object holding the UID, or replaced by merged content, possibly with a new UID.
+- both sides changed the object
+- the server removed the object, and you edited it
+- you deleted the object, and the server edited it
+- the server has a new object at the id your create chose, and your create hasn't been sent yet
+- the server refused your create because another object holds its UID
+
+Later remote changes update the record's remote side, and if it becomes equal to your edit, the conflict resolves itself.
+
+The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. You resolve a record with your edit, the server's version, merged content, or a delete, and the core pushes the result as a change to the server's current version. You can't push a create the server refused for its UID again unchanged, so you can discard it, push it as an update to the object that holds the UID, or replace it with merged content, possibly with a new UID.
 
 ``resolve_conflicts(resolver)`` passes each open record to your resolver, outside any sync. Each resolution is its own transaction: ``None`` leaves a record open, and an exception stops the loop and keeps the resolutions before it.
 
-A removal against a local edit is always a conflict, never resolved automatically, because that would delete your edit without asking.
+A removal on the server against a local edit is always a conflict, never resolved automatically, because that would delete your edit without asking.
 
 Why a removed scope is yours to drop
 ====================================
 
-If a calendar or account disappears from the server, the adapter raises an error and the store stays as it was. Treating it as an empty listing would turn every pending edit into a conflict after one transient error. You drop the scope yourself, and the call returns the pending edits and open conflicts it discards.
+If a calendar or account disappears from the server, the adapter raises an error and the :term:`store` stays as it was. Treating it as an empty listing would turn every pending edit into a conflict after one transient error. You :term:`drop` the scope yourself, and the call returns the pending edits and open conflicts it discards.
 
 Why storage is synchronous
 ==========================
 
-Storage is a typed interface, ``StateStore``, with an in-memory implementation for tests and a SQLite one for real use. One store holds many scopes. A key-value interface couldn't apply a change set and advance a token in one transaction, and an asynchronous store would push synchronous callers through an event loop. Adapters come in synchronous and asynchronous variants that share their logic; the asynchronous ones call the core directly, since each store call is one short transaction.
+Storage is a typed interface, ``StateStore``, with an in-memory implementation for tests and a SQLite one for real use. One :term:`store` holds many scopes. A key-value interface couldn't apply a change set and advance a token in one transaction, and an asynchronous store would push synchronous callers through an event loop. Adapters come in synchronous and asynchronous variants that share their logic; the asynchronous ones call the core directly, since each store call is one short transaction.
