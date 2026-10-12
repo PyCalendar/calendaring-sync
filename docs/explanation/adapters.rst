@@ -107,10 +107,10 @@ A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a
 
 A server MUST NOT return a strong ETag for data it stored differently (:rfc:`4791#section-5.3.4`), but tested servers do, so an applied push doesn't keep the ETag it got back.
 
-Why the adapter needs python-caldav 3.5.0
------------------------------------------
+Why the adapter needs python-caldav 3.5.0 or later
+--------------------------------------------------
 
-The adapter relies on six python-caldav changes in 3.5.0: following truncated sync reports, listing removed members in ``deleted_urls``, keeping preconditions on every error, ``UidConflictError``, honoring ``increase_seqno`` on every save, and ``delete(if_match=...)``.
+The adapter needs python-caldav 3.5.0 or later, which has six changes it relies on: following truncated sync reports, listing removed members in ``deleted_urls``, keeping preconditions on every error, ``UidConflictError``, honoring ``increase_seqno`` on every save, and ``delete(if_match=...)``.
 
 JMAP
 ====
