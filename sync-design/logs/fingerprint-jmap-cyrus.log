@@ -1,0 +1,25 @@
+
+===== calendars =====
+>>> Calendar/get {"ids": null}
+<<< Calendar/get {"state": "127", "list": [{"id": "Default", "name": "personal", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": true, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": false, "mayShare": true}, "shareWith": null}, {"id": "client", "name": "client", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": false, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": true, "mayShare": true}, "shareWith": null}, {"id": "fp", "name": "fp", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": false, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": true, "mayShare": true}, "shareWith": null}, {"id": "probe", "name": "probe", "description": null, "sortOrder": 0, "isVisible": true, "isSubscribed": true, "isDefault": false, "includeInAvailability": "all", "timeZone": null, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayDelete": true, "mayShare": true}, "shareWith": null}], "notFound": [], "accountId": "user1"}
+
+===== create =====
+>>> CalendarEvent/set {"create": {"c": {"@type": "Event", "version": "2.0", "uid": "fp-jmap", "title": "fingerprint", "calendarIds": {"Default": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"oldState": "127", "newState": "128", "created": {"c": {"updated": "2026-10-12T15:09:27Z", "created": "2026-10-12T15:09:27Z", "id": "EMV-", "uid": "fp-jmap", "x-href": "/dav/calendars/user/user1/Default/9936fb7e-cd87-448e-a939-20372cea264b.ics"}}, "updated": null, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+
+===== get =====
+>>> CalendarEvent/get {"ids": ["EMV-"]}
+<<< CalendarEvent/get {"state": "128", "list": [{"@type": "Event", "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H", "created": "2026-10-12T15:09:27Z", "updated": "2026-10-12T15:09:27Z", "sequence": 0, "title": "fingerprint", "uid": "fp-jmap", "prodId": "-//CyrusIMAP.org/Cyrus 3.13.7-545-gc04cece19//EN", "version": "2.0", "isDraft": false, "calendarIds": {"Default": true}, "isOrigin": true, "id": "EMV-"}], "notFound": [], "accountId": "user1"}
+
+===== update =====
+>>> CalendarEvent/set {"update": {"EMV-": {"title": "fingerprint, updated"}}}
+<<< CalendarEvent/set {"oldState": "128", "newState": "130", "created": null, "updated": {"EMV-": {"sequence": 1, "updated": "2026-10-12T15:09:27Z"}}, "destroyed": null, "notCreated": null, "notUpdated": null, "notDestroyed": null, "accountId": "user1"}
+
+===== get =====
+>>> CalendarEvent/get {"ids": ["EMV-"]}
+<<< CalendarEvent/get {"state": "130", "list": [{"@type": "Event", "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H", "created": "2026-10-12T15:09:27Z", "updated": "2026-10-12T15:09:27Z", "sequence": 1, "title": "fingerprint, updated", "uid": "fp-jmap", "prodId": "-//CyrusIMAP.org/Cyrus 3.13.7-545-gc04cece19//EN", "version": "2.0", "isDraft": false, "calendarIds": {"Default": true}, "isOrigin": true, "id": "EMV-"}], "notFound": [], "accountId": "user1"}
+
+RESULT [Cyrus] after create: properties the server added: ['created', 'id', 'isDraft', 'isOrigin', 'prodId', 'sequence', 'updated']
+RESULT [Cyrus] PASS after create: fingerprint equal: ok
+RESULT [Cyrus] after an update: properties the server added: ['created', 'id', 'isDraft', 'isOrigin', 'prodId', 'sequence', 'updated']
+RESULT [Cyrus] PASS after an update: fingerprint equal: ok

@@ -1,0 +1,289 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /dav.php/calendars/test/fp/
+<<< 404 Not Found
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
+<<<   <s:sabredav-version>4.7.0</s:sabredav-version>
+<<<   <s:exception>Sabre\DAV\Exception\NotFound</s:exception>
+<<<   <s:message>Node with name 'fp' could not be found</s:message>
+<<< </d:error>
+
+===== reset: MKCALENDAR =====
+>>> MKCALENDAR /dav.php/calendars/test/fp/
+<<< 201 Created
+<<< Content-Type: text/html; charset=UTF-8
+
+===== PUT event.ics =====
+>>> PUT /dav.php/calendars/test/fp/event-fp.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:fp-event.ics
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:fingerprint
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< Content-Type: text/html; charset=UTF-8
+<<< ETag: "9e624a1441ce6a1ebf2f60ea40dbbb00"
+
+===== GET event.ics =====
+>>> GET /dav.php/calendars/test/fp/event-fp.ics
+<<< 200 OK
+<<< Content-Type: text/calendar; charset=utf-8; component=vevent
+<<< ETag: "9e624a1441ce6a1ebf2f60ea40dbbb00"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync evidence//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:fp-event.ics
+
+<<< DTSTAMP:20261010T000000Z
+
+<<< DTSTART:20261020T100000Z
+
+<<< DTEND:20261020T110000Z
+
+<<< SUMMARY:fingerprint
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+===== PUT event-rich.ics =====
+>>> PUT /dav.php/calendars/test/fp/event-rich-fp.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VTIMEZONE
+
+>>> TZID:Europe/Berlin
+
+>>> BEGIN:STANDARD
+
+>>> DTSTART:19701025T030000
+
+>>> RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+
+>>> TZOFFSETFROM:+0200
+
+>>> TZOFFSETTO:+0100
+
+>>> TZNAME:CET
+
+>>> END:STANDARD
+
+>>> BEGIN:DAYLIGHT
+
+>>> DTSTART:19700329T020000
+
+>>> RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+
+>>> TZOFFSETFROM:+0100
+
+>>> TZOFFSETTO:+0200
+
+>>> TZNAME:CEST
+
+>>> END:DAYLIGHT
+
+>>> END:VTIMEZONE
+
+>>> BEGIN:VEVENT
+
+>>> UID:fp-event-rich.ics
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART;TZID=Europe/Berlin:20261020T100000
+
+>>> DTEND;TZID=Europe/Berlin:20261020T110000
+
+>>> RRULE:FREQ=WEEKLY;COUNT=4
+
+>>> SUMMARY:fingerprint
+
+>>> DESCRIPTION:A description long enough that it has to be folded across lines
+
+>>>  \, with non-ASCII text: Grüße\, déjà vu\, 日本語.
+
+>>> ORGANIZER;CN=Organizer:mailto:organizer@example.org
+
+>>> ATTENDEE;CN=First;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION:mailto:first@e
+
+>>>  xample.org
+
+>>> ATTENDEE;CN=Second;ROLE=OPT-PARTICIPANT;PARTSTAT=ACCEPTED:mailto:second@exa
+
+>>>  mple.org
+
+>>> BEGIN:VALARM
+
+>>> ACTION:DISPLAY
+
+>>> DESCRIPTION:Reminder
+
+>>> TRIGGER:-PT15M
+
+>>> END:VALARM
+
+>>> END:VEVENT
+
+>>> BEGIN:VEVENT
+
+>>> UID:fp-event-rich.ics
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> RECURRENCE-ID;TZID=Europe/Berlin:20261027T100000
+
+>>> DTSTART;TZID=Europe/Berlin:20261027T120000
+
+>>> DTEND;TZID=Europe/Berlin:20261027T130000
+
+>>> SUMMARY:fingerprint\, moved
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< Content-Type: text/html; charset=UTF-8
+<<< ETag: "8accd4c31001bf88491eae8ec2073934"
+
+===== GET event-rich.ics =====
+>>> GET /dav.php/calendars/test/fp/event-rich-fp.ics
+<<< 200 OK
+<<< Content-Type: text/calendar; charset=utf-8; component=vevent
+<<< ETag: "8accd4c31001bf88491eae8ec2073934"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync evidence//EN
+
+<<< BEGIN:VTIMEZONE
+
+<<< TZID:Europe/Berlin
+
+<<< BEGIN:STANDARD
+
+<<< DTSTART:19701025T030000
+
+<<< RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+
+<<< TZOFFSETFROM:+0200
+
+<<< TZOFFSETTO:+0100
+
+<<< TZNAME:CET
+
+<<< END:STANDARD
+
+<<< BEGIN:DAYLIGHT
+
+<<< DTSTART:19700329T020000
+
+<<< RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+
+<<< TZOFFSETFROM:+0100
+
+<<< TZOFFSETTO:+0200
+
+<<< TZNAME:CEST
+
+<<< END:DAYLIGHT
+
+<<< END:VTIMEZONE
+
+<<< BEGIN:VEVENT
+
+<<< UID:fp-event-rich.ics
+
+<<< DTSTAMP:20261010T000000Z
+
+<<< DTSTART;TZID=Europe/Berlin:20261020T100000
+
+<<< DTEND;TZID=Europe/Berlin:20261020T110000
+
+<<< RRULE:FREQ=WEEKLY;COUNT=4
+
+<<< SUMMARY:fingerprint
+
+<<< DESCRIPTION:A description long enough that it has to be folded across lines
+
+<<<  \, with non-ASCII text: Grüße\, déjà vu\, 日本語.
+
+<<< ORGANIZER;CN=Organizer:mailto:organizer@example.org
+
+<<< ATTENDEE;CN=First;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION:mailto:first@e
+
+<<<  xample.org
+
+<<< ATTENDEE;CN=Second;ROLE=OPT-PARTICIPANT;PARTSTAT=ACCEPTED:mailto:second@exa
+
+<<<  mple.org
+
+<<< BEGIN:VALARM
+
+<<< ACTION:DISPLAY
+
+<<< DESCRIPTION:Reminder
+
+<<< TRIGGER:-PT15M
+
+<<< END:VALARM
+
+<<< END:VEVENT
+
+<<< BEGIN:VEVENT
+
+<<< UID:fp-event-rich.ics
+
+<<< DTSTAMP:20261010T000000Z
+
+<<< RECURRENCE-ID;TZID=Europe/Berlin:20261027T100000
+
+<<< DTSTART;TZID=Europe/Berlin:20261027T120000
+
+<<< DTEND;TZID=Europe/Berlin:20261027T130000
+
+<<< SUMMARY:fingerprint\, moved
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+RESULT [Baikal] event.ics: PUT status: 201
+RESULT [Baikal] event.ics: raw text equal: True
+RESULT [Baikal] PASS event.ics: canonical fingerprint equal: ok
+RESULT [Baikal] event-rich.ics: PUT status: 201
+RESULT [Baikal] event-rich.ics: raw text equal: True
+RESULT [Baikal] PASS event-rich.ics: canonical fingerprint equal: ok

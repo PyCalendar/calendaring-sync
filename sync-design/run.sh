@@ -72,6 +72,7 @@ radicale() {
     curl -s -o /dev/null -u test:test -X MKCALENDAR http://127.0.0.1:5232/test/client/
     probe caldav-sync-radicale.log caldav_sync.py Radicale http://127.0.0.1:5232 /test/probe/ test test
     probe caldav-client-radicale.log caldav_client.py Radicale http://127.0.0.1:5232/ http://127.0.0.1:5232/test/client/ test test
+    probe fingerprint-radicale.log fingerprint.py caldav Radicale http://127.0.0.1:5232 /test/fp/ test test
     stop_port 5232
 }
 
@@ -83,6 +84,7 @@ xandikos() {
     curl -s -o /dev/null -u test:test -X MKCALENDAR http://127.0.0.1:8090/user/calendars/client/
     probe caldav-sync-xandikos.log caldav_sync.py Xandikos http://127.0.0.1:8090 /user/calendars/probe/ test test
     probe caldav-client-xandikos.log caldav_client.py Xandikos http://127.0.0.1:8090/ http://127.0.0.1:8090/user/calendars/client/ test test
+    probe fingerprint-xandikos.log fingerprint.py caldav Xandikos http://127.0.0.1:8090 /user/calendars/fp/ test test
     stop_port 8090
 }
 
@@ -116,6 +118,8 @@ cyrus() {
     probe caldav-client-cyrus.log caldav_client.py Cyrus http://localhost:8802/ http://localhost:8802/dav/calendars/user/user1/client/ user1 x
     probe jmap-sync-cyrus.log jmap_sync.py Cyrus http://localhost:8802 user1 x yes
     probe jmap-client-cyrus.log jmap_client.py Cyrus http://localhost:8802/.well-known/jmap user1 x
+    probe fingerprint-cyrus.log fingerprint.py caldav Cyrus http://localhost:8802 /dav/calendars/user/user1/fp/ user1 x
+    probe fingerprint-jmap-cyrus.log fingerprint.py jmap Cyrus http://localhost:8802 user1 x yes
     probe expiry-caldav-cyrus.log expiry.py caldav Cyrus http://localhost:8802 /dav/calendars/user/user1/expiry/ user1 x before "$DATA/cyrus-token"
     probe expiry-jmap-cyrus.log expiry.py jmap Cyrus http://localhost:8802 user1 x yes before "$DATA/cyrus-state"
     docker exec cyrus-test /usr/cyrus/sbin/cyr_expire -X 0 -D 0 -E 0 -v -u user1 > "$LOGS/server-cyrus-cyr_expire.log" 2>&1
@@ -132,6 +136,8 @@ stalwart() {
     probe caldav-client-stalwart.log caldav_client.py Stalwart http://localhost:8809/ "http://localhost:8809$home/client/" "$user" testcaldav
     probe jmap-sync-stalwart.log jmap_sync.py Stalwart http://localhost:8809 "$user" testcaldav no
     probe jmap-client-stalwart.log jmap_client.py Stalwart http://localhost:8809/.well-known/jmap "$user" testcaldav
+    probe fingerprint-stalwart.log fingerprint.py caldav Stalwart http://localhost:8809 "$home/fp/" "$user" testcaldav
+    probe fingerprint-jmap-stalwart.log fingerprint.py jmap Stalwart http://localhost:8809 "$user" testcaldav no
     "$PY" -B -E -s "$SERVERS/stalwart_admin.py" expire-setup > "$LOGS/server-stalwart-expire-setup.log" 2>&1
     probe expiry-caldav-stalwart.log expiry.py caldav Stalwart http://localhost:8809 "$home/expiry/" "$user" testcaldav before "$DATA/stalwart-token"
     probe expiry-jmap-stalwart.log expiry.py jmap Stalwart http://localhost:8809 "$user" testcaldav no before "$DATA/stalwart-state"
@@ -169,6 +175,7 @@ baikal() {
     curl -s -o /dev/null -u test:test -X MKCALENDAR http://127.0.0.1:8811/dav.php/calendars/test/client/
     probe caldav-sync-baikal.log caldav_sync.py Baikal http://127.0.0.1:8811 /dav.php/calendars/test/probe/ test test
     probe caldav-client-baikal.log caldav_client.py Baikal http://127.0.0.1:8811/ http://127.0.0.1:8811/dav.php/calendars/test/client/ test test
+    probe fingerprint-baikal.log fingerprint.py caldav Baikal http://127.0.0.1:8811 /dav.php/calendars/test/fp/ test test
     docker stop baikal-evidence > /dev/null
 }
 
