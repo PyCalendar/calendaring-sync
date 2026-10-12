@@ -1,0 +1,85 @@
+/* SPDX-FileCopyrightText: 2026 calendaring-sync contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Page content rules on top of pycal-theme.css: tables that fit the content
+ * column, and mermaid diagrams in the site's own colors.
+ */
+
+/* Tables take the column widths their :widths: option sets and fit the
+   content column, and long code names in a cell wrap, so no table needs a
+   horizontal scrollbar. */
+.bd-content table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.bd-content table td,
+.bd-content table th {
+  overflow-wrap: break-word;
+}
+
+.bd-content table code,
+.bd-content table code span.pre {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Mermaid scopes its inline styles to each diagram's id, so these need
+   !important to win. Every color comes from pydata-sphinx-theme's variables,
+   so light and dark mode both follow pycal-theme.css. */
+
+pre.mermaid {
+  background: transparent;
+  border: none;
+}
+
+/* pydata-sphinx-theme inverts mermaid diagrams in dark mode; these already
+   take their dark colors from the variables below. */
+html[data-theme="dark"] pre.mermaid > svg {
+  filter: none;
+}
+
+pre.mermaid svg .statediagram-state rect {
+  fill: var(--pst-color-surface) !important;
+  stroke: var(--pst-color-primary) !important;
+  stroke-width: 1.5px !important;
+  filter: none !important;
+}
+
+pre.mermaid svg .nodeLabel,
+pre.mermaid svg .nodeLabel p {
+  color: var(--pst-color-text-base) !important;
+}
+
+pre.mermaid svg .state-start {
+  fill: var(--pst-color-primary) !important;
+  stroke: var(--pst-color-primary) !important;
+}
+
+pre.mermaid svg .transition {
+  stroke: var(--pst-color-text-muted) !important;
+}
+
+pre.mermaid svg marker path {
+  fill: var(--pst-color-text-muted) !important;
+  stroke: var(--pst-color-text-muted) !important;
+}
+
+pre.mermaid svg .edgeLabel,
+pre.mermaid svg .labelBkg,
+pre.mermaid svg .edgeLabel p {
+  background-color: var(--pst-color-background) !important;
+  color: var(--pst-color-text-muted) !important;
+}
+
+pre.mermaid svg .statediagram-note path,
+pre.mermaid svg .statediagram-note rect {
+  fill: var(--pst-color-primary-bg) !important;
+  stroke: var(--pst-color-border) !important;
+  filter: none !important;
+}
+
+pre.mermaid svg .noteLabel,
+pre.mermaid svg .noteLabel p {
+  color: var(--pst-color-text-muted) !important;
+}

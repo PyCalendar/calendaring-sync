@@ -21,6 +21,7 @@ extensions = [
     "sphinx_design",
     "sphinx_issues",
     "sphinx_last_updated_by_git",
+    "sphinxcontrib.mermaid",
     "sphinxext.opengraph",
 ]
 
@@ -88,6 +89,7 @@ html_js_files = [
 html_css_files = [
     "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&family=Cascadia+Code&display=swap",
     "css/pycal-theme.css",
+    "css/content.css",
 ]
 
 notfound_template = "404.html"
@@ -97,6 +99,14 @@ notfound_template = "404.html"
 # when not building on RTD.
 if not os.environ.get("READTHEDOCS"):
     notfound_urls_prefix = "/"
+
+# Diagrams render in the reader's browser with mermaid.js from jsdelivr, so
+# building the docs needs no Node.js. Pin the release so rendering can't change
+# under us.
+mermaid_output_format = "raw"
+mermaid_version = "12.1.0"
+# Measure labels in the site's own font, so they fit the boxes drawn for them.
+mermaid_init_config = {"startOnLoad": False, "fontFamily": "var(--pst-font-family-base)"}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
