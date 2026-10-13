@@ -12,7 +12,7 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, ExitStack
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -129,6 +129,12 @@ def _open_session(
     replica: Replica, scope: str = _SCOPE, *, scheme: str = _SCHEME, media: str = _MEDIA
 ) -> AbstractContextManager[Session]:
     return replica.session(scope, fingerprint_scheme=scheme, media_type=media)
+
+
+def _enter(context: AbstractContextManager[object]) -> None:
+    """Enter and leave a context, for tests about what happens on entry."""
+    with ExitStack() as stack:
+        stack.enter_context(context)
 
 
 def _sync(replica: Replica, *pages: ChangeSet) -> SessionState:
@@ -458,10 +464,8 @@ class TestSessions:
         with _open_session(replica) as session:
             assert session.scope_id == _SCOPE
             with pytest.raises(SessionError, match="already open"):
-                with _open_session(replica):
-                    pass
-        with _open_session(replica):
-            pass
+                _enter(_open_session(replica))
+        _enter(_open_session(replica))
 
     @pytest.mark.parametrize("method", ["reset", "drop_scope"])
     def test_reset_and_drop_refused_while_a_session_is_open(self, replica, method):
@@ -473,10 +477,8 @@ class TestSessions:
     def test_media_type_mismatch(self, replica):
         _seeded(replica)
         with pytest.raises(ScopeMismatchError):
-            with _open_session(replica, media="application/json"):
-                pass
-        with _open_session(replica):
-            pass
+            _enter(_open_session(replica, media="application/json"))
+        _enter(_open_session(replica))
 
     def test_fingerprint_scheme_change_resets_and_clears_versions(self, replica):
         _seeded(replica)
@@ -602,8 +604,7 @@ class TestStores:
 
     def test_transactions_do_not_nest(self, store):
         with store.transaction(), pytest.raises(RuntimeError, match="already open"):
-            with store.transaction():
-                pass
+            _enter(store.transaction())
 
     def test_object_ids_are_unique_per_scope(self, replica, store):
         _seeded(replica)
