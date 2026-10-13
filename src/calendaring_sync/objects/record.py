@@ -37,7 +37,9 @@ class Record:
             assigns one to an object you created.
         state: The record's state.
         version: The object's :term:`version`, or ``None``.
-        fingerprint: The :term:`fingerprint` of :attr:`content`.
+        fingerprint: The :term:`fingerprint` of :attr:`content`, or ``None``
+            after a :term:`fingerprint scheme` change until the object is
+            listed again.
         content: The object's :term:`synced content`.
         containers: The :term:`containers <container>` the object belongs to.
         logical_key: The object's :term:`logical key`, if it has one.
@@ -52,7 +54,7 @@ class Record:
     object_id: str | None
     state: RecordState
     version: str | None
-    fingerprint: str
+    fingerprint: str | None
     content: str
     containers: frozenset[str]
     logical_key: str | None

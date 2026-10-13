@@ -35,7 +35,8 @@ class MemoryStore(LockedStore):
     """A store held in memory and lost when the process ends.
 
     A write transaction works on a copy of the data, which replaces the data
-    only when the transaction ends normally. Meant for tests; use
+    only when the transaction ends normally. Lookups scan every record, so
+    it suits test data, not large stores. Meant for tests; use
     :class:`~calendaring_sync.store.sqlite.SQLiteStore` to keep state.
     """
 

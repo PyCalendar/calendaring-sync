@@ -232,13 +232,23 @@ class TestIngest:
         assert after.synced_at == clock.now
         assert _feed(replica, 2) == []
 
-    def test_containers_and_logical_key_survive_an_equal_fingerprint(self, replica):
-        containers = frozenset({"x", "y", "z"})
-        first = _changed("fa", containers=containers, logical_key="uid-1")
+    @pytest.mark.parametrize(
+        "moved",
+        [
+            {"containers": frozenset({"cal2"}), "logical_key": "uid-1"},
+            {"containers": frozenset({"cal1"}), "logical_key": "uid-2"},
+        ],
+    )
+    def test_new_containers_or_logical_key_count_as_a_change(self, replica, moved):
+        first = _changed("fa", containers=frozenset({"cal1"}), logical_key="uid-1")
         _sync(replica, _page(None, "T1", {"a": first}, full=True))
-        _sync(replica, _page("T1", "T2", {"a": _changed("fa", "v2")}))
+        _sync(replica, _page("T1", "T2", {"a": _changed("fa", "v2", **moved)}))
         [record] = replica.records(_SCOPE)
-        assert (record.containers, record.logical_key) == (containers, "uid-1")
+        assert (record.containers, record.logical_key) == (
+            moved["containers"],
+            moved["logical_key"],
+        )
+        assert _feed(replica, 1) == [(FeedEntryKind.CHANGED, "a")]
 
     def test_content_round_trips_exactly(self, replica):
         text = "BEGIN:X\r\nSUMMARY:café ☃\r\n line folded\r\nEND:X\r\n"
@@ -425,6 +435,17 @@ class TestFullListing:
         assert replica.scope(_SCOPE).token == "L"
         assert replica.known_versions(_SCOPE) == {"a": "v1", "b": "v2"}
 
+    def test_stale_page_lets_the_same_session_start_over(self, replica):
+        _seeded(replica)
+        with _open_session(replica) as session:
+            session.ingest(_page("T1", "L1", {"a": Unchanged()}, full=True, truncated=True))
+            with pytest.raises(StaleChangeSetError):
+                session.ingest(_page("T1", "L-other", {}, full=True))
+            assert session.state is SessionState.IDLE
+            session.ingest(_page("T1", "L2", {"a": Unchanged()}, full=True))
+        assert replica.scope(_SCOPE).token == "L2"
+        assert _states(replica)["b"] is RecordState.REMOVED
+
     def test_interleaved_listings_refuse_the_older_one(self, make_store, clock):
         a, b = Replica(make_store(), clock=clock), Replica(make_store(), clock=clock)
         with _open_session(a) as session_a:
@@ -485,10 +506,24 @@ class TestSessions:
         with _open_session(replica, scheme="scheme-2") as session:
             scope = replica.scope(_SCOPE)
             assert (scope.token, scope.fingerprint_scheme) == (None, "scheme-2")
-            assert {r.version for r in replica.records(_SCOPE)} == {None}
+            assert {(r.version, r.fingerprint) for r in replica.records(_SCOPE)} == {(None, None)}
             assert replica.known_versions(_SCOPE) == {}
             with pytest.raises(ValueError, match="needs a full listing"):
                 session.ingest(_page(None, "T2", {}))
+
+    def test_listing_after_a_scheme_change_reports_only_new_text(self, replica):
+        _seeded(replica)
+        relisted = {
+            "a": _changed("new-a", content="text of fa"),
+            "b": _changed("new-b", content="b edited meanwhile"),
+        }
+        with _open_session(replica, scheme="scheme-2") as session:
+            session.ingest(_page(None, "L", relisted, full=True))
+        assert _feed(replica, 2) == [(FeedEntryKind.CHANGED, "b")]
+        assert {r.object_id: r.fingerprint for r in replica.records(_SCOPE)} == {
+            "a": "new-a",
+            "b": "new-b",
+        }
 
     def test_reset_keeps_records(self, replica):
         _seeded(replica)

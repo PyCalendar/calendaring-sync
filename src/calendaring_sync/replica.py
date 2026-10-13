@@ -24,7 +24,7 @@ from calendaring_sync.error import (
     TrimmedFeedError,
     UnknownScopeError,
 )
-from calendaring_sync.objects.change import Change, Removed, Unchanged
+from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
 from calendaring_sync.objects.dropped_scope import DroppedScope
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
@@ -35,6 +35,24 @@ from calendaring_sync.store.base import StateStore
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def _holds_same_data(record: Record, change: Changed) -> bool:
+    """Whether a change leaves a record's data as it is, so it isn't reported.
+
+    Fingerprints decide, except right after a fingerprint scheme change,
+    when the record has none and its text is compared instead.
+    """
+    same_content = (
+        record.content == change.content
+        if record.fingerprint is None
+        else record.fingerprint == change.fingerprint
+    )
+    return (
+        same_content
+        and record.containers == change.containers
+        and record.logical_key == change.logical_key
+    )
 
 
 class SessionState(StrEnum):
@@ -74,8 +92,8 @@ class Session:
 
         The core applies each object in it: a new object gets a record, a
         changed one gets the new data, and a removed one is marked removed. An object whose
-        :term:`fingerprint` didn't change only gets its version and the
-        server's text, and isn't reported. A :term:`truncated page` of an
+        :term:`fingerprint`, containers and logical key didn't change only
+        gets its version and the server's text, and isn't reported. A :term:`truncated page` of an
         :term:`incremental change set` moves the token to its
         :term:`checkpoint`. A :term:`full listing` moves the token only on
         its last page, which also removes every record the listing never
@@ -84,7 +102,9 @@ class Session:
         Raises:
             StaleChangeSetError: If the change set was fetched from a token
                 the scope no longer has, or is a later page of a listing with
-                another token, such as one another session has replaced.
+                another token, such as one another session has replaced. The
+                session goes back to idle, so the adapter can fetch again and
+                ingest from the start in the same session.
             SessionError: If the session has ended, already ingested its last
                 page, or the page is a listing page in an incremental session
                 or the other way round.
@@ -103,17 +123,28 @@ class Session:
             raise SessionError("The session already ingested its last page")
         if self._listing is not None and self._listing != change_set.full_listing:
             raise SessionError("One session's pages are all listing pages or all incremental")
-        self._mentioned = self._replica._ingest(
-            change_set, first_page=self._state is SessionState.IDLE, mentioned=self._mentioned
-        )
+        try:
+            self._mentioned = self._replica._ingest(
+                change_set, first_page=self._state is SessionState.IDLE, mentioned=self._mentioned
+            )
+        except StaleChangeSetError:
+            # The scope moved on, so whatever this session was ingesting is
+            # outdated; the adapter fetches again and starts over here.
+            self._restart()
+            raise
         self._listing = change_set.full_listing
         self._state = SessionState.INGESTING if change_set.truncated else SessionState.INGESTED
 
-    def _end(self) -> None:
-        """Close the session when its ``with`` block ends; a half-done listing is dropped."""
-        self._closed = True
+    def _restart(self) -> None:
+        """Go back to idle, dropping a half-done listing."""
         self._state = SessionState.IDLE
+        self._listing = None
         self._mentioned = set()
+
+    def _end(self) -> None:
+        """Close the session when its ``with`` block ends."""
+        self._closed = True
+        self._restart()
 
 
 class Replica:
@@ -139,8 +170,9 @@ class Replica:
 
         The first session creates the scope. A different
         :term:`fingerprint scheme` from the stored one resets the scope and
-        clears every record's version, so the next :term:`full listing`
-        fetches and fingerprints every object again.
+        clears every record's version and fingerprint, so the next
+        :term:`full listing` fetches every object again. Objects whose text
+        is the same as before aren't reported as changed.
 
         Args:
             scope_id: The scope's id, chosen by the :term:`adapter`.
@@ -181,7 +213,7 @@ class Replica:
                     )
                 )
                 for record in self._store.scope_records(scope_id):
-                    self._store.update_record(replace(record, version=None))
+                    self._store.update_record(replace(record, version=None, fingerprint=None))
 
     def _ingest(self, change_set: ChangeSet, *, first_page: bool, mentioned: set[str]) -> set[str]:
         """Apply one change set in one transaction; return the listing's mentioned ids after it."""
@@ -244,9 +276,15 @@ class Replica:
                     f"Object {object_id!r} is reported unchanged, "
                     "but the store has no version for it"
                 )
-        elif live is not None and live.fingerprint == change.fingerprint:
+        elif live is not None and _holds_same_data(live, change):
             self._store.update_record(
-                replace(live, version=change.version, content=change.content, synced_at=now)
+                replace(
+                    live,
+                    version=change.version,
+                    fingerprint=change.fingerprint,
+                    content=change.content,
+                    synced_at=now,
+                )
             )
         else:
             synced = Record(
@@ -283,10 +321,13 @@ class Replica:
             raise UnknownScopeError(f"No scope {scope_id!r}")
         return scope
 
-    def _check_no_session(self, scope_id: str) -> None:
+    @contextmanager
+    def _without_session(self, scope_id: str) -> Iterator[None]:
+        """Hold off new sessions for a scope that has none open, for the ``with`` block."""
         with self._sessions_lock:
             if scope_id in self._sessions:
                 raise SessionError(f"A session for {scope_id!r} is open")
+            yield
 
     def scope(self, scope_id: str) -> Scope:
         """Return one scope.
@@ -344,8 +385,7 @@ class Replica:
             UnknownScopeError: If there's no scope with this id.
             SessionError: If a session for the scope is open.
         """
-        self._check_no_session(scope_id)
-        with self._store.transaction():
+        with self._without_session(scope_id), self._store.transaction():
             scope = self._existing_scope(scope_id)
             self._store.put_scope(replace(scope, token=None, listing_token=None))
 
@@ -359,8 +399,7 @@ class Replica:
             UnknownScopeError: If there's no scope with this id.
             SessionError: If a session for the scope is open.
         """
-        self._check_no_session(scope_id)
-        with self._store.transaction():
+        with self._without_session(scope_id), self._store.transaction():
             self._existing_scope(scope_id)
             records = self._store.scope_records(scope_id)
             self._store.delete_scope(scope_id)

@@ -62,7 +62,7 @@ _SCHEMA = (
     object_id TEXT,
     state TEXT NOT NULL,
     version TEXT,
-    fingerprint TEXT NOT NULL,
+    fingerprint TEXT,
     content TEXT NOT NULL,
     containers TEXT NOT NULL,
     logical_key TEXT,
@@ -82,8 +82,6 @@ _SCHEMA = (
 )
 
 
-#: How a column's stored text turns back into its field's value. Columns
-#: not listed are stored as they are.
 #: How the stored text of these columns turns back into a field's value;
 #: every other column is stored as the value itself.
 _DECODERS: dict[str, Callable[[Any], Any]] = {
