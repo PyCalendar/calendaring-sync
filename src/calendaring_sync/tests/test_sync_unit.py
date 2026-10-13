@@ -662,6 +662,22 @@ class TestSQLiteStore:
             assert replica.scope(_SCOPE).token == "T1"
             assert _states(replica) == {"a": RecordState.SYNCED, "b": RecordState.SYNCED}
 
+    def test_schema_created_by_another_process_first(self, tmp_path, monkeypatch):
+        path = tmp_path / _DB_FILE
+        SQLiteStore(path).close()
+        real = SQLiteStore._version
+        looks: list[int] = []
+
+        def version(store: SQLiteStore) -> int:
+            # The first look sees an empty file; under the write lock the schema is there.
+            looks.append(0)
+            return 0 if len(looks) == 1 else real(store)
+
+        monkeypatch.setattr(SQLiteStore, "_version", version)
+        with SQLiteStore(path) as store, store.transaction(write=False):
+            assert store.scopes() == []
+        assert len(looks) == 3
+
     def test_newer_schema_is_refused(self, tmp_path):
         path = tmp_path / _DB_FILE
         SQLiteStore(path).close()
