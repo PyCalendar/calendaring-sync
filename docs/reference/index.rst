@@ -13,4 +13,6 @@
 .. toctree::
    :maxdepth: 1
 
+   glossary
+   server-compatibility
    ../changelog

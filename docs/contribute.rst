@@ -165,6 +165,8 @@ Prose style for pages
 Cross-referencing and code examples
     Link between pages with ``:doc:`` and an explicit relative path (``:doc:`../explanation/design```). Reference a class or method with ``:class:``/``:meth:`` and a leading ``~`` for a short display name. Cite an RFC the same way :ref:`code-style`'s "RFC citations" rule describes for docstrings, merging the section into the role.
 
+    Link a sync term to :doc:`reference/glossary` with ``:term:`` the first time a section uses it, and define a new term there rather than inline. Sphinx doesn't check the syntax inside a ``.. mermaid::`` diagram, so render a changed diagram before opening a PR.
+
     Use ``.. code-block:: python`` or ``.. code-block:: bash``, with a blank line before and after the directive and the indented block. A tutorial ends with an explicit "Next steps" section linking forward to relevant how-to and explanation pages.
 
 Title underlines

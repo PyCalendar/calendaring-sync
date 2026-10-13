@@ -23,7 +23,7 @@ A Python library for calendar sync state: sync tokens, object versions, change t
         :link: reference/index
         :link-type: doc
 
-        Every class and method, generated from the source.
+        Sync terms, server behavior, and every class and method.
 
     .. grid-item-card:: 💡 Design
         :link: explanation/design

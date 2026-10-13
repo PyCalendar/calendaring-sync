@@ -1,0 +1,1 @@
+Added the sync state design with a walk-through of one sync and state diagrams, a glossary of sync terms, an explanation of how each adapter maps its protocol onto the design, and a server compatibility reference.

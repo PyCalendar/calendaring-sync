@@ -14,3 +14,4 @@ Background and design rationale: why calendaring-sync is built the way it is, no
    :maxdepth: 1
 
    design
+   adapters
