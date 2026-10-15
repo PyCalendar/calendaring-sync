@@ -91,13 +91,14 @@ class Session:
         """:term:`Ingest` one change set, or one page of it, in one transaction.
 
         The core applies each object in it: a new object gets a record, a
-        changed one gets the new data, and a removed one is marked removed. An object whose
-        :term:`fingerprint`, containers and logical key didn't change only
-        gets its version and the server's text, and isn't reported. A :term:`truncated page` of an
-        :term:`incremental change set` moves the token to its
-        :term:`checkpoint`. A :term:`full listing` moves the token only on
-        its last page, which also removes every record the listing never
-        mentioned. If anything fails, nothing changes.
+        changed one gets the new data, and a removed one is marked removed.
+        An object whose :term:`fingerprint`, containers and logical key
+        didn't change only gets its version and the server's text, and isn't
+        reported. A :term:`truncated page` of an :term:`incremental change set`
+        moves the token to its :term:`checkpoint`. A :term:`full listing`
+        moves the token only on its last page, which also removes every
+        record the listing never mentioned. If anything fails, nothing
+        changes.
 
         Raises:
             StaleChangeSetError: If the change set was fetched from a token
@@ -128,8 +129,6 @@ class Session:
                 change_set, first_page=self._state is SessionState.IDLE, mentioned=self._mentioned
             )
         except StaleChangeSetError:
-            # The scope moved on, so whatever this session was ingesting is
-            # outdated; the adapter fetches again and starts over here.
             self._restart()
             raise
         self._listing = change_set.full_listing
@@ -149,6 +148,12 @@ class Session:
 
 class Replica:
     """The sync state of every :term:`scope` in one :term:`store`.
+
+    Any method can also raise the store's errors:
+    :class:`~calendaring_sync.error.StoreBusyError` when another process
+    kept the store busy, which is safe to retry, and
+    :class:`~calendaring_sync.error.StoreError` when the store can't read or
+    write its data. Neither changes anything.
 
     Args:
         store: Where the state is kept.

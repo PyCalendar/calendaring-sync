@@ -51,5 +51,25 @@ class SessionError(CalendaringSyncError):
     """
 
 
-class StoreVersionError(CalendaringSyncError):
+class TransactionError(CalendaringSyncError):
+    """A :term:`store` operation ran outside a transaction of the kind it needs.
+
+    That is, an operation outside any transaction, a transaction opened
+    while the thread already has one, or a write inside a transaction that
+    only reads.
+    """
+
+
+class StoreError(CalendaringSyncError):
+    """The :term:`store` couldn't read or write its data, such as a file that isn't a store."""
+
+
+class StoreBusyError(StoreError):
+    """Another process kept the :term:`store` busy for longer than the store waits.
+
+    Nothing was changed. Try again later.
+    """
+
+
+class StoreVersionError(StoreError):
     """The store was written by a newer calendaring-sync, with a schema this one can't read."""

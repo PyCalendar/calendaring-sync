@@ -12,7 +12,7 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import AbstractContextManager, ExitStack
+from contextlib import AbstractContextManager, ExitStack, contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -37,20 +37,26 @@ from calendaring_sync import (
     SQLiteStore,
     StaleChangeSetError,
     StateStore,
+    StoreBusyError,
+    StoreError,
     StoreVersionError,
+    TransactionError,
     TrimmedFeedError,
     Unchanged,
     UnknownScopeError,
 )
 from calendaring_sync.constants import FEED_PAGE_SIZE, SCHEMA_VERSION
-from calendaring_sync.store.sqlite import _META
+from calendaring_sync.store.sqlite import _META, _RECORDS
 
 _SCOPE = "cal"
 _OTHER = "other"
 _DB_FILE = "s.db"
 _SCHEME = "scheme-1"
+_OTHER_SCHEME = "scheme-2"
 _MEDIA = "text/plain"
 _START = datetime(2026, 10, 1, tzinfo=UTC)
+# How long a test store waits for another, where the wait is meant to run out.
+_SHORT_TIMEOUT = 0.1
 
 
 class _Clock:
@@ -155,6 +161,26 @@ def _feed(replica: Replica, after: int = 0) -> list[tuple[FeedEntryKind, str | N
 def _snapshot(replica: Replica) -> tuple[object, ...]:
     """Everything a replica holds, to compare before and after."""
     return (replica.scopes(), replica.records(_SCOPE), replica.read_feed(), replica.feed_head())
+
+
+def _new_scope() -> Scope:
+    return Scope(_SCOPE, None, _SCHEME, _MEDIA)
+
+
+@contextmanager
+def _busy_pair(tmp_path: Path) -> Iterator[tuple[SQLiteStore, SQLiteStore]]:
+    """Two stores on one file; the second gives up quickly when the first holds it."""
+    path = tmp_path / _DB_FILE
+    with SQLiteStore(path) as holder, SQLiteStore(path, timeout=_SHORT_TIMEOUT) as waiter:
+        yield holder, waiter
+
+
+def _edit_file(path: Path, sql: str, params: tuple[object, ...]) -> None:
+    """Change a store's file directly, as a damaged or newer file would look."""
+    conn = sqlite3.connect(path)
+    conn.execute(sql, params)
+    conn.commit()
+    conn.close()
 
 
 def _local_record(state: RecordState, object_id: str | None = None, local_key: int = 0) -> Record:
@@ -503,9 +529,9 @@ class TestSessions:
 
     def test_fingerprint_scheme_change_resets_and_clears_versions(self, replica):
         _seeded(replica)
-        with _open_session(replica, scheme="scheme-2") as session:
+        with _open_session(replica, scheme=_OTHER_SCHEME) as session:
             scope = replica.scope(_SCOPE)
-            assert (scope.token, scope.fingerprint_scheme) == (None, "scheme-2")
+            assert (scope.token, scope.fingerprint_scheme) == (None, _OTHER_SCHEME)
             assert {(r.version, r.fingerprint) for r in replica.records(_SCOPE)} == {(None, None)}
             assert replica.known_versions(_SCOPE) == {}
             with pytest.raises(ValueError, match="needs a full listing"):
@@ -517,7 +543,7 @@ class TestSessions:
             "a": _changed("new-a", content="text of fa"),
             "b": _changed("new-b", content="b edited meanwhile"),
         }
-        with _open_session(replica, scheme="scheme-2") as session:
+        with _open_session(replica, scheme=_OTHER_SCHEME) as session:
             session.ingest(_page(None, "L", relisted, full=True))
         assert _feed(replica, 2) == [(FeedEntryKind.CHANGED, "b")]
         assert {r.object_id: r.fingerprint for r in replica.records(_SCOPE)} == {
@@ -634,12 +660,58 @@ class TestFeed:
 
 class TestStores:
     def test_operations_outside_a_transaction_raise(self, store):
-        with pytest.raises(RuntimeError, match="inside store.transaction"):
+        with pytest.raises(TransactionError, match="inside store.transaction"):
             store.scopes()
 
     def test_transactions_do_not_nest(self, store):
-        with store.transaction(), pytest.raises(RuntimeError, match="already open"):
+        with store.transaction(), pytest.raises(TransactionError, match="already open"):
             _enter(store.transaction())
+
+    def test_threads_share_one_store(self, replica):
+        def write(n: int) -> None:
+            scope = f"scope-{n}"
+            objects = {f"o{i}": _changed(f"f{n}-{i}") for i in range(20)}
+            with _open_session(replica, scope) as session:
+                session.ingest(_page(None, "T1", objects, full=True, scope=scope))
+            if n % 2:
+                replica.drop_scope(scope)
+
+        def read(_: int) -> None:
+            for scope in replica.scopes():
+                try:
+                    replica.records(scope.id)
+                except UnknownScopeError:
+                    pass  # dropped by a writer between the two calls
+
+        def work(n: int) -> None:
+            write(n)
+            read(n)
+
+        with ThreadPoolExecutor(8) as pool:
+            list(pool.map(work, range(16)))
+        assert [s.id for s in replica.scopes()] == sorted(f"scope-{n}" for n in range(0, 16, 2))
+        assert all(len(replica.records(s.id)) == 20 for s in replica.scopes())
+        assert [e.number for e in replica.read_feed()] == list(range(1, replica.feed_head() + 1))
+
+    def test_a_closed_store_refuses_transactions(self, store):
+        store.close()
+        store.close()
+        with pytest.raises(StoreError, match="closed"):
+            _enter(store.transaction(write=False))
+
+    def test_closing_inside_a_transaction_is_refused(self, store):
+        with store.transaction():
+            store.put_scope(_new_scope())
+            with pytest.raises(TransactionError, match="after its transaction"):
+                store.close()
+        with store.transaction(write=False):
+            assert [s.id for s in store.scopes()] == [_SCOPE]
+
+    def test_a_read_transaction_refuses_writes(self, store):
+        with store.transaction(write=False), pytest.raises(TransactionError, match="write=False"):
+            store.put_scope(_new_scope())
+        with store.transaction(write=False):
+            assert store.scopes() == []
 
     def test_object_ids_are_unique_per_scope(self, replica, store):
         _seeded(replica)
@@ -665,7 +737,7 @@ class TestStores:
         store = FailingCommit()
         with pytest.raises(OSError):
             with store.transaction():
-                store.put_scope(Scope("s", None, _SCHEME, _MEDIA))
+                store.put_scope(_new_scope())
         store._commit = lambda: None  # type: ignore[method-assign]
         with store.transaction():
             assert store.scopes() == []
@@ -677,6 +749,55 @@ class TestStores:
 
 
 class TestSQLiteStore:
+    def test_busy_file_raises_store_busy_error_and_stays_usable(self, tmp_path):
+        with _busy_pair(tmp_path) as (holder, waiter):
+            with holder.transaction(), pytest.raises(StoreBusyError):
+                _enter(waiter.transaction())
+            with waiter.transaction():
+                waiter.put_scope(_new_scope())
+            with holder.transaction(write=False):
+                assert [s.id for s in holder.scopes()] == [_SCOPE]
+
+    def test_ingest_while_busy_changes_nothing_and_can_be_retried(self, tmp_path, clock):
+        with _busy_pair(tmp_path) as (holder, waiter):
+            replica = Replica(waiter, clock=clock)
+            first = _page(None, "T1", {"a": _changed("fa")}, full=True)
+            with _open_session(replica) as session:
+                with holder.transaction(), pytest.raises(StoreBusyError):
+                    session.ingest(first)
+                assert (session.state, replica.records(_SCOPE)) == (SessionState.IDLE, [])
+                session.ingest(first)
+            assert replica.scope(_SCOPE).token == "T1"
+
+    def test_unreadable_files_raise_store_error(self, tmp_path):
+        not_a_store = tmp_path / "junk.db"
+        not_a_store.write_bytes(b"not a database" * 100)
+        for path in (not_a_store, tmp_path / "missing" / _DB_FILE):
+            with pytest.raises(StoreError):
+                SQLiteStore(path)
+
+    @pytest.mark.parametrize(
+        "column, damage",
+        [
+            ("state", "bogus"),
+            ("containers", "not json"),
+            ("containers", "5"),
+            ("containers", '"abc"'),
+            ("synced_at", "noon"),
+        ],
+    )
+    def test_damaged_values_raise_store_error(self, tmp_path, clock, column, damage):
+        path = tmp_path / _DB_FILE
+        with SQLiteStore(path) as store:
+            _seeded(Replica(store, clock=clock))
+        _edit_file(path, f"UPDATE {_RECORDS} SET {column} = ?", (damage,))
+        with SQLiteStore(path) as store, pytest.raises(StoreError, match=column):
+            Replica(store, clock=clock).records(_SCOPE)
+
+    def test_other_sqlite_errors_become_store_error(self, tmp_path):
+        with SQLiteStore(tmp_path / _DB_FILE) as sqlite_store, pytest.raises(StoreError):
+            sqlite_store._run("SELECT * FROM no_such_table")
+
     def test_state_survives_reopening(self, tmp_path, clock):
         path = tmp_path / _DB_FILE
         with SQLiteStore(path) as store:
@@ -717,10 +838,7 @@ class TestSQLiteStore:
     def test_newer_schema_is_refused(self, tmp_path):
         path = tmp_path / _DB_FILE
         SQLiteStore(path).close()
-        conn = sqlite3.connect(path)
-        conn.execute(f"UPDATE {_META} SET schema_version = ?", (SCHEMA_VERSION + 1,))
-        conn.commit()
-        conn.close()
+        _edit_file(path, f"UPDATE {_META} SET schema_version = ?", (SCHEMA_VERSION + 1,))
         with pytest.raises(StoreVersionError):
             SQLiteStore(path)
 
@@ -729,18 +847,3 @@ class TestSQLiteStore:
             with pytest.raises(OSError), store.transaction():
                 store._conn.execute("COMMIT")
                 raise OSError("after an implicit end")
-
-    def test_threads_share_one_store(self, tmp_path, clock):
-        with SQLiteStore(tmp_path / _DB_FILE) as store:
-            replica = Replica(store, clock=clock)
-
-            def work(n: int) -> None:
-                scope = f"scope-{n}"
-                objects = {f"o{i}": _changed(f"f{n}-{i}") for i in range(20)}
-                with _open_session(replica, scope) as session:
-                    session.ingest(_page(None, "T1", objects, full=True, scope=scope))
-
-            with ThreadPoolExecutor(8) as pool:
-                list(pool.map(work, range(8)))
-            assert len(replica.scopes()) == 8
-            assert [e.number for e in replica.read_feed()] == list(range(1, 161))
