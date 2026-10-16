@@ -9,6 +9,7 @@ Rule: zero network calls, zero Docker dependency, all tests are fast.
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
@@ -23,6 +24,7 @@ from calendaring_sync import (
     Change,
     Changed,
     ChangeSet,
+    DuplicateObjectError,
     FeedEntryKind,
     MemoryStore,
     Record,
@@ -41,12 +43,16 @@ from calendaring_sync import (
     StoreError,
     StoreVersionError,
     TransactionError,
+    TransactionPermissionError,
+    TransactionRequiredError,
     TrimmedFeedError,
     Unchanged,
+    UnexpectedStoreError,
+    UnknownRecordError,
     UnknownScopeError,
 )
-from calendaring_sync.constants import FEED_PAGE_SIZE, SCHEMA_VERSION
-from calendaring_sync.store.sqlite import _META, _RECORDS
+from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
+from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS
 
 _SCOPE = "cal"
 _OTHER = "other"
@@ -186,6 +192,34 @@ def _edit_file(path: Path, sql: str, params: tuple[object, ...]) -> None:
 def _local_record(state: RecordState, object_id: str | None = None, local_key: int = 0) -> Record:
     """A record written straight to a store, as later local edits will be."""
     return Record(local_key, _SCOPE, object_id, state, None, "f", "c", frozenset(), None, None, 0)
+
+
+# Every store operation that only reads, called so it works on an empty store.
+_READS: dict[str, Callable[[StateStore], object]] = {
+    "get_scope": lambda store: store.get_scope(_SCOPE),
+    "scopes": lambda store: store.scopes(),
+    "get_record": lambda store: store.get_record(1),
+    "find_record": lambda store: store.find_record(_SCOPE, "a"),
+    "scope_records": lambda store: store.scope_records(_SCOPE),
+    "removed_records": lambda store: store.removed_records(0),
+    "entries": lambda store: store.entries(0, 1),
+    "feed_bounds": lambda store: store.feed_bounds(),
+}
+
+# Every store operation that writes.
+_WRITES: dict[str, Callable[[StateStore], object]] = {
+    "put_scope": lambda store: store.put_scope(_new_scope()),
+    "delete_scope": lambda store: store.delete_scope(_SCOPE),
+    "insert_record": lambda store: store.insert_record(_local_record(RecordState.SYNCED)),
+    "update_record": lambda store: store.update_record(
+        _local_record(RecordState.SYNCED, local_key=1)
+    ),
+    "delete_record": lambda store: store.delete_record(1),
+    "append_entry": lambda store: store.append_entry(
+        _SCOPE, FeedEntryKind.CHANGED, None, None, _START
+    ),
+    "trim_entries": lambda store: store.trim_entries(0),
+}
 
 
 def _seeded(replica: Replica) -> Replica:
@@ -659,9 +693,26 @@ class TestFeed:
 
 
 class TestStores:
-    def test_operations_outside_a_transaction_raise(self, store):
-        with pytest.raises(TransactionError, match="inside store.transaction"):
-            store.scopes()
+    def test_every_operation_is_in_the_tables(self):
+        public = {name for name in vars(StateStore) if not name.startswith("_")}
+        assert public - {"transaction", "close"} == _READS.keys() | _WRITES.keys()
+
+    @pytest.mark.parametrize("call", [*_READS.values(), *_WRITES.values()], ids=[*_READS, *_WRITES])
+    def test_operations_outside_a_transaction_raise(self, store, call):
+        with pytest.raises(TransactionRequiredError):
+            call(store)
+
+    @pytest.mark.parametrize("call", _READS.values(), ids=_READS)
+    def test_reads_run_in_a_read_transaction(self, store, call):
+        with store.transaction(write=False):
+            call(store)
+
+    @pytest.mark.parametrize("call", _WRITES.values(), ids=_WRITES)
+    def test_a_read_transaction_refuses_writes(self, store, call):
+        with store.transaction(write=False), pytest.raises(TransactionPermissionError):
+            call(store)
+        with store.transaction(write=False):
+            assert (store.scopes(), store.feed_bounds()) == ([], (0, 0))
 
     def test_transactions_do_not_nest(self, store):
         with store.transaction(), pytest.raises(TransactionError, match="already open"):
@@ -707,40 +758,51 @@ class TestStores:
         with store.transaction(write=False):
             assert [s.id for s in store.scopes()] == [_SCOPE]
 
-    def test_a_read_transaction_refuses_writes(self, store):
-        with store.transaction(write=False), pytest.raises(TransactionError, match="write=False"):
-            store.put_scope(_new_scope())
-        with store.transaction(write=False):
-            assert store.scopes() == []
-
     def test_object_ids_are_unique_per_scope(self, replica, store):
         _seeded(replica)
         a, b = replica.records(_SCOPE)
-        with store.transaction(), pytest.raises(ValueError):
+        with store.transaction(), pytest.raises(DuplicateObjectError):
             store.insert_record(_local_record(RecordState.SYNCED, object_id="a"))
-        with store.transaction(), pytest.raises(ValueError):
+        with store.transaction(), pytest.raises(DuplicateObjectError):
             store.update_record(_local_record(b.state, object_id="a", local_key=b.local_key))
 
     def test_inserting_into_a_missing_scope_raises(self, store):
-        with store.transaction(), pytest.raises(ValueError):
+        with store.transaction(), pytest.raises(UnknownScopeError):
             store.insert_record(_local_record(RecordState.SYNCED))
 
     def test_updating_a_missing_record_raises(self, store):
-        with store.transaction(), pytest.raises(ValueError, match="No record"):
+        with store.transaction(), pytest.raises(UnknownRecordError):
             store.update_record(_local_record(RecordState.SYNCED, local_key=999))
 
-    def test_failed_commit_rolls_back(self):
-        class FailingCommit(MemoryStore):
-            def _commit(self) -> None:
-                raise OSError("commit failed")
+    @pytest.mark.parametrize("hook", ["_begin", "_commit", "_scopes"])
+    def test_a_failure_inside_the_store_is_unexpected_and_keeps_nothing(
+        self, store, monkeypatch, hook
+    ):
+        bug = RuntimeError(f"{hook} has a bug")
 
-        store = FailingCommit()
-        with pytest.raises(OSError):
+        def fail(*args: object, **kwargs: object) -> None:
+            raise bug
+
+        monkeypatch.setattr(store, hook, fail)
+        with pytest.raises(UnexpectedStoreError, match=re.escape(ISSUES_URL)) as raised:
             with store.transaction():
                 store.put_scope(_new_scope())
-        store._commit = lambda: None  # type: ignore[method-assign]
-        with store.transaction():
+                store.scopes()
+        assert raised.value.__cause__ is bug
+        assert not isinstance(raised.value, StoreError)
+        monkeypatch.undo()
+        with store.transaction(write=False):
             assert store.scopes() == []
+
+    def test_interrupts_pass_through_unchanged(self, store, monkeypatch):
+        def interrupt() -> None:
+            raise KeyboardInterrupt
+
+        monkeypatch.setattr(store, "_scopes", interrupt)
+        with pytest.raises(KeyboardInterrupt), store.transaction(write=False):
+            store.scopes()
+        with store.transaction(write=False):
+            assert store.feed_bounds() == (0, 0)
 
     def test_store_as_context_manager(self, make_store):
         with make_store() as store:
@@ -795,8 +857,48 @@ class TestSQLiteStore:
             Replica(store, clock=clock).records(_SCOPE)
 
     def test_other_sqlite_errors_become_store_error(self, tmp_path):
-        with SQLiteStore(tmp_path / _DB_FILE) as sqlite_store, pytest.raises(StoreError):
-            sqlite_store._run("SELECT * FROM no_such_table")
+        path = tmp_path / _DB_FILE
+        with SQLiteStore(path) as store:
+            _edit_file(path, f"DROP TABLE {_FEED}", ())
+            with store.transaction(write=False), pytest.raises(StoreError, match=_FEED):
+                store.entries(0, 1)
+
+    def test_a_lost_meta_row_raises_store_error(self, tmp_path, clock):
+        path = tmp_path / _DB_FILE
+        with SQLiteStore(path) as store:
+            replica = Replica(store, clock=clock)
+            _edit_file(path, f"DELETE FROM {_META}", ())
+            with pytest.raises(StoreError, match="lost its row"):
+                replica.feed_head()
+            with pytest.raises(StoreError, match="lost its row"):
+                _seeded(replica)
+        with pytest.raises(StoreError, match="lost its row"):
+            SQLiteStore(path)
+
+    def test_a_full_disk_raises_store_error_and_keeps_nothing(self, tmp_path, clock):
+        with SQLiteStore(tmp_path / _DB_FILE) as store:
+            replica = _seeded(Replica(store, clock=clock))
+            before = _snapshot(replica)
+            # SQLite reports a file at its page limit as a full disk.
+            pages = store._conn.execute("PRAGMA page_count").fetchone()[0]
+            store._conn.execute(f"PRAGMA max_page_count = {pages}")
+            many = {f"o{n}": _changed(f"f{n}", content="x" * 10_000) for n in range(20)}
+            with pytest.raises(StoreError, match="full"):
+                _sync(replica, _page("T1", "T2", many))
+            assert _snapshot(replica) == before
+
+    def test_a_failed_close_raises_store_error_and_still_closes(self, tmp_path):
+        class FailingClose(SQLiteStore):
+            def _close(self) -> None:
+                super()._close()
+                raise sqlite3.OperationalError("disk I/O error")
+
+        store = FailingClose(tmp_path / _DB_FILE)
+        with pytest.raises(StoreError, match="disk I/O"):
+            store.close()
+        store.close()
+        with pytest.raises(StoreError, match="closed"):
+            _enter(store.transaction())
 
     def test_state_survives_reopening(self, tmp_path, clock):
         path = tmp_path / _DB_FILE

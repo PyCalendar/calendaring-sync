@@ -11,10 +11,15 @@ import sqlite3
 from collections.abc import Callable
 from dataclasses import fields
 from datetime import datetime
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from calendaring_sync.constants import DEFAULT_TIMEOUT, SCHEMA_VERSION
-from calendaring_sync.error import StoreBusyError, StoreError, StoreVersionError
+from calendaring_sync.error import (
+    CalendaringSyncError,
+    StoreBusyError,
+    StoreError,
+    StoreVersionError,
+)
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
@@ -133,14 +138,6 @@ def _load(cls: type[_Row], row: sqlite3.Row) -> _Row:
     return cls(**values)
 
 
-def _store_error(exc: sqlite3.Error) -> StoreError:
-    """The store's own error for an SQLite error, so no ``sqlite3`` exception reaches callers."""
-    # Errors from the sqlite3 module itself, such as a closed connection, carry no code.
-    if getattr(exc, "sqlite_errorcode", None) == sqlite3.SQLITE_BUSY:
-        return StoreBusyError(str(exc))
-    return StoreError(str(exc))
-
-
 class SQLiteStore(StateStore):
     """A store in a SQLite database file, shared between threads and processes.
 
@@ -168,28 +165,42 @@ class SQLiteStore(StateStore):
 
     def __init__(self, path: str | os.PathLike[str], *, timeout: float = DEFAULT_TIMEOUT) -> None:
         super().__init__()
-        try:
+        with self._errors():
             self._conn = sqlite3.connect(
                 path, timeout=timeout, isolation_level=None, check_same_thread=False
             )
-        except sqlite3.Error as exc:
-            raise _store_error(exc) from exc
         self._conn.row_factory = sqlite3.Row
         try:
-            self._run("PRAGMA foreign_keys = ON")
-            self._ensure_schema()
+            with self._errors():
+                self._conn.execute("PRAGMA foreign_keys = ON")
+                self._ensure_schema()
         except BaseException:
             self._conn.close()
             raise
 
+    def _store_error(self, exc: Exception) -> CalendaringSyncError:
+        if not isinstance(exc, sqlite3.Error):
+            return super()._store_error(exc)
+        # Errors from the sqlite3 module itself, such as a closed connection, carry no code.
+        if getattr(exc, "sqlite_errorcode", None) == sqlite3.SQLITE_BUSY:
+            return StoreBusyError(str(exc))
+        return StoreError(str(exc))
+
+    def _meta(self, columns: str) -> sqlite3.Row:
+        """Read ``columns`` from the one row of the store's own data."""
+        row: sqlite3.Row | None = self._conn.execute(f"SELECT {columns} FROM {_META}").fetchone()
+        if row is None:
+            raise StoreError(f"The store's {_META} table has lost its row")
+        return row
+
     def _version(self) -> int:
         """The schema version in ``store_meta``, ``0`` for a file with no schema yet."""
-        exists = self._run(
+        exists = self._conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (_META,)
         ).fetchone()
         if exists is None:
             return 0
-        version: int = self._run(f"SELECT schema_version FROM {_META}").fetchone()[0]
+        version: int = self._meta("schema_version")[0]
         return version
 
     def _ensure_schema(self) -> None:
@@ -199,7 +210,7 @@ class SQLiteStore(StateStore):
             with self.transaction():
                 if self._version() == 0:
                     for statement in _SCHEMA:
-                        self._run(statement)
+                        self._conn.execute(statement)
         version = self._version()
         if version > SCHEMA_VERSION:
             raise StoreVersionError(
@@ -211,27 +222,22 @@ class SQLiteStore(StateStore):
         self._conn.close()
 
     def _begin(self, *, write: bool) -> None:
-        self._run("BEGIN IMMEDIATE" if write else "BEGIN")
+        self._conn.execute("BEGIN IMMEDIATE" if write else "BEGIN")
 
     def _commit(self) -> None:
-        self._run("COMMIT")
+        self._conn.execute("COMMIT")
 
     def _rollback(self) -> None:
         if self._conn.in_transaction:
-            self._run("ROLLBACK")
-
-    def _run(self, sql: str, params: tuple[Any, ...] = ()) -> sqlite3.Cursor:
-        """Run one statement, with SQLite's errors turned into the store's own."""
-        try:
-            return self._conn.execute(sql, params)
-        except sqlite3.Error as exc:
-            raise _store_error(exc) from exc
+            self._conn.execute("ROLLBACK")
 
     def _select(
         self, cls: type[_Row], table: str, clause: str, params: tuple[Any, ...] = ()
     ) -> list[_Row]:
         """Load the rows of ``table`` that ``clause`` selects, as ``cls``."""
-        rows = self._run(f"SELECT {', '.join(_columns(cls))} FROM {table} {clause}", params)
+        rows = self._conn.execute(
+            f"SELECT {', '.join(_columns(cls))} FROM {table} {clause}", params
+        )
         return [_load(cls, row) for row in rows]
 
     def _select_one(
@@ -242,9 +248,11 @@ class SQLiteStore(StateStore):
 
     def _insert(self, table: str, columns: tuple[str, ...], values: tuple[Any, ...]) -> int:
         marks = ", ".join("?" for _ in columns)
-        cursor = self._run(f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({marks})", values)
-        assert cursor.lastrowid is not None
-        return cursor.lastrowid
+        cursor = self._conn.execute(
+            f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({marks})", values
+        )
+        # Typed as optional, but an INSERT always sets it to the new row's id.
+        return cast(int, cursor.lastrowid)
 
     def _get_scope(self, scope_id: str) -> Scope | None:
         return self._select_one(Scope, _SCOPES, "WHERE id = ?", (scope_id,))
@@ -254,14 +262,14 @@ class SQLiteStore(StateStore):
         # and the cascade would take the scope's records with it.
         marks = ", ".join("?" for _ in _SCOPE_COLUMNS)
         updates = ", ".join(f"{name} = excluded.{name}" for name in _SCOPE_COLUMNS[1:])
-        self._run(
+        self._conn.execute(
             f"INSERT INTO {_SCOPES} ({', '.join(_SCOPE_COLUMNS)}) VALUES ({marks}) "
             f"ON CONFLICT (id) DO UPDATE SET {updates}",
             _values(scope, _SCOPE_COLUMNS),
         )
 
     def _delete_scope(self, scope_id: str) -> None:
-        self._run(f"DELETE FROM {_SCOPES} WHERE id = ?", (scope_id,))
+        self._conn.execute(f"DELETE FROM {_SCOPES} WHERE id = ?", (scope_id,))
 
     def _scopes(self) -> list[Scope]:
         return self._select(Scope, _SCOPES, "ORDER BY id")
@@ -273,13 +281,13 @@ class SQLiteStore(StateStore):
     def _update_record(self, record: Record) -> None:
         columns = _RECORD_COLUMNS[1:]
         assignments = ", ".join(f"{name} = ?" for name in columns)
-        self._run(
+        self._conn.execute(
             f"UPDATE {_RECORDS} SET {assignments} WHERE local_key = ?",
             (*_values(record, columns), record.local_key),
         )
 
     def _delete_record(self, local_key: int) -> None:
-        self._run(f"DELETE FROM {_RECORDS} WHERE local_key = ?", (local_key,))
+        self._conn.execute(f"DELETE FROM {_RECORDS} WHERE local_key = ?", (local_key,))
 
     def _get_record(self, local_key: int) -> Record | None:
         return self._select_one(Record, _RECORDS, "WHERE local_key = ?", (local_key,))
@@ -308,8 +316,8 @@ class SQLiteStore(StateStore):
         object_id: str | None,
         at: datetime,
     ) -> FeedEntry:
-        self._run(f"UPDATE {_META} SET feed_head = feed_head + 1")
-        number: int = self._run(f"SELECT feed_head FROM {_META}").fetchone()[0]
+        self._conn.execute(f"UPDATE {_META} SET feed_head = feed_head + 1")
+        number: int = self._meta("feed_head")[0]
         entry = FeedEntry(number, scope_id, kind, local_key, object_id, at)
         self._insert(_FEED, _FEED_COLUMNS, _values(entry, _FEED_COLUMNS))
         return entry
@@ -320,9 +328,9 @@ class SQLiteStore(StateStore):
         )
 
     def _feed_bounds(self) -> tuple[int, int]:
-        trimmed, head = self._run(f"SELECT feed_trimmed, feed_head FROM {_META}").fetchone()
+        trimmed, head = self._meta("feed_trimmed, feed_head")
         return trimmed, head
 
     def _trim_entries(self, through: int) -> None:
-        self._run(f"DELETE FROM {_FEED} WHERE number <= ?", (through,))
-        self._run(f"UPDATE {_META} SET feed_trimmed = max(feed_trimmed, ?)", (through,))
+        self._conn.execute(f"DELETE FROM {_FEED} WHERE number <= ?", (through,))
+        self._conn.execute(f"UPDATE {_META} SET feed_trimmed = max(feed_trimmed, ?)", (through,))

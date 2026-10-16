@@ -12,6 +12,7 @@ changes.
 from calendaring_sync._version import __version__
 from calendaring_sync.error import (
     CalendaringSyncError,
+    DuplicateObjectError,
     ScopeMismatchError,
     SessionError,
     StaleChangeSetError,
@@ -19,7 +20,11 @@ from calendaring_sync.error import (
     StoreError,
     StoreVersionError,
     TransactionError,
+    TransactionPermissionError,
+    TransactionRequiredError,
     TrimmedFeedError,
+    UnexpectedStoreError,
+    UnknownRecordError,
     UnknownScopeError,
 )
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
@@ -39,6 +44,7 @@ __all__ = [
     "ChangeSet",
     "Changed",
     "DroppedScope",
+    "DuplicateObjectError",
     "FeedEntry",
     "FeedEntryKind",
     "MemoryStore",
@@ -58,8 +64,12 @@ __all__ = [
     "StoreError",
     "StoreVersionError",
     "TransactionError",
+    "TransactionPermissionError",
+    "TransactionRequiredError",
     "TrimmedFeedError",
     "Unchanged",
+    "UnexpectedStoreError",
+    "UnknownRecordError",
     "UnknownScopeError",
     "__version__",
 ]

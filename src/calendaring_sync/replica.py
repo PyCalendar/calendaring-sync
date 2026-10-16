@@ -151,9 +151,10 @@ class Replica:
 
     Any method can also raise the store's errors:
     :class:`~calendaring_sync.error.StoreBusyError` when another process
-    kept the store busy, which is safe to retry, and
+    kept the store busy, which is safe to retry,
     :class:`~calendaring_sync.error.StoreError` when the store can't read or
-    write its data. Neither changes anything.
+    write its data, and :class:`~calendaring_sync.error.UnexpectedStoreError`
+    for a bug in the store. None of them changes anything.
 
     Args:
         store: Where the state is kept.
@@ -466,6 +467,11 @@ class Replica:
         """:term:`Purge <purge>` removed records whose last feed entry is at or below ``through``.
 
         Their feed entries stay until trimmed.
+
+        Args:
+            through: The number of a :term:`change feed` entry, such as the
+                oldest :term:`cursor` your application still reads from, so
+                every part of it has seen these removals.
 
         Returns:
             How many records were purged.

@@ -20,3 +20,7 @@ FEED_PAGE_SIZE = 1000
 #: Seconds :class:`~calendaring_sync.store.sqlite.SQLiteStore` waits for
 #: another process to finish writing before giving up.
 DEFAULT_TIMEOUT = 5.0
+
+#: Where to report a bug, named in the message of
+#: :class:`~calendaring_sync.error.UnexpectedStoreError`.
+ISSUES_URL = "https://github.com/pycalendar/calendaring-sync/issues"

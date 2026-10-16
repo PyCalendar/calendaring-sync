@@ -35,6 +35,14 @@ class UnknownScopeError(CalendaringSyncError):
     """The :term:`store` has no :term:`scope` with this id."""
 
 
+class UnknownRecordError(CalendaringSyncError):
+    """The :term:`store` has no :term:`record` with this :term:`local key`."""
+
+
+class DuplicateObjectError(CalendaringSyncError):
+    """Another :term:`record` in the :term:`scope` already has this :term:`object id`."""
+
+
 class ScopeMismatchError(CalendaringSyncError):
     """A :term:`session` was opened with a media type the :term:`scope` doesn't have.
 
@@ -52,12 +60,20 @@ class SessionError(CalendaringSyncError):
 
 
 class TransactionError(CalendaringSyncError):
-    """A :term:`store` operation ran outside a transaction of the kind it needs.
+    """A :term:`store` transaction was used the wrong way.
 
-    That is, an operation outside any transaction, a transaction opened
-    while the thread already has one, or a write inside a transaction that
-    only reads.
+    Raised for a transaction opened while the thread already has one, and
+    for closing the store inside a transaction. Its subclasses cover an
+    operation outside a transaction and a write inside a read.
     """
+
+
+class TransactionRequiredError(TransactionError):
+    """A :term:`store` operation ran outside a transaction."""
+
+
+class TransactionPermissionError(TransactionError):
+    """A :term:`store` operation that writes ran in a transaction opened with ``write=False``."""
 
 
 class StoreError(CalendaringSyncError):
@@ -73,3 +89,11 @@ class StoreBusyError(StoreError):
 
 class StoreVersionError(StoreError):
     """The store was written by a newer calendaring-sync, with a schema this one can't read."""
+
+
+class UnexpectedStoreError(CalendaringSyncError):
+    """A :term:`store` failed in a way it doesn't expect, which is a bug in it or its caller.
+
+    It isn't a :class:`StoreError`, so code that retries on a store error
+    doesn't retry a bug. The original exception is its ``__cause__``.
+    """
