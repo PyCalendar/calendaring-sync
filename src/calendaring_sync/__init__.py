@@ -13,6 +13,9 @@ from calendaring_sync._version import __version__
 from calendaring_sync.error import (
     CalendaringSyncError,
     DuplicateObjectError,
+    EditRefusedError,
+    OpenConflictError,
+    RemovedRecordError,
     ScopeMismatchError,
     SessionError,
     StaleChangeSetError,
@@ -29,7 +32,9 @@ from calendaring_sync.error import (
 )
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
+from calendaring_sync.objects.conflict import Conflict, ConflictKind
 from calendaring_sync.objects.dropped_scope import DroppedScope
+from calendaring_sync.objects.edit import EditKind, LocalEdit
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
@@ -43,14 +48,21 @@ __all__ = [
     "Change",
     "ChangeSet",
     "Changed",
+    "Conflict",
+    "ConflictKind",
     "DroppedScope",
     "DuplicateObjectError",
+    "EditKind",
+    "EditRefusedError",
     "FeedEntry",
     "FeedEntryKind",
+    "LocalEdit",
     "MemoryStore",
+    "OpenConflictError",
     "Record",
     "RecordState",
     "Removed",
+    "RemovedRecordError",
     "Replica",
     "SQLiteStore",
     "Scope",

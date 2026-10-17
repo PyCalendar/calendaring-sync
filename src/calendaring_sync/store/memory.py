@@ -94,6 +94,13 @@ class MemoryStore(StateStore):
             None,
         )
 
+    def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
+        return [
+            r
+            for r in self._scope_records(scope_id)
+            if logical_key in (r.logical_key, r.edit and r.edit.logical_key)
+        ]
+
     def _scope_records(self, scope_id: str) -> list[Record]:
         return [r for r in self._ordered_records() if r.scope == scope_id]
 

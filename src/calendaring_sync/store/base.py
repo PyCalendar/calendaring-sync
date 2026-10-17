@@ -30,9 +30,26 @@ from calendaring_sync.error import (
     UnknownRecordError,
     UnknownScopeError,
 )
+from calendaring_sync.objects.edit import EditKind
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
-from calendaring_sync.objects.record import Record
+from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
+
+# The states in which a record holds a pending edit.
+_EDIT_STATES = frozenset({RecordState.PENDING, RecordState.IN_FLIGHT, RecordState.CONFLICT})
+
+
+def _check_record(record: Record) -> None:
+    """Raise ``ValueError`` if the record's state doesn't match what it holds."""
+    if (record.edit is not None) != (record.state in _EDIT_STATES):
+        need = "needs" if record.state in _EDIT_STATES else "can't hold"
+        raise ValueError(f"A {record.state} record {need} a local edit")
+    if (record.conflict is not None) != (record.state is RecordState.CONFLICT):
+        need = "needs" if record.state is RecordState.CONFLICT else "can't hold"
+        raise ValueError(f"A {record.state} record {need} a conflict")
+    is_create = record.edit is not None and record.edit.kind is EditKind.CREATE
+    if (record.content is None) != is_create:
+        raise ValueError("A record has no synced content exactly when its edit is a create")
 
 
 class StateStore(ABC):
@@ -200,8 +217,12 @@ class StateStore(ABC):
             UnknownScopeError: If the record's scope doesn't exist.
             DuplicateObjectError: If another record in the scope has the
                 record's object id.
+            ValueError: If the record's state doesn't match what it holds:
+                an edit exactly when pending, in flight or in conflict, the
+                server's side of a conflict exactly when in conflict, and no
+                synced content exactly when the edit is a create.
         """
-        with self._operation(write=True):
+        with self._record_write(record):
             if self._get_scope(record.scope) is None:
                 raise UnknownScopeError(f"No scope {record.scope!r}")
             self._check_unique(record)
@@ -218,14 +239,26 @@ class StateStore(ABC):
             UnknownRecordError: If no record has the record's local key.
             DuplicateObjectError: If another record in the scope has the
                 record's object id.
+            ValueError: If the record's state doesn't match what it holds,
+                as for :meth:`insert_record`.
         """
-        with self._operation(write=True):
+        with self._record_write(record):
             stored = self._get_record(record.local_key)
             if stored is None:
                 raise UnknownRecordError(f"No record with local key {record.local_key}")
             if (stored.scope, stored.object_id) != (record.scope, record.object_id):
                 self._check_unique(record)
             self._update_record(record)
+
+    def _record_write(self, record: Record) -> AbstractContextManager[None]:
+        """Check the transaction, then the record, and guard the write that follows.
+
+        The record is checked outside the guard, which would report its
+        ``ValueError`` as a bug in the store.
+        """
+        operation = self._operation(write=True)
+        _check_record(record)
+        return operation
 
     def _check_unique(self, record: Record) -> None:
         """Raise if another record in the record's scope has its object id."""
@@ -270,6 +303,18 @@ class StateStore(ABC):
         """
         with self._operation(write=False):
             return self._find_record(scope_id, object_id)
+
+    def find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
+        """Return the scope's records with this :term:`logical key`, ordered by local key.
+
+        A record matches if its synced side or its :term:`pending edit` has
+        the key. Several records can share one. Runs inside any transaction.
+
+        Raises:
+            TransactionRequiredError: If no transaction is open in this thread.
+        """
+        with self._operation(write=False):
+            return self._find_by_logical_key(scope_id, logical_key)
 
     def scope_records(self, scope_id: str) -> list[Record]:
         """Return every record in the scope, ordered by local key.
@@ -421,6 +466,9 @@ class StateStore(ABC):
 
     @abstractmethod
     def _find_record(self, scope_id: str, object_id: str) -> Record | None: ...
+
+    @abstractmethod
+    def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]: ...
 
     @abstractmethod
     def _scope_records(self, scope_id: str) -> list[Record]: ...
