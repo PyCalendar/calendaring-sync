@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from calendaring_sync._text import check_text
+
 
 @dataclass(frozen=True)
 class Changed:
@@ -20,6 +22,10 @@ class Changed:
         content: The object's :term:`content`, exactly as the server sent it.
         containers: The :term:`containers <container>` the object belongs to.
         logical_key: The object's :term:`logical key`, if it has one.
+
+    Raises:
+        ValueError: If a string isn't valid text, such as one holding a
+            lone surrogate.
     """
 
     version: str | None
@@ -27,6 +33,12 @@ class Changed:
     content: str
     containers: frozenset[str] = frozenset()
     logical_key: str | None = None
+
+    def __post_init__(self) -> None:
+        check_text(
+            "A change",
+            (self.version, self.fingerprint, self.content, self.logical_key, *self.containers),
+        )
 
 
 @dataclass(frozen=True)

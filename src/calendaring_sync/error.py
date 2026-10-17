@@ -43,6 +43,22 @@ class DuplicateObjectError(CalendaringSyncError):
     """Another :term:`record` in the :term:`scope` already has this :term:`object id`."""
 
 
+class EditRefusedError(CalendaringSyncError):
+    """The :term:`record` is in a state that takes no :term:`local edit`.
+
+    Raised as itself for a record whose :term:`push` is :term:`in flight`.
+    Its subclasses cover a record in :term:`conflict` and a removed one.
+    """
+
+
+class OpenConflictError(EditRefusedError):
+    """The :term:`record` holds an open :term:`conflict`; resolve it before editing."""
+
+
+class RemovedRecordError(EditRefusedError):
+    """The :term:`record` was removed from the server, so there's nothing to edit."""
+
+
 class ScopeMismatchError(CalendaringSyncError):
     """A :term:`session` was opened with a media type the :term:`scope` doesn't have.
 

@@ -211,7 +211,7 @@ The table lists every transition with its conditions, including the ones the dia
      - Settled by the next complete ingest
    * - conflict
      - Remote change ingested
-     - Conflict with the new remote side, or synced if that now equals your edit
+     - Conflict with the new remote side; synced if it now equals your edit, pending again if the server is back at the synced content, or removed if both sides deleted the object
    * - conflict
      - Resolved
      - Synced, pending, or removed, depending on the resolution
@@ -259,7 +259,7 @@ Each :term:`conflict record` has one of five kinds:
 - the server has a new object at the id your create chose, and your create hasn't been sent yet
 - the server refused your create because another object holds its UID
 
-Later remote changes update the record's remote side, and if it becomes equal to your edit, the conflict resolves itself.
+Later remote changes update the record's remote side. The conflict resolves itself when the server reaches your edit, goes back to the synced content, or removes an object you deleted too.
 
 The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. You resolve a record with your edit, the server's version, merged content, or a delete, and the core pushes the result as a change to the server's current version. You can't push a create the server refused for its UID again unchanged, so you can discard it, push it as an update to the object that holds the UID, or replace it with merged content, possibly with a new UID.
 

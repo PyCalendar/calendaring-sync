@@ -20,6 +20,12 @@ class FeedEntryKind(StrEnum):
     REMOVED = "removed"
     #: A :term:`scope` was :term:`dropped <drop>`, with every record in it.
     SCOPE_DROPPED = "scope_dropped"
+    #: A :term:`conflict` was stored.
+    CONFLICT_OPENED = "conflict_opened"
+    #: The server's side of an open conflict changed.
+    CONFLICT_UPDATED = "conflict_updated"
+    #: An open conflict ended, and the record holds what it ended with.
+    CONFLICT_RESOLVED = "conflict_resolved"
 
 
 @dataclass(frozen=True)
