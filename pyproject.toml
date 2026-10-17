@@ -14,7 +14,7 @@ license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 authors = [{ name = "Sashank Bhamidi" }]
 dynamic = ["version"]
-keywords = ["calendar", "calendaring", "sync", "synchronization", "conflict-detection", "cache"]
+keywords = ["calendar", "calendaring", "sync", "synchronization", "conflict-detection"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",

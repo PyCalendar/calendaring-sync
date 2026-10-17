@@ -31,6 +31,7 @@ wheels/
 .coverage
 .coverage.*
 coverage.xml
+junit.xml
 htmlcov/
 .tox/
 .nox/

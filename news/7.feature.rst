@@ -1,0 +1,1 @@
+Added the sync state store. ``Replica`` ingests change sets into a ``MemoryStore`` or ``SQLiteStore`` and keeps each scope's token and records. Every change goes into a change feed your application reads from its own cursor.
