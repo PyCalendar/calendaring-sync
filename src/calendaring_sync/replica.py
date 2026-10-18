@@ -333,66 +333,81 @@ class Replica:
         was_conflict = live is not None and live.conflict is not None
         # A record leaving a conflict is reported as the conflict ending.
         settled = FeedEntryKind.CONFLICT_RESOLVED if was_conflict else None
-        if kind is not None and live is not None:
-            opened_at = now if live.conflict is None else live.conflict.opened_at
-            self._write(
-                replace(
-                    live, state=RecordState.CONFLICT, conflict=_conflict(kind, change, opened_at)
-                ),
-                FeedEntryKind.CONFLICT_UPDATED if was_conflict else FeedEntryKind.CONFLICT_OPENED,
-                now,
-            )
-        elif isinstance(change, Changed) and (
-            change_class is ChangeClass.REMOTE_ONLY
-            or (change_class is ChangeClass.UNCHANGED and edit is not None)
-        ):
-            synced_record = Record(
-                local_key=0 if record is None else record.local_key,
-                scope=scope_id,
-                object_id=object_id,
-                state=RecordState.SYNCED,
-                version=change.version,
-                fingerprint=change.fingerprint,
-                content=change.content,
-                containers=change.containers,
-                logical_key=change.logical_key,
-                synced_at=now,
-                last_entry=0 if record is None else record.last_entry,
-            )
-            if record is None:
-                synced_record = replace(
-                    synced_record, local_key=self._store.insert_record(synced_record)
-                )
-            self._write(
-                synced_record,
-                settled or FeedEntryKind.CHANGED,
-                now,
-            )
-        elif change_class is ChangeClass.DELETED_REMOTE and live is not None:
-            self._write(
-                replace(live, state=RecordState.REMOVED, edit=None, conflict=None, synced_at=now),
-                settled or FeedEntryKind.REMOVED,
-                now,
-            )
-        elif live is not None and (isinstance(change, Changed) or was_conflict):
-            # The server's copy holds the synced data, so only its version and
-            # text move; a conflict this settles leaves the edit to be pushed.
-            if isinstance(change, Changed):
-                live = replace(
-                    live,
-                    version=change.version,
-                    fingerprint=change.fingerprint,
-                    content=change.content,
-                    synced_at=now,
-                )
-            if was_conflict:
+        match change_class:
+            case ChangeClass.CONFLICT if kind is not None and live is not None:
+                opened_at = now if live.conflict is None else live.conflict.opened_at
                 self._write(
-                    replace(live, state=RecordState.PENDING, conflict=None),
-                    FeedEntryKind.CONFLICT_RESOLVED,
+                    replace(
+                        live,
+                        state=RecordState.CONFLICT,
+                        conflict=_conflict(kind, change, opened_at),
+                    ),
+                    FeedEntryKind.CONFLICT_UPDATED
+                    if was_conflict
+                    else FeedEntryKind.CONFLICT_OPENED,
                     now,
                 )
-            else:
-                self._store.update_record(live)
+            case ChangeClass.REMOTE_ONLY if isinstance(change, Changed):
+                self._store_server_copy(record, scope_id, object_id, change, now, settled)
+            case ChangeClass.UNCHANGED if isinstance(change, Changed) and edit is not None:
+                # Both sides arrived at the same content, so the edit is done.
+                self._store_server_copy(record, scope_id, object_id, change, now, settled)
+            case ChangeClass.DELETED_REMOTE if live is not None:
+                self._write(
+                    replace(
+                        live, state=RecordState.REMOVED, edit=None, conflict=None, synced_at=now
+                    ),
+                    settled or FeedEntryKind.REMOVED,
+                    now,
+                )
+            case ChangeClass.UNCHANGED | ChangeClass.LOCAL_ONLY | ChangeClass.DELETED_LOCAL if (
+                live is not None and (isinstance(change, Changed) or was_conflict)
+            ):
+                # The server's copy holds the synced data, so only its version and
+                # text move; a conflict this settles leaves the edit to be pushed.
+                if isinstance(change, Changed):
+                    live = replace(
+                        live,
+                        version=change.version,
+                        fingerprint=change.fingerprint,
+                        content=change.content,
+                        synced_at=now,
+                    )
+                if was_conflict:
+                    self._write(
+                        replace(live, state=RecordState.PENDING, conflict=None),
+                        FeedEntryKind.CONFLICT_RESOLVED,
+                        now,
+                    )
+                else:
+                    self._store.update_record(live)
+
+    def _store_server_copy(
+        self,
+        record: Record | None,
+        scope_id: str,
+        object_id: str,
+        change: Changed,
+        now: datetime,
+        settled: FeedEntryKind | None,
+    ) -> None:
+        """Store the server's copy as the record's synced copy, with the feed entry about it."""
+        synced = Record(
+            local_key=0 if record is None else record.local_key,
+            scope=scope_id,
+            object_id=object_id,
+            state=RecordState.SYNCED,
+            version=change.version,
+            fingerprint=change.fingerprint,
+            content=change.content,
+            containers=change.containers,
+            logical_key=change.logical_key,
+            synced_at=now,
+            last_entry=0 if record is None else record.last_entry,
+        )
+        if record is None:
+            synced = replace(synced, local_key=self._store.insert_record(synced))
+        self._write(synced, settled or FeedEntryKind.CHANGED, now)
 
     def _remove_unmentioned(self, scope_id: str, mentioned: set[str], now: datetime) -> None:
         """Remove every record with an object id the finished listing never mentioned."""
