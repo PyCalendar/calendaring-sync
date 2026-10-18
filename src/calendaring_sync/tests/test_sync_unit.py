@@ -901,10 +901,20 @@ class TestLocalEdits:
             EditKind.CREATE, _text("fn"), "fn", frozenset({"x", "y"}), "u", clock.now
         )
 
-    def test_a_create_cannot_take_an_id_in_use(self, replica):
-        _seeded(replica)
+    def test_a_create_at_an_id_in_use(self, replica):
+        _a_removed(replica)
         with pytest.raises(DuplicateObjectError):
-            replica.create(_SCOPE, _text("fn"), fingerprint="fn", object_id="a")
+            replica.create(_SCOPE, _text("fn"), fingerprint="fn", object_id="b")
+        removed = replica.find_record(_SCOPE, "a")
+        key = replica.create(_SCOPE, _text("fn"), fingerprint="fn", object_id="a")
+        record = replica.record(key)
+        assert key == removed.local_key
+        assert _summary(record) == _pending(EditKind.CREATE)
+        assert (record.content, record.version) == (None, None)
+        assert record.last_entry == removed.last_entry
+        assert replica.purge(replica.feed_head()) == 0
+        _sync(replica, _page("T2", "T3", {"a": _changed("fn", "v3")}))
+        assert _summary(replica.record(key)) == _SYNCED
 
     @pytest.mark.parametrize("step", ["change fy", "delete", "discard"])
     def test_records_that_take_no_edit(self, replica, store, step):

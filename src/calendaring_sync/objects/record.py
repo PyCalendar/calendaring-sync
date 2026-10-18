@@ -24,7 +24,8 @@ class RecordState(StrEnum):
     IN_FLIGHT = "in_flight"
     #: Holds an open :term:`conflict`.
     CONFLICT = "conflict"
-    #: Gone from the server, kept until it's :term:`purged <purge>`.
+    #: Gone from the server, kept until it's :term:`purged <purge>` or the
+    #: object comes back, on the server or as a create at its id.
     REMOVED = "removed"
 
 

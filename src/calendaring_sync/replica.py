@@ -481,7 +481,10 @@ class Replica:
         """Record the creation of an object, and return its :term:`local key`.
 
         The record is pending until a :term:`push` creates the object on
-        the server. Build ``fingerprint``, ``containers`` and
+        the server. A create at the object id of a record the server removed
+        takes that record over, as the server does when it has an object at
+        that id again: it keeps its local key and drops the removed copy.
+        Build ``fingerprint``, ``containers`` and
         ``logical_key`` with the :term:`adapter`'s function for them, the
         same one it uses for the server's changes; built any other way, an
         identical copy on the server looks different.
@@ -498,7 +501,7 @@ class Replica:
 
         Raises:
             UnknownScopeError: If there's no scope with this id.
-            DuplicateObjectError: If another record in the scope has the
+            DuplicateObjectError: If a record that isn't removed holds the
                 object id.
             ValueError: If a string isn't valid text.
         """
@@ -510,22 +513,32 @@ class Replica:
             edit = LocalEdit(
                 EditKind.CREATE, content, fingerprint, containers, logical_key, self._clock()
             )
-            return self._store.insert_record(
-                Record(
-                    local_key=0,
-                    scope=scope_id,
-                    object_id=object_id,
-                    state=RecordState.PENDING,
-                    version=None,
-                    fingerprint=None,
-                    content=None,
-                    containers=frozenset(),
-                    logical_key=None,
-                    synced_at=None,
-                    last_entry=0,
-                    edit=edit,
+            created = Record(
+                local_key=0,
+                scope=scope_id,
+                object_id=object_id,
+                state=RecordState.PENDING,
+                version=None,
+                fingerprint=None,
+                content=None,
+                containers=frozenset(),
+                logical_key=None,
+                synced_at=None,
+                last_entry=0,
+                edit=edit,
+            )
+            removed = None if object_id is None else self._store.find_record(scope_id, object_id)
+            if removed is None or removed.state is not RecordState.REMOVED:
+                return self._store.insert_record(created)
+            self._store.update_record(
+                replace(
+                    created,
+                    local_key=removed.local_key,
+                    synced_at=removed.synced_at,
+                    last_entry=removed.last_entry,
                 )
             )
+            return removed.local_key
 
     def change(
         self,

@@ -219,6 +219,9 @@ The table lists every transition with its conditions, including the ones the dia
      - Remote change: the server holds an object at that id again
      - Synced with the new content, as the same record
    * - removed
+     - Create recorded at its object id
+     - Pending, as the same record, holding the create
+   * - removed
      - Purged by your application
      - Gone from the store; its feed entries stay until trimmed
    * - any
@@ -272,7 +275,7 @@ Why changes are read from a feed
 
 Every change the core makes to the store also goes into a :term:`change feed`, in the same transaction: a remote change or removal applied, a conflict stored, updated or resolved, a push's outcome, and a scope dropped. Each entry has a number that only grows. Your application keeps the number of the last entry it handled, its :term:`cursor`, and asks for the entries after it, so it learns what changed even if it stopped right after a sync. Several parts of an application can each keep their own cursor.
 
-A removed record stays in the store, marked removed, until your application :term:`purges <purge>` it, so a removal can always be read. You trim the feed and purge removed records up to a point you choose. A cursor older than the oldest entry kept gets an error, and the application reads its records again from the store instead.
+A removed record stays in the store, marked removed, so a removal can always be read. It stays until your application :term:`purges <purge>` it, or until the object comes back, on the server or as a create at its id. You trim the feed and purge removed records up to a point you choose. A cursor older than the oldest entry kept gets an error, and the application reads its records again from the store instead.
 
 Why a removed scope is yours to drop
 ====================================
