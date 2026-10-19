@@ -74,6 +74,11 @@ def classify(
 ) -> tuple[ChangeClass, ConflictKind | None]:
     """Classify one object from its synced side, the server's report and the local edit.
 
+    Each case below is one kind of local edit meeting one kind of report
+    from the server. A change that holds the synced data counts as no
+    change, and one that holds the edit's data means both sides arrived at
+    the same object.
+
     Args:
         synced: The record's :term:`synced content`, ``None`` for an object
             the store doesn't hold, one it holds as removed, or a create.
@@ -83,30 +88,45 @@ def classify(
 
     Returns:
         The class, and the conflict's kind when the class is ``CONFLICT``.
+
+    Raises:
+        ValueError: If no object could have these sides: nothing at all,
+            a create of an object the server has, or a change or delete of
+            one it doesn't.
     """
-    new = None if remote is None or isinstance(remote, Removed) else remote
-    if local is None:
-        if new is None:
-            if remote is not None and synced is not None:
-                return ChangeClass.DELETED_REMOTE, None
+    if synced is None and remote is None and local is None:
+        raise ValueError("Nothing to classify: no synced copy, remote change or local edit")
+    if local is not None and (local.kind is EditKind.CREATE) != (synced is None):
+        has = "without" if synced is None else "with"
+        raise ValueError(f"A {local.kind} edit can't meet an object {has} a synced copy")
+    kept = isinstance(remote, Changed) and synced is not None and same_data(remote, synced)
+    match local and local.kind, remote:
+        case None, None:
             return ChangeClass.UNCHANGED, None
-        if synced is not None and same_data(new, synced):
+        case None, Changed() if kept:
             return ChangeClass.UNCHANGED, None
-        return ChangeClass.REMOTE_ONLY, None
-    if new is not None and local.kind is not EditKind.DELETE and same_data(new, local):
-        return ChangeClass.UNCHANGED, None
-    if local.kind is EditKind.CREATE:
-        if new is not None:
-            return ChangeClass.CONFLICT, ConflictKind.BOTH_CREATED
-        return ChangeClass.LOCAL_ONLY, None
-    if remote is None or (new is not None and synced is not None and same_data(new, synced)):
-        if local.kind is EditKind.DELETE:
+        case None, Changed():
+            return ChangeClass.REMOTE_ONLY, None
+        case None, Removed():
+            # Removing an object the store doesn't hold changes nothing.
+            return (ChangeClass.UNCHANGED if synced is None else ChangeClass.DELETED_REMOTE), None
+        case EditKind.CHANGE | EditKind.CREATE, Changed() if local and same_data(remote, local):
+            return ChangeClass.UNCHANGED, None
+        case EditKind.CHANGE, None | Changed() if remote is None or kept:
+            return ChangeClass.LOCAL_ONLY, None
+        case EditKind.DELETE, None | Changed() if remote is None or kept:
             return ChangeClass.DELETED_LOCAL, None
-        return ChangeClass.LOCAL_ONLY, None
-    if local.kind is EditKind.DELETE:
-        if new is not None:
+        case EditKind.CHANGE, Changed():
+            return ChangeClass.CONFLICT, ConflictKind.BOTH_CHANGED
+        case EditKind.CHANGE, Removed():
+            return ChangeClass.CONFLICT, ConflictKind.REMOVED_REMOTELY
+        case EditKind.DELETE, Changed():
             return ChangeClass.CONFLICT, ConflictKind.DELETED_LOCALLY
-        return ChangeClass.DELETED_REMOTE, None
-    if new is not None:
-        return ChangeClass.CONFLICT, ConflictKind.BOTH_CHANGED
-    return ChangeClass.CONFLICT, ConflictKind.REMOVED_REMOTELY
+        case EditKind.DELETE, Removed():
+            # Both sides deleted the object.
+            return ChangeClass.DELETED_REMOTE, None
+        case EditKind.CREATE, Changed():
+            return ChangeClass.CONFLICT, ConflictKind.BOTH_CREATED
+        case _:
+            # A create the server has nothing at, or nothing anymore.
+            return ChangeClass.LOCAL_ONLY, None
