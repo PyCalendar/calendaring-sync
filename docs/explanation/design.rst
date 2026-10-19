@@ -174,7 +174,7 @@ Every :term:`record` is in one of five states at a time: synced, pending, in fli
        conflict --> removed: resolved: removal
        removed --> [*]: purged
 
-The table lists every transition with its conditions, including the ones the diagram leaves out: an unknown push, both sides reaching the same content or both deleting, and a scope :term:`reset`, which leaves every record's state as it is.
+The table lists every transition with its conditions, including the ones the diagram leaves out: an unknown push, a create recorded at a removed record's object id, a conflict the server settles on its own, both sides reaching the same content or both deleting, and a scope :term:`reset`, which leaves every record's state as it is.
 
 .. list-table::
    :header-rows: 1

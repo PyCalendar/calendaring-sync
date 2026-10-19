@@ -9,6 +9,9 @@ Rule: zero network calls, zero Docker dependency, all tests are fast.
 
 from __future__ import annotations
 
+import doctest
+import importlib
+import pkgutil
 import re
 import sqlite3
 from collections.abc import Callable, Iterator, Mapping
@@ -417,7 +420,28 @@ def _assert_refused(
     assert _snapshot(replica, store) == before
 
 
+def _docstring_examples() -> list[doctest.DocTest]:
+    """Every docstring example in the package; a replica method's start from the class's."""
+    finder = doctest.DocTestFinder()
+    tests = [
+        test
+        for module in pkgutil.walk_packages(calendaring_sync.__path__, "calendaring_sync.")
+        if ".tests" not in module.name
+        for test in finder.find(importlib.import_module(module.name))
+        if test.examples
+    ]
+    start = next(t for t in tests if t.name == "calendaring_sync.replica.Replica").examples
+    for test in tests:
+        if test.name.startswith("calendaring_sync.replica.Replica."):
+            test.examples = start + test.examples
+    return tests
+
+
 class TestPackage:
+    @pytest.mark.parametrize("test", _docstring_examples(), ids=lambda test: test.name)
+    def test_docstring_examples(self, test):
+        assert doctest.DocTestRunner().run(test).failed == 0
+
     def test_version_is_set(self):
         assert isinstance(calendaring_sync.__version__, str)
         assert calendaring_sync.__version__
@@ -1317,9 +1341,12 @@ class TestStores:
         with store.transaction(write=False):
             assert (store.scopes(), store.feed_bounds()) == ([], (0, 0))
 
-    def test_transactions_do_not_nest(self, store):
+    def test_transactions_do_not_nest(self, replica, store):
         with store.transaction(), pytest.raises(TransactionError, match="already open"):
             _enter(store.transaction())
+        # A replica's methods each open their own, so they can't run inside one.
+        with store.transaction(write=False), pytest.raises(TransactionError, match="already open"):
+            replica.scopes()
 
     def test_threads_share_one_store(self, replica):
         _seeded(replica)

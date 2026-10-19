@@ -108,6 +108,7 @@ class Session:
         changes.
 
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             StaleChangeSetError: If the change set was fetched from a token
                 the scope no longer has, or is a later page of a listing with
                 another token, such as one another session has replaced. The
@@ -156,6 +157,19 @@ class Session:
 class Replica:
     """The sync state of every :term:`scope` in one :term:`store`.
 
+    This is the class your application and the :term:`adapter` use: the
+    adapter ingests what the server changed through a :meth:`session`, and
+    your application records its edits and reads records and the
+    :term:`change feed`. The store underneath only keeps the data.
+
+    Each method runs in a store transaction of its own, so two calls can
+    see another thread's or process's write between them. To read several
+    things at one point in time, open the store's
+    :meth:`~calendaring_sync.store.base.StateStore.transaction` with
+    ``write=False`` and call the store's own methods inside it. A replica's
+    methods can't run inside a transaction already open in the same
+    thread; they raise :class:`~calendaring_sync.error.TransactionError`.
+
     Any method can also raise the store's errors:
     :class:`~calendaring_sync.error.StoreBusyError` when another process
     kept the store busy, which is safe to retry,
@@ -167,6 +181,26 @@ class Replica:
         store: Where the state is kept.
         clock: Returns the current time for every timestamp. Defaults to
             the current time in UTC.
+
+    Examples:
+        A replica on a store in memory, with one scope that a
+        :term:`full listing` filled with one object. The examples on each
+        method start from this replica. An adapter computes fingerprints
+        from the content; these are short made-up ones.
+
+        >>> from calendaring_sync import Changed, ChangeSet, MemoryStore, Replica
+        >>> replica = Replica(MemoryStore())
+        >>> listing = ChangeSet(
+        ...     "work", None, "t1", {"a": Changed("v1", "fp-a", b"Team meeting")}, full_listing=True
+        ... )
+        >>> with replica.session(
+        ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
+        ... ) as session:
+        ...     session.ingest(listing)
+        >>> replica.find_record("work", "a").content
+        b'Team meeting'
+        >>> [(entry.kind, entry.object_id) for entry in replica.read_feed()]
+        [(<FeedEntryKind.CHANGED: 'changed'>, 'a')]
     """
 
     def __init__(self, store: StateStore, *, clock: Callable[[], datetime] | None = None) -> None:
@@ -187,15 +221,28 @@ class Replica:
         :term:`full listing` fetches every object again. Objects whose
         content is the same as before aren't reported as changed.
 
+        Opening the session and each :meth:`Session.ingest` run in a write
+        transaction of their own.
+
         Args:
             scope_id: The scope's id, chosen by the :term:`adapter`.
             fingerprint_scheme: The name of the adapter's fingerprint scheme.
             media_type: The media type of the scope's :term:`content`.
 
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             SessionError: If this replica already has a session open for the scope.
             ScopeMismatchError: If the scope's content has another media type.
             ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
+
+        Examples:
+            >>> changes = {"a": Changed("v2", "fp-a2", b"Team meeting, moved")}
+            >>> with replica.session(
+            ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
+            ... ) as session:
+            ...     session.ingest(ChangeSet("work", "t1", "t2", changes))
+            >>> replica.find_record("work", "a").content
+            b'Team meeting, moved'
         """
         check_text(scope_id=scope_id, fingerprint_scheme=fingerprint_scheme, media_type=media_type)
         session = Session(self, scope_id)
@@ -409,19 +456,47 @@ class Replica:
     def scope(self, scope_id: str) -> Scope:
         """Return one scope.
 
+        Runs in a read transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownScopeError: If there's no scope with this id.
+
+        Examples:
+            >>> replica.scope("work").token
+            't1'
         """
         with self._store.transaction(write=False):
             return self._existing_scope(scope_id)
 
     def scopes(self) -> list[Scope]:
-        """Return every scope, ordered by id."""
+        """Return every scope, ordered by id.
+
+        Runs in a read transaction of its own.
+
+        Raises:
+            TransactionError: If a store transaction is already open in this thread.
+
+        Examples:
+            >>> [scope.id for scope in replica.scopes()]
+            ['work']
+        """
         with self._store.transaction(write=False):
             return self._store.scopes()
 
     def record(self, local_key: int) -> Record | None:
-        """Return the record with this :term:`local key`, or ``None``."""
+        """Return the record with this :term:`local key`, or ``None``.
+
+        Runs in a read transaction of its own.
+
+        Raises:
+            TransactionError: If a store transaction is already open in this thread.
+
+        Examples:
+            >>> key = replica.find_record("work", "a").local_key
+            >>> replica.record(key).object_id
+            'a'
+        """
         with self._store.transaction(write=False):
             return self._store.get_record(local_key)
 
@@ -430,8 +505,17 @@ class Replica:
 
         A removed record is returned until it's :term:`purged <purge>`.
 
+        Runs in a read transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownScopeError: If there's no scope with this id.
+
+        Examples:
+            >>> replica.find_record("work", "a").state
+            <RecordState.SYNCED: 'synced'>
+            >>> replica.find_record("work", "z") is None
+            True
         """
         return self._read_in_scope(scope_id, lambda: self._store.find_record(scope_id, object_id))
 
@@ -442,8 +526,17 @@ class Replica:
         the key. Several records can share one, and removed records are
         included until they're :term:`purged <purge>`.
 
+        Runs in a read transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownScopeError: If there's no scope with this id.
+
+        Examples:
+            >>> key = replica.create("work", b"Lunch", fingerprint="fp-l", logical_key="uid-1")
+            >>> found = replica.find_by_logical_key("work", "uid-1")
+            >>> [record.local_key for record in found] == [key]
+            True
         """
         return self._read_in_scope(
             scope_id, lambda: self._store.find_by_logical_key(scope_id, logical_key)
@@ -470,6 +563,8 @@ class Replica:
         server's changes; built any other way, an identical copy on the
         server looks different.
 
+        Runs in a write transaction of its own.
+
         Args:
             scope_id: The scope the object belongs to.
             content: The object's :term:`content`.
@@ -481,11 +576,19 @@ class Replica:
                 picks one.
 
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownScopeError: If there's no scope with this id.
             DuplicateObjectError: If a record that isn't removed holds the
                 object id.
             TypeError: If the content isn't bytes.
             ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
+
+        Examples:
+            >>> key = replica.create("work", b"Lunch", fingerprint="fp-l", object_id="b")
+            >>> replica.record(key).state
+            <RecordState.PENDING: 'pending'>
+            >>> replica.record(key).edit.content
+            b'Lunch'
         """
         check_content(content)
         check_text(
@@ -543,13 +646,28 @@ class Replica:
         created is still a create. Build ``fingerprint``, ``containers`` and
         ``logical_key`` as for :meth:`create`.
 
+        Runs in a write transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownRecordError: If there's no record with this local key.
             OpenConflictError: If the record holds an open :term:`conflict`.
             RemovedRecordError: If the record was removed from the server.
             EditRefusedError: If the record's :term:`push` is :term:`in flight`.
             TypeError: If the content isn't bytes.
             ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
+
+        Examples:
+            >>> key = replica.find_record("work", "a").local_key
+            >>> replica.change(key, b"Team meeting, moved", fingerprint="fp-a2")
+            >>> replica.record(key).edit.content
+            b'Team meeting, moved'
+
+            A change back to the synced content cancels the edit:
+
+            >>> replica.change(key, b"Team meeting", fingerprint="fp-a")
+            >>> replica.record(key).state
+            <RecordState.SYNCED: 'synced'>
         """
         check_content(content)
         check_text(fingerprint=fingerprint, containers=containers, logical_key=logical_key)
@@ -574,11 +692,20 @@ class Replica:
         Deleting an object you created that the server doesn't have yet
         removes its record, leaving nothing to push.
 
+        Runs in a write transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownRecordError: If there's no record with this local key.
             OpenConflictError: If the record holds an open :term:`conflict`.
             RemovedRecordError: If the record was removed from the server.
             EditRefusedError: If the record's :term:`push` is :term:`in flight`.
+
+        Examples:
+            >>> key = replica.find_record("work", "a").local_key
+            >>> replica.delete(key)
+            >>> replica.record(key).edit.kind
+            <EditKind.DELETE: 'delete'>
         """
         with self._editing(local_key) as record:
             if record.is_create:
@@ -593,11 +720,21 @@ class Replica:
         Discarding a create removes its record. A record with no edit is
         left as it is.
 
+        Runs in a write transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownRecordError: If there's no record with this local key.
             OpenConflictError: If the record holds an open :term:`conflict`.
             RemovedRecordError: If the record was removed from the server.
             EditRefusedError: If the record's :term:`push` is :term:`in flight`.
+
+        Examples:
+            >>> key = replica.find_record("work", "a").local_key
+            >>> replica.delete(key)
+            >>> replica.discard(key)
+            >>> replica.record(key).state
+            <RecordState.SYNCED: 'synced'>
         """
         with self._editing(local_key) as record:
             if record.edit is not None:
@@ -612,7 +749,12 @@ class Replica:
 
     @contextmanager
     def _editing(self, local_key: int) -> Iterator[Record]:
-        """Open the write transaction an edit runs in, and yield the record it edits."""
+        """Open the write transaction an edit runs in, and yield the record it edits.
+
+        The record is frozen, so nothing is saved by changing it: the edit
+        writes its new copy with ``update_record`` inside the block, and
+        leaving the block commits it.
+        """
         with self._store.transaction():
             yield self._editable(local_key)
 
@@ -632,8 +774,15 @@ class Replica:
     def records(self, scope_id: str) -> list[Record]:
         """Return every record in a scope, removed ones included, ordered by local key.
 
+        Runs in a read transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownScopeError: If there's no scope with this id.
+
+        Examples:
+            >>> [record.object_id for record in replica.records("work")]
+            ['a']
         """
         return self._read_in_scope(scope_id, lambda: self._store.scope_records(scope_id))
 
@@ -645,8 +794,15 @@ class Replica:
         :term:`full listing`, and reports objects whose version matches as
         ``Unchanged`` instead of fetching them. Removed records aren't included.
 
+        Runs in a read transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownScopeError: If there's no scope with this id.
+
+        Examples:
+            >>> replica.known_versions("work")
+            {'a': 'v1'}
         """
         return {
             record.object_id: version
@@ -659,9 +815,17 @@ class Replica:
 
         Records keep their state.
 
+        Runs in a write transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownScopeError: If there's no scope with this id.
             SessionError: If a session for the scope is open.
+
+        Examples:
+            >>> replica.reset("work")
+            >>> replica.scope("work").token is None
+            True
         """
         with self._without_session(scope_id), self._store.transaction():
             scope = self._existing_scope(scope_id)
@@ -670,12 +834,22 @@ class Replica:
     def drop_scope(self, scope_id: str) -> DroppedScope:
         """:term:`Drop <drop>` a scope and every record in it.
 
+        Runs in a write transaction of its own.
+
         Returns:
             The records holding local work that the drop discarded.
 
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             UnknownScopeError: If there's no scope with this id.
             SessionError: If a session for the scope is open.
+
+        Examples:
+            >>> dropped = replica.drop_scope("work")
+            >>> dropped.pending, dropped.conflicts
+            ((), ())
+            >>> replica.scopes()
+            []
         """
         with self._without_session(scope_id), self._store.transaction():
             self._existing_scope(scope_id)
@@ -695,6 +869,15 @@ class Replica:
         """Return the number of the last :term:`change feed` entry written, ``0`` for none.
 
         Start a new :term:`cursor` here after reading every record.
+
+        Runs in a read transaction of its own.
+
+        Raises:
+            TransactionError: If a store transaction is already open in this thread.
+
+        Examples:
+            >>> replica.feed_head()
+            1
         """
         with self._store.transaction(write=False):
             return self._store.feed_bounds()[1]
@@ -705,15 +888,24 @@ class Replica:
         Save the new cursor only after handling the entries, so a crash in
         between reads them again instead of skipping them.
 
+        Runs in a read transaction of its own.
+
         Args:
             after: The number of the last entry already handled.
             limit: The most entries to return, at most
                 :data:`~calendaring_sync.constants.FEED_PAGE_SIZE`.
 
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             TrimmedFeedError: If entries after ``after`` were trimmed.
             ValueError: If ``after`` is negative or past the last entry,
                 or ``limit`` is outside 1 to ``FEED_PAGE_SIZE``.
+
+        Examples:
+            >>> [(entry.number, entry.kind) for entry in replica.read_feed(after=0)]
+            [(1, <FeedEntryKind.CHANGED: 'changed'>)]
+            >>> replica.read_feed(after=replica.feed_head())
+            []
         """
         if not 1 <= limit <= FEED_PAGE_SIZE:
             raise ValueError(f"limit must be between 1 and {FEED_PAGE_SIZE}, not {limit}")
@@ -728,8 +920,16 @@ class Replica:
     def trim_feed(self, through: int) -> None:
         """Delete every :term:`change feed` entry numbered at or below ``through``.
 
+        Runs in a write transaction of its own.
+
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             ValueError: If ``through`` is negative or past the last entry.
+
+        Examples:
+            >>> replica.trim_feed(replica.feed_head())
+            >>> replica.read_feed(after=replica.feed_head())
+            []
         """
         with self._store.transaction():
             self._checked_feed_bounds(through, "through")
@@ -740,6 +940,8 @@ class Replica:
 
         Their feed entries stay until trimmed.
 
+        Runs in a write transaction of its own.
+
         Args:
             through: The number of a :term:`change feed` entry, such as the
                 oldest :term:`cursor` your application still reads from, so
@@ -749,7 +951,19 @@ class Replica:
             How many records were purged.
 
         Raises:
+            TransactionError: If a store transaction is already open in this thread.
             ValueError: If ``through`` is negative or past the last entry.
+
+        Examples:
+            >>> from calendaring_sync import Removed
+            >>> with replica.session(
+            ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
+            ... ) as session:
+            ...     session.ingest(ChangeSet("work", "t1", "t2", {"a": Removed()}))
+            >>> replica.purge(replica.feed_head())
+            1
+            >>> replica.records("work")
+            []
         """
         with self._store.transaction():
             self._checked_feed_bounds(through, "through")
