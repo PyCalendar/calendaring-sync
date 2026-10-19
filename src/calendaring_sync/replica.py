@@ -18,7 +18,7 @@ from threading import Lock
 from typing import TypeVar
 
 from calendaring_sync._classify import ChangeClass, classify, same_data, same_remote
-from calendaring_sync._text import check_text
+from calendaring_sync._text import check_content, check_text
 from calendaring_sync.constants import FEED_PAGE_SIZE
 from calendaring_sync.error import (
     EditRefusedError,
@@ -33,7 +33,7 @@ from calendaring_sync.error import (
 )
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
-from calendaring_sync.objects.conflict import Conflict, ConflictKind
+from calendaring_sync.objects.conflict import Conflict
 from calendaring_sync.objects.dropped_scope import DroppedScope
 from calendaring_sync.objects.edit import EditKind, LocalEdit
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
@@ -48,15 +48,6 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def _server_version(record: Record) -> str | None:
-    """The version of the server's copy as the store knows it, ``None`` if it knows none."""
-    if record.state is RecordState.REMOVED:
-        return None
-    if record.conflict is not None:
-        return record.conflict.remote_version
-    return record.version
-
-
 def _without_fingerprints(record: Record) -> Record:
     """The record after a fingerprint scheme change: no fingerprint, and no version to reuse."""
     edit, conflict = record.edit, record.conflict
@@ -68,26 +59,6 @@ def _without_fingerprints(record: Record) -> Record:
         conflict=None
         if conflict is None
         else replace(conflict, remote_version=None, remote_fingerprint=None),
-    )
-
-
-def _is_create(record: Record) -> bool:
-    """Whether the record is an object you created that the server doesn't have yet."""
-    return record.edit is not None and record.edit.kind is EditKind.CREATE
-
-
-def _conflict(kind: ConflictKind, change: Changed | Removed, opened_at: datetime) -> Conflict:
-    """A conflict whose server side is what the change reported."""
-    if isinstance(change, Removed):
-        return Conflict(kind, None, None, None, frozenset(), None, opened_at)
-    return Conflict(
-        kind,
-        change.version,
-        change.fingerprint,
-        change.content,
-        change.containers,
-        change.logical_key,
-        opened_at,
     )
 
 
@@ -129,7 +100,7 @@ class Session:
         The core applies each object in it: a new object gets a record, a
         changed one gets the new data, and a removed one is marked removed.
         An object whose :term:`fingerprint`, containers and logical key
-        didn't change only gets its version and the server's text, and isn't
+        didn't change only gets its version and the server's content, and isn't
         reported. A :term:`truncated page` of an :term:`incremental change set`
         moves the token to its :term:`checkpoint`. A :term:`full listing`
         moves the token only on its last page, which also removes every
@@ -213,8 +184,8 @@ class Replica:
         The first session creates the scope. A different
         :term:`fingerprint scheme` from the stored one resets the scope and
         clears every record's version and fingerprint, so the next
-        :term:`full listing` fetches every object again. Objects whose text
-        is the same as before aren't reported as changed.
+        :term:`full listing` fetches every object again. Objects whose
+        content is the same as before aren't reported as changed.
 
         Args:
             scope_id: The scope's id, chosen by the :term:`adapter`.
@@ -224,9 +195,9 @@ class Replica:
         Raises:
             SessionError: If this replica already has a session open for the scope.
             ScopeMismatchError: If the scope's content has another media type.
-            ValueError: If a string isn't valid text.
+            ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
         """
-        check_text("A session", (scope_id, fingerprint_scheme, media_type))
+        check_text(scope_id=scope_id, fingerprint_scheme=fingerprint_scheme, media_type=media_type)
         session = Session(self, scope_id)
         with self._sessions_lock:
             if scope_id in self._sessions:
@@ -307,7 +278,7 @@ class Replica:
         """Apply one object's change to the store, classified against its local edit."""
         record = self._store.find_record(scope_id, object_id)
         if isinstance(change, Unchanged):
-            if record is None or _server_version(record) is None:
+            if record is None or record.server_version is None:
                 raise ValueError(
                     f"Object {object_id!r} is reported unchanged, "
                     "but the store has no version for it"
@@ -319,12 +290,7 @@ class Replica:
         live = None if record is None or record.state is RecordState.REMOVED else record
         if live is not None and live.conflict is not None and same_remote(live.conflict, change):
             if isinstance(change, Changed):
-                conflict = replace(
-                    live.conflict,
-                    remote_version=change.version,
-                    remote_fingerprint=change.fingerprint,
-                    remote_content=change.content,
-                )
+                conflict = Conflict.from_change(live.conflict.kind, change, live.conflict.opened_at)
                 self._store.update_record(replace(live, conflict=conflict))
             return
         edit = None if live is None else live.edit
@@ -340,7 +306,7 @@ class Replica:
                     replace(
                         live,
                         state=RecordState.CONFLICT,
-                        conflict=_conflict(kind, change, opened_at),
+                        conflict=Conflict.from_change(kind, change, opened_at),
                     ),
                     FeedEntryKind.CONFLICT_UPDATED
                     if was_conflict
@@ -364,7 +330,7 @@ class Replica:
                 live is not None and (isinstance(change, Changed) or was_conflict)
             ):
                 # The server's copy holds the synced data, so only its version and
-                # text move; a conflict this settles leaves the edit to be pushed.
+                # content move; a conflict this settles leaves the edit to be pushed.
                 if isinstance(change, Changed):
                     live = replace(
                         live,
@@ -486,7 +452,7 @@ class Replica:
     def create(
         self,
         scope_id: str,
-        content: str,
+        content: bytes,
         *,
         fingerprint: str,
         containers: frozenset[str] = frozenset(),
@@ -499,10 +465,10 @@ class Replica:
         the server. A create at the object id of a record the server removed
         takes that record over, as the server does when it has an object at
         that id again: it keeps its local key and drops the removed copy.
-        Build ``fingerprint``, ``containers`` and
-        ``logical_key`` with the :term:`adapter`'s function for them, the
-        same one it uses for the server's changes; built any other way, an
-        identical copy on the server looks different.
+        Build ``fingerprint``, ``containers`` and ``logical_key`` with the
+        :term:`adapter`'s function for them, the same one it uses for the
+        server's changes; built any other way, an identical copy on the
+        server looks different.
 
         Args:
             scope_id: The scope the object belongs to.
@@ -518,10 +484,16 @@ class Replica:
             UnknownScopeError: If there's no scope with this id.
             DuplicateObjectError: If a record that isn't removed holds the
                 object id.
-            ValueError: If a string isn't valid text.
+            TypeError: If the content isn't bytes.
+            ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
         """
+        check_content(content)
         check_text(
-            "A create", (scope_id, content, fingerprint, logical_key, object_id, *containers)
+            scope_id=scope_id,
+            fingerprint=fingerprint,
+            containers=containers,
+            logical_key=logical_key,
+            object_id=object_id,
         )
         with self._store.transaction():
             self._existing_scope(scope_id)
@@ -558,7 +530,7 @@ class Replica:
     def change(
         self,
         local_key: int,
-        content: str,
+        content: bytes,
         *,
         fingerprint: str,
         containers: frozenset[str] = frozenset(),
@@ -576,11 +548,13 @@ class Replica:
             OpenConflictError: If the record holds an open :term:`conflict`.
             RemovedRecordError: If the record was removed from the server.
             EditRefusedError: If the record's :term:`push` is :term:`in flight`.
-            ValueError: If a string isn't valid text.
+            TypeError: If the content isn't bytes.
+            ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
         """
-        check_text("A change", (content, fingerprint, logical_key, *containers))
+        check_content(content)
+        check_text(fingerprint=fingerprint, containers=containers, logical_key=logical_key)
         with self._editing(local_key) as record:
-            created = _is_create(record)
+            created = record.is_create
             edit = LocalEdit(
                 EditKind.CREATE if created else EditKind.CHANGE,
                 content,
@@ -607,7 +581,7 @@ class Replica:
             EditRefusedError: If the record's :term:`push` is :term:`in flight`.
         """
         with self._editing(local_key) as record:
-            if _is_create(record):
+            if record.is_create:
                 self._drop_edit(record)
                 return
             edit = LocalEdit(EditKind.DELETE, None, None, frozenset(), None, self._clock())
@@ -631,7 +605,7 @@ class Replica:
 
     def _drop_edit(self, record: Record) -> None:
         """Leave the record as the server has it: synced, or gone if the server never had it."""
-        if _is_create(record):
+        if record.is_create:
             self._store.delete_record(record.local_key)
         else:
             self._store.update_record(replace(record, state=RecordState.SYNCED, edit=None))
@@ -677,7 +651,7 @@ class Replica:
         return {
             record.object_id: version
             for record in self.records(scope_id)
-            if record.object_id is not None and (version := _server_version(record)) is not None
+            if record.object_id is not None and (version := record.server_version) is not None
         }
 
     def reset(self, scope_id: str) -> None:

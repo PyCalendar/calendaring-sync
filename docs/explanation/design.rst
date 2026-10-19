@@ -58,6 +58,10 @@ Each scope remembers its :term:`fingerprint scheme`. If the scheme changes, the 
 
 The core never reads inside :term:`content`. It stores what the server sent and pushes what you recorded.
 
+.. _lone-surrogates:
+
+Content is bytes, kept exactly as the server sent them, so nothing is decoded and any media type works. Every other value the core stores, such as an id, a token or a logical key, is a string, kept exactly as it's given, empty strings and whitespace included. The one exception is a string holding a lone surrogate, such as ``"\ud800"``: half of the pair UTF-16 uses for characters such as emoji. Python allows one in a string, but it isn't a character and UTF-8 can't encode it, so a store that writes UTF-8 would fail on it where one that keeps Python objects wouldn't. The core refuses such a string with ``ValueError`` wherever it takes one, so every store behaves the same.
+
 Why a change set is applied all at once
 =======================================
 

@@ -48,6 +48,13 @@ def _encode_containers(value: frozenset[str]) -> str:
     return json.dumps(sorted(value))
 
 
+def _bytes(value: object) -> bytes:
+    """Check a value read back as content is bytes, as the store wrote it."""
+    if not isinstance(value, bytes):
+        raise ValueError(f"Content isn't bytes: {value!r}")
+    return value
+
+
 def _codec(tp: Any) -> tuple[Callable[[Any], Any] | None, Callable[[Any], Any] | None]:
     """How a field of type ``tp`` is written and read back; ``None`` keeps the value as is."""
     if isinstance(tp, type) and issubclass(tp, StrEnum):
@@ -56,6 +63,8 @@ def _codec(tp: Any) -> tuple[Callable[[Any], Any] | None, Callable[[Any], Any] |
         return datetime.isoformat, datetime.fromisoformat
     if get_origin(tp) is frozenset:
         return _encode_containers, _containers
+    if tp is bytes:
+        return None, _bytes
     return None, None
 
 
@@ -180,7 +189,11 @@ _FEED_COLUMNS = _columns(FeedEntry)
 
 #: How each stored class is selected, and read back from its rows. Built
 #: once here, so nothing in the module changes while stores run.
-_SELECTS: dict[type, str] = {cls: _names(_columns(cls)) for cls in (Scope, Record, FeedEntry)}
+_SELECTS: dict[type, str] = {
+    Scope: _names(_SCOPE_COLUMNS),
+    Record: _names(_RECORD_COLUMNS),
+    FeedEntry: _names(_FEED_COLUMNS),
+}
 _READERS: dict[type, _Reader] = {cls: _reader(cls) for cls in (Scope, Record, FeedEntry)}
 
 # Every column but the key, which SQLite assigns.
@@ -227,13 +240,13 @@ _SCHEMA = (
     state TEXT NOT NULL,
     version TEXT,
     fingerprint TEXT,
-    content TEXT,
+    content BLOB,
     containers TEXT NOT NULL,
     logical_key TEXT,
     synced_at TEXT,
     last_entry INTEGER NOT NULL,
     edit_kind TEXT,
-    edit_content TEXT,
+    edit_content BLOB,
     edit_fingerprint TEXT,
     edit_containers TEXT,
     edit_logical_key TEXT,
@@ -241,7 +254,7 @@ _SCHEMA = (
     conflict_kind TEXT,
     conflict_remote_version TEXT,
     conflict_remote_fingerprint TEXT,
-    conflict_remote_content TEXT,
+    conflict_remote_content BLOB,
     conflict_remote_containers TEXT,
     conflict_remote_logical_key TEXT,
     conflict_opened_at TEXT

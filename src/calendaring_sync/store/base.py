@@ -22,6 +22,7 @@ from calendaring_sync.constants import ISSUES_URL
 from calendaring_sync.error import (
     CalendaringSyncError,
     DuplicateObjectError,
+    RecordValueError,
     StoreError,
     TransactionError,
     TransactionPermissionError,
@@ -30,6 +31,7 @@ from calendaring_sync.error import (
     UnknownRecordError,
     UnknownScopeError,
 )
+from calendaring_sync.objects.conflict import ConflictKind
 from calendaring_sync.objects.edit import EditKind
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
 from calendaring_sync.objects.record import Record, RecordState
@@ -38,18 +40,61 @@ from calendaring_sync.objects.scope import Scope
 # The states in which a record holds a pending edit.
 _EDIT_STATES = frozenset({RecordState.PENDING, RecordState.IN_FLIGHT, RecordState.CONFLICT})
 
+# The edit each kind of conflict is about, and whether the server still has
+# the object. What the server's side of a refused create holds is decided
+# with pushes, so that kind allows either.
+_CONFLICT_SIDES: dict[ConflictKind, tuple[EditKind, bool | None]] = {
+    ConflictKind.BOTH_CHANGED: (EditKind.CHANGE, True),
+    ConflictKind.REMOVED_REMOTELY: (EditKind.CHANGE, False),
+    ConflictKind.DELETED_LOCALLY: (EditKind.DELETE, True),
+    ConflictKind.BOTH_CREATED: (EditKind.CREATE, True),
+    ConflictKind.LOGICAL_KEY_TAKEN: (EditKind.CREATE, None),
+}
+
+# Content, fingerprint, containers and logical key of a copy that isn't there.
+_NO_COPY: tuple[None, None, frozenset[str], None] = (None, None, frozenset(), None)
+
 
 def _check_record(record: Record) -> None:
-    """Raise ``ValueError`` if the record's state doesn't match what it holds."""
-    if (record.edit is not None) != (record.state in _EDIT_STATES):
-        need = "needs" if record.state in _EDIT_STATES else "can't hold"
-        raise ValueError(f"A {record.state} record {need} a local edit")
-    if (record.conflict is not None) != (record.state is RecordState.CONFLICT):
-        need = "needs" if record.state is RecordState.CONFLICT else "can't hold"
-        raise ValueError(f"A {record.state} record {need} a conflict")
-    is_create = record.edit is not None and record.edit.kind is EditKind.CREATE
-    if (record.content is None) != is_create:
-        raise ValueError("A record has no synced content exactly when its edit is a create")
+    """Raise :class:`RecordValueError` if the record holds what its state can't."""
+    state, edit, conflict = record.state, record.edit, record.conflict
+    # A pending edit in exactly the states that keep one.
+    if (edit is not None) != (state in _EDIT_STATES):
+        need = "needs" if state in _EDIT_STATES else "can't hold"
+        raise RecordValueError(f"A {state} record {need} a local edit")
+    # The server's side of a conflict in exactly the conflict state.
+    if (conflict is not None) != (state is RecordState.CONFLICT):
+        need = "needs" if state is RecordState.CONFLICT else "can't hold"
+        raise RecordValueError(f"A {state} record {need} a conflict")
+    # No synced content for exactly an object the server doesn't have yet.
+    if (record.content is None) != record.is_create:
+        raise RecordValueError("A record has no synced content exactly when its edit is a create")
+    # A delete holds no copy of the object; a change or a create holds one.
+    if edit is not None:
+        edit_copy = (edit.content, edit.fingerprint, edit.containers, edit.logical_key)
+        if edit.kind is EditKind.DELETE and edit_copy != _NO_COPY:
+            raise RecordValueError("A delete edit can't hold a copy of the object")
+        if edit.kind is not EditKind.DELETE and edit.content is None:
+            raise RecordValueError(f"A {edit.kind} edit needs the object's content")
+    if conflict is None:
+        return
+    # Each kind of conflict is about one kind of edit.
+    edit_kind, server_has_it = _CONFLICT_SIDES[conflict.kind]
+    if edit is None or edit.kind is not edit_kind:
+        raise RecordValueError(f"A {conflict.kind} conflict needs a {edit_kind} edit")
+    # The server's side holds a copy exactly when the server still has the object.
+    remote_copy = (
+        conflict.remote_content,
+        conflict.remote_fingerprint,
+        conflict.remote_containers,
+        conflict.remote_logical_key,
+    )
+    removed = remote_copy == _NO_COPY and conflict.remote_version is None
+    if conflict.remote_content is None and not removed:
+        raise RecordValueError("A conflict without the server's content can't hold the rest of it")
+    if server_has_it is not None and server_has_it == removed:
+        need = "needs" if server_has_it else "can't hold"
+        raise RecordValueError(f"A {conflict.kind} conflict {need} the server's copy")
 
 
 class StateStore(ABC):
@@ -212,15 +257,19 @@ class StateStore(ABC):
         write transaction.
 
         Raises:
+            RecordValueError: If the record holds what its state can't. A
+                record holds an edit exactly when it's pending, in flight or
+                in conflict, the server's side of a conflict exactly when
+                it's in conflict, and no synced content exactly when its
+                edit is a create. An edit holds a copy of the object unless
+                it's a delete, and a conflict's edit and server's side match
+                its kind. The record is checked first, so this is raised
+                outside a transaction too.
             TransactionRequiredError: If no transaction is open in this thread.
             TransactionPermissionError: If the transaction only reads.
             UnknownScopeError: If the record's scope doesn't exist.
             DuplicateObjectError: If another record in the scope has the
                 record's object id.
-            ValueError: If the record's state doesn't match what it holds:
-                an edit exactly when pending, in flight or in conflict, the
-                server's side of a conflict exactly when in conflict, and no
-                synced content exactly when the edit is a create.
         """
         with self._record_write(record):
             if self._get_scope(record.scope) is None:
@@ -234,13 +283,13 @@ class StateStore(ABC):
         Runs inside a write transaction.
 
         Raises:
+            RecordValueError: If the record holds what its state can't, as
+                for :meth:`insert_record`.
             TransactionRequiredError: If no transaction is open in this thread.
             TransactionPermissionError: If the transaction only reads.
             UnknownRecordError: If no record has the record's local key.
             DuplicateObjectError: If another record in the scope has the
                 record's object id.
-            ValueError: If the record's state doesn't match what it holds,
-                as for :meth:`insert_record`.
         """
         with self._record_write(record):
             stored = self._get_record(record.local_key)
@@ -251,14 +300,13 @@ class StateStore(ABC):
             self._update_record(record)
 
     def _record_write(self, record: Record) -> AbstractContextManager[None]:
-        """Check the transaction, then the record, and guard the write that follows.
+        """Check the record, then the transaction, and guard the write that follows.
 
-        The record is checked outside the guard, which would report its
-        ``ValueError`` as a bug in the store.
+        The record comes first: checking it costs less than anything the
+        store does, and a bad record is wrong in any transaction.
         """
-        operation = self._operation(write=True)
         _check_record(record)
-        return operation
+        return self._operation(write=True)
 
     def _check_unique(self, record: Record) -> None:
         """Raise if another record in the record's scope has its object id."""

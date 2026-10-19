@@ -8,6 +8,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
+from typing import Self
+
+from calendaring_sync.objects.change import Changed, Removed
 
 
 class ConflictKind(StrEnum):
@@ -28,11 +31,16 @@ class ConflictKind(StrEnum):
 
 @dataclass(frozen=True)
 class Conflict:
-    """An open conflict.
+    """The server's copy of an object, kept where it conflicts with your edit.
 
-    Together with its record's synced side and :attr:`Record.edit
+    Together with its record's synced copy and :attr:`Record.edit
     <calendaring_sync.objects.record.Record.edit>`, it makes up the
-    :term:`conflict record`.
+    :term:`conflict record`: the record's
+    :attr:`~calendaring_sync.objects.record.Record.content` is the object
+    as both sides last agreed on it, ``edit.content`` is yours, and
+    :attr:`remote_content` is the server's. A resolution can compare all
+    three, for example to keep both sides where they changed different
+    parts of the object.
 
     Attributes:
         kind: How the two sides disagree.
@@ -56,7 +64,24 @@ class Conflict:
     kind: ConflictKind
     remote_version: str | None
     remote_fingerprint: str | None
-    remote_content: str | None
+    remote_content: bytes | None
     remote_containers: frozenset[str]
     remote_logical_key: str | None
     opened_at: datetime
+
+    @classmethod
+    def from_change(
+        cls, kind: ConflictKind, change: Changed | Removed, opened_at: datetime
+    ) -> Self:
+        """Return a conflict whose server side is what a change reported."""
+        if isinstance(change, Removed):
+            return cls(kind, None, None, None, frozenset(), None, opened_at)
+        return cls(
+            kind,
+            change.version,
+            change.fingerprint,
+            change.content,
+            change.containers,
+            change.logical_key,
+            opened_at,
+        )

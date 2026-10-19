@@ -47,7 +47,7 @@ def _same(a: tuple[object, ...], b: tuple[object, ...]) -> bool:
     """Whether two copies' data match.
 
     Fingerprints decide when both copies have one; after a fingerprint
-    scheme change one of them has none, and the text is compared instead.
+    scheme change one of them has none, and the content is compared instead.
     """
     (fingerprint_a, content_a, *rest_a), (fingerprint_b, content_b, *rest_b) = a, b
     if fingerprint_a is None or fingerprint_b is None:

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from calendaring_sync._text import check_text
+from calendaring_sync._text import check_content, check_text
 
 
 @dataclass(frozen=True)
@@ -19,25 +19,29 @@ class Changed:
             gives none.
         fingerprint: The object's :term:`fingerprint`, computed by the
             :term:`adapter`.
-        content: The object's :term:`content`, exactly as the server sent it.
+        content: The object's :term:`content`, the bytes exactly as the server
+            sent them.
         containers: The :term:`containers <container>` the object belongs to.
         logical_key: The object's :term:`logical key`, if it has one.
 
     Raises:
-        ValueError: If a string isn't valid text, such as one holding a
-            lone surrogate.
+        TypeError: If the content isn't bytes.
+        ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
     """
 
     version: str | None
     fingerprint: str
-    content: str
+    content: bytes
     containers: frozenset[str] = frozenset()
     logical_key: str | None = None
 
     def __post_init__(self) -> None:
+        check_content(self.content)
         check_text(
-            "A change",
-            (self.version, self.fingerprint, self.content, self.logical_key, *self.containers),
+            version=self.version,
+            fingerprint=self.fingerprint,
+            containers=self.containers,
+            logical_key=self.logical_key,
         )
 
 

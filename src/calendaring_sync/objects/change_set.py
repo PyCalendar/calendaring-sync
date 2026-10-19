@@ -33,8 +33,8 @@ class ChangeSet:
         truncated: Whether more pages follow it.
 
     Raises:
-        ValueError: If the scope id, a token or an object id isn't valid
-            text, such as one holding a lone surrogate.
+        ValueError: If the scope id, a token or an object id holds a
+            :ref:`lone surrogate <lone-surrogates>`.
     """
 
     scope: str
@@ -45,4 +45,4 @@ class ChangeSet:
     truncated: bool = False
 
     def __post_init__(self) -> None:
-        check_text("A change set", (self.scope, self.since, self.token, *self.changes))
+        check_text(scope=self.scope, since=self.since, token=self.token, object_ids=self.changes)

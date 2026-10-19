@@ -40,7 +40,7 @@ class LocalEdit:
     """
 
     kind: EditKind
-    content: str | None
+    content: bytes | None
     fingerprint: str | None
     containers: frozenset[str]
     logical_key: str | None

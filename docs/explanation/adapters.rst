@@ -50,7 +50,7 @@ Each collection has its own sync token (:rfc:`6578`), so one collection is one s
    * - Sync token
      - ``DAV:sync-token``, an opaque URI (:rfc:`6578#section-3.2`)
    * - Content and fingerprint
-     - The iCalendar text (``text/calendar``), and SHA-256 of a canonical form: lines unfolded, properties and parameters sorted within each component, components sorted, the parts of each recurrence rule sorted, and ``DTSTAMP``, ``LAST-MODIFIED`` and ``PRODID`` left out
+     - The iCalendar data (``text/calendar``) as the server sent it, and SHA-256 of a canonical form: lines unfolded, properties and parameters sorted within each component, components sorted, the parts of each recurrence rule sorted, and ``DTSTAMP``, ``LAST-MODIFIED`` and ``PRODID`` left out
    * - Containers
      - The collection the member is in
    * - Logical key
@@ -144,7 +144,7 @@ A record type is the kind of data a JMAP record holds, such as ``CalendarEvent``
    * - Sync token
      - The type's ``state`` string
    * - Content and fingerprint
-     - The JSCalendar JSON, and SHA-256 of it serialized with sorted keys, without the properties the server sets, and with ``isDraft``, ``useDefaultAlerts`` and ``version`` filled in with their defaults
+     - The JSCalendar JSON, encoded as UTF-8, and SHA-256 of it serialized with sorted keys, without the properties the server sets, and with ``isDraft``, ``useDefaultAlerts`` and ``version`` filled in with their defaults
    * - Containers
      - The event's ``calendarIds``
    * - Logical key
