@@ -13,7 +13,9 @@ import doctest
 import importlib
 import pkgutil
 import re
+import runpy
 import sqlite3
+import sys
 from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import AbstractContextManager, ExitStack, contextmanager, suppress
@@ -66,6 +68,7 @@ from calendaring_sync import (
 )
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
 from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
+from calendaring_sync.tests import benchmark
 
 _SCOPE = "cal"
 _OTHER = "other"
@@ -441,6 +444,22 @@ class TestPackage:
     @pytest.mark.parametrize("test", _docstring_examples(), ids=lambda test: test.name)
     def test_docstring_examples(self, test):
         assert doctest.DocTestRunner().run(test).failed == 0
+
+    def test_benchmarks_run_and_measure_what_they_say(self, monkeypatch, capsys):
+        size = 200
+        # Run the module as the contributing guide says to, at a small size.
+        monkeypatch.setattr(sys, "argv", ["benchmark", "--size", str(size), "--runs", "1"])
+        monkeypatch.delitem(sys.modules, benchmark.__name__)
+        runpy.run_module("calendaring_sync.tests.benchmark", run_name="__main__")
+        printed = capsys.readouterr().out.splitlines()
+        assert [line.split(",")[0] for line in printed] == list(benchmark.SCENARIOS)
+        edited = size // benchmark.EDITED_SHARE
+        conflicted = edited // benchmark.CONFLICTED_SHARE
+        assert benchmark.states_over_edits(size) == {
+            RecordState.SYNCED: size - edited,
+            RecordState.PENDING: edited - conflicted,
+            RecordState.CONFLICT: conflicted,
+        }
 
     def test_version_is_set(self):
         assert isinstance(calendaring_sync.__version__, str)
