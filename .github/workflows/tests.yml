@@ -163,7 +163,8 @@ jobs:
         run: |
           pytest --cov --cov-branch --cov-report=xml \
             --junitxml=junit.xml -o junit_family=legacy \
-            src/calendaring_sync/tests/test_sync_unit.py
+            src/calendaring_sync/tests/test_sync_unit.py \
+            src/calendaring_sync/tests/test_classify_unit.py
 
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}

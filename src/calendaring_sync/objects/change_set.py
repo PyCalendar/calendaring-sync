@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from calendaring_sync._text import check_text
 from calendaring_sync.objects.change import Change
 
 
@@ -30,6 +31,10 @@ class ChangeSet:
         full_listing: Whether it lists every object in the scope, rather
             than only what changed.
         truncated: Whether more pages follow it.
+
+    Raises:
+        ValueError: If the scope id, a token or an object id holds a
+            :ref:`lone surrogate <lone-surrogates>`.
     """
 
     scope: str
@@ -38,3 +43,6 @@ class ChangeSet:
     changes: Mapping[str, Change]
     full_listing: bool = False
     truncated: bool = False
+
+    def __post_init__(self) -> None:
+        check_text(scope=self.scope, since=self.since, token=self.token, object_ids=self.changes)

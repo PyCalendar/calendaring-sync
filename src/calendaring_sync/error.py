@@ -4,8 +4,11 @@
 """calendaring-sync's error hierarchy.
 
 Every error the library raises on purpose derives from
-:class:`CalendaringSyncError`. A call with an argument that can never be
-valid, such as a negative cursor, raises :class:`ValueError` instead.
+:class:`CalendaringSyncError`, except for arguments that can never be
+valid: those raise :class:`ValueError`, such as a negative cursor, or
+:class:`TypeError`, such as content that isn't bytes. A record a store
+can't hold raises :class:`RecordValueError`, which is both a
+:class:`CalendaringSyncError` and a :class:`ValueError`.
 """
 
 
@@ -41,6 +44,32 @@ class UnknownRecordError(CalendaringSyncError):
 
 class DuplicateObjectError(CalendaringSyncError):
     """Another :term:`record` in the :term:`scope` already has this :term:`object id`."""
+
+
+class RecordValueError(CalendaringSyncError, ValueError):
+    """A :term:`record` holds what its state can't, so a :term:`store` refuses to write it.
+
+    For example a pending record without a :term:`pending edit`, or a
+    :term:`conflict` that says the server removed the object but holds the
+    server's content. It's a :class:`ValueError` too, since such a record
+    can never be valid.
+    """
+
+
+class EditRefusedError(CalendaringSyncError):
+    """The :term:`record` is in a state that takes no :term:`local edit`.
+
+    Raised as itself for a record whose :term:`push` is :term:`in flight`.
+    Its subclasses cover a record in :term:`conflict` and a removed one.
+    """
+
+
+class OpenConflictError(EditRefusedError):
+    """The :term:`record` holds an open :term:`conflict`; resolve it before editing."""
+
+
+class RemovedRecordError(EditRefusedError):
+    """The :term:`record` was removed from the server, so there's nothing to edit."""
 
 
 class ScopeMismatchError(CalendaringSyncError):

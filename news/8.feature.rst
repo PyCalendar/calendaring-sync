@@ -1,0 +1,1 @@
+Added local edits and conflict detection. ``Replica`` records a change, delete or create, finds records by object id or logical key, and stores a conflict where the server changed an object you also edited. An object's content is bytes, kept exactly as the server sent it.

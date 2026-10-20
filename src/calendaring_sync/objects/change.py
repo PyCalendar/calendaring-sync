@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from calendaring_sync._text import check_content, check_text
+
 
 @dataclass(frozen=True)
 class Changed:
@@ -17,16 +19,40 @@ class Changed:
             gives none.
         fingerprint: The object's :term:`fingerprint`, computed by the
             :term:`adapter`.
-        content: The object's :term:`content`, exactly as the server sent it.
+        content: The object's :term:`content`, the bytes exactly as the server
+            sent them.
         containers: The :term:`containers <container>` the object belongs to.
         logical_key: The object's :term:`logical key`, if it has one.
+
+    Raises:
+        TypeError: If the content isn't bytes.
+        ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
+
+    Examples:
+        An :term:`adapter` reports an object the server changed, and one it
+        removed, in a change set from token ``t1`` to ``t2``:
+
+        >>> from calendaring_sync import Changed, ChangeSet, Removed
+        >>> changes = {"a": Changed("v2", "fp-a2", b"Team meeting, moved"), "b": Removed()}
+        >>> change_set = ChangeSet("work", "t1", "t2", changes)
+        >>> change_set.changes["a"].content
+        b'Team meeting, moved'
     """
 
     version: str | None
     fingerprint: str
-    content: str
+    content: bytes
     containers: frozenset[str] = frozenset()
     logical_key: str | None = None
+
+    def __post_init__(self) -> None:
+        check_content(self.content)
+        check_text(
+            version=self.version,
+            fingerprint=self.fingerprint,
+            containers=self.containers,
+            logical_key=self.logical_key,
+        )
 
 
 @dataclass(frozen=True)

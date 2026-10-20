@@ -58,6 +58,10 @@ Each scope remembers its :term:`fingerprint scheme`. If the scheme changes, the 
 
 The core never reads inside :term:`content`. It stores what the server sent and pushes what you recorded.
 
+.. _lone-surrogates:
+
+Content is bytes, kept exactly as the server sent them, so nothing is decoded and any media type works. Every other value the core stores, such as an id, a token or a logical key, is a string, kept exactly as it's given, empty strings and whitespace included. The one exception is a string holding a lone surrogate, such as ``"\ud800"``: half of the pair UTF-16 uses for characters such as emoji. Python allows one in a string, but it isn't a character and UTF-8 can't encode it, so a store that writes UTF-8 would fail on it where one that keeps Python objects wouldn't. The core refuses such a string with ``ValueError`` wherever it takes one, so every store behaves the same.
+
 Why a change set is applied all at once
 =======================================
 
@@ -170,7 +174,7 @@ Every :term:`record` is in one of five states at a time: synced, pending, in fli
        conflict --> removed: resolved: removal
        removed --> [*]: purged
 
-The table lists every transition with its conditions, including the ones the diagram leaves out: an unknown push, both sides reaching the same content or both deleting, and a scope :term:`reset`, which leaves every record's state as it is.
+The table lists every transition with its conditions, including the ones the diagram leaves out: an unknown push, a create recorded at a removed record's object id, a conflict the server settles on its own, both sides reaching the same content or both deleting, and a scope :term:`reset`, which leaves every record's state as it is.
 
 .. list-table::
    :header-rows: 1
@@ -211,13 +215,16 @@ The table lists every transition with its conditions, including the ones the dia
      - Settled by the next complete ingest
    * - conflict
      - Remote change ingested
-     - Conflict with the new remote side, or synced if that now equals your edit
+     - Conflict with the new remote side; synced if it now equals your edit, pending again if the server is back at the synced content, or removed if both sides deleted the object
    * - conflict
      - Resolved
      - Synced, pending, or removed, depending on the resolution
    * - removed
      - Remote change: the server holds an object at that id again
      - Synced with the new content, as the same record
+   * - removed
+     - Create recorded at its object id
+     - Pending, as the same record, holding the create
    * - removed
      - Purged by your application
      - Gone from the store; its feed entries stay until trimmed
@@ -259,7 +266,7 @@ Each :term:`conflict record` has one of five kinds:
 - the server has a new object at the id your create chose, and your create hasn't been sent yet
 - the server refused your create because another object holds its UID
 
-Later remote changes update the record's remote side, and if it becomes equal to your edit, the conflict resolves itself.
+Later remote changes update the record's remote side. The conflict resolves itself when the server reaches your edit, goes back to the synced content, or removes an object you deleted too.
 
 The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. You resolve a record with your edit, the server's version, merged content, or a delete, and the core pushes the result as a change to the server's current version. You can't push a create the server refused for its UID again unchanged, so you can discard it, push it as an update to the object that holds the UID, or replace it with merged content, possibly with a new UID.
 
@@ -272,7 +279,7 @@ Why changes are read from a feed
 
 Every change the core makes to the store also goes into a :term:`change feed`, in the same transaction: a remote change or removal applied, a conflict stored, updated or resolved, a push's outcome, and a scope dropped. Each entry has a number that only grows. Your application keeps the number of the last entry it handled, its :term:`cursor`, and asks for the entries after it, so it learns what changed even if it stopped right after a sync. Several parts of an application can each keep their own cursor.
 
-A removed record stays in the store, marked removed, until your application :term:`purges <purge>` it, so a removal can always be read. You trim the feed and purge removed records up to a point you choose. A cursor older than the oldest entry kept gets an error, and the application reads its records again from the store instead.
+A removed record stays in the store, marked removed, so a removal can always be read. It stays until your application :term:`purges <purge>` it, or until the object comes back, on the server or as a create at its id. You trim the feed and purge removed records up to a point you choose. A cursor older than the oldest entry kept gets an error, and the application reads its records again from the store instead.
 
 Why a removed scope is yours to drop
 ====================================

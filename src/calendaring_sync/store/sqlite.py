@@ -9,9 +9,12 @@ import json
 import os
 import sqlite3
 from collections.abc import Callable
-from dataclasses import fields
+from dataclasses import fields, is_dataclass
 from datetime import datetime
-from typing import Any, TypeVar, cast
+from enum import StrEnum
+from operator import attrgetter
+from types import UnionType
+from typing import Any, NamedTuple, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 from calendaring_sync.constants import DEFAULT_TIMEOUT, SCHEMA_VERSION
 from calendaring_sync.error import (
@@ -33,14 +36,183 @@ _FEED = "feed"
 _Row = TypeVar("_Row", Scope, Record, FeedEntry)
 
 
-def _columns(cls: type[_Row]) -> tuple[str, ...]:
-    """A table's columns, which carry the names of its dataclass's fields."""
-    return tuple(f.name for f in fields(cls))
+def _containers(text: str) -> frozenset[str]:
+    """Read back the JSON list of strings a set of containers is stored as."""
+    value = json.loads(text)
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError(f"Containers aren't a list of strings: {text!r}")
+    return frozenset(value)
+
+
+def _encode_containers(value: frozenset[str]) -> str:
+    return json.dumps(sorted(value))
+
+
+def _bytes(value: object) -> bytes:
+    """Check a value read back as content is bytes, as the store wrote it."""
+    if not isinstance(value, bytes):
+        raise ValueError(f"Content isn't bytes: {value!r}")
+    return value
+
+
+def _codec(tp: Any) -> tuple[Callable[[Any], Any] | None, Callable[[Any], Any] | None]:
+    """How a field of type ``tp`` is written and read back; ``None`` keeps the value as is."""
+    if isinstance(tp, type) and issubclass(tp, StrEnum):
+        return None, tp
+    if tp is datetime:
+        return datetime.isoformat, datetime.fromisoformat
+    if get_origin(tp) is frozenset:
+        return _encode_containers, _containers
+    if tp is bytes:
+        return None, _bytes
+    return None, None
+
+
+class _Field(NamedTuple):
+    """One field of a stored dataclass, as the table maps it."""
+
+    name: str
+    encode: Callable[[Any], Any] | None
+    decode: Callable[[Any], Any] | None
+    nested: type | None
+    optional: bool
+
+
+def _fields(cls: type) -> tuple[_Field, ...]:
+    """The stored dataclass's fields, from its type hints.
+
+    ``None`` is taken out of an optional type, and a field holding a
+    dataclass is marked as nested, stored in columns of its own.
+
+    Raises:
+        TypeError: If a field's type is a union of more than one type
+            besides ``None``, which one column can't hold.
+    """
+    hints = get_type_hints(cls)
+    result = []
+    for f in fields(cls):
+        tp = hints[f.name]
+        optional = get_origin(tp) in (Union, UnionType)
+        if optional:
+            types = [arg for arg in get_args(tp) if arg is not type(None)]
+            if len(types) != 1:
+                raise TypeError(f"{cls.__name__}.{f.name} is {tp}; a column holds one type")
+            tp = types[0]
+        nested = tp if isinstance(tp, type) and is_dataclass(tp) else None
+        result.append(_Field(f.name, *_codec(tp), nested, optional))
+    return tuple(result)
+
+
+class _Column(NamedTuple):
+    """One column of a table, how its value is read from the stored object, and how it's written."""
+
+    name: str
+    get: Callable[[Any], Any]
+    encode: Callable[[Any], Any] | None
+
+
+def _nested_getter(
+    outer: Callable[[Any], Any], inner: Callable[[Any], Any]
+) -> Callable[[Any], Any]:
+    """Read ``inner`` from what ``outer`` reads, or ``None`` when that's ``None``."""
+
+    def get(obj: Any) -> Any:
+        value = outer(obj)
+        return None if value is None else inner(value)
+
+    return get
+
+
+def _columns(cls: type) -> tuple[_Column, ...]:
+    """A table's columns, named after its dataclass's fields.
+
+    A field holding a dataclass maps to that dataclass's columns, prefixed
+    with the field's name, so one row holds the whole object.
+    """
+    columns: list[_Column] = []
+    for f in _fields(cls):
+        if f.nested is None:
+            columns.append(_Column(f.name, attrgetter(f.name), f.encode))
+        else:
+            columns.extend(
+                _Column(f"{f.name}_{c.name}", _nested_getter(attrgetter(f.name), c.get), c.encode)
+                for c in _columns(f.nested)
+            )
+    return tuple(columns)
+
+
+class _Reader(NamedTuple):
+    """How a row turns back into one dataclass: its fields, each with its column."""
+
+    cls: type
+    fields: tuple[tuple[_Field, str, _Reader | None], ...]
+
+
+def _reader(cls: type, prefix: str = "") -> _Reader:
+    """The reader for ``cls`` stored in columns starting with ``prefix``.
+
+    A nested field is read from its dataclass's first column, which is never
+    ``NULL`` when the field holds a value, so it tells whether there is one.
+
+    Raises:
+        TypeError: If a nested dataclass has no fields, or its first field
+            can be ``None``, so no column can tell whether the field holds
+            a value.
+    """
+    entries: list[tuple[_Field, str, _Reader | None]] = []
+    for f in _fields(cls):
+        if f.nested is None:
+            entries.append((f, prefix + f.name, None))
+        else:
+            nested_fields = _fields(f.nested)
+            if not nested_fields or nested_fields[0].optional:
+                raise TypeError(
+                    f"{f.nested.__name__} needs a first field that always holds a value, "
+                    f"to mark whether {cls.__name__}.{f.name} holds one"
+                )
+            nested = _reader(f.nested, f"{prefix}{f.name}_")
+            entries.append((f, nested.fields[0][1], nested))
+    return _Reader(cls, tuple(entries))
+
+
+def _names(columns: tuple[_Column, ...]) -> str:
+    return ", ".join(column.name for column in columns)
+
+
+def _marks(columns: tuple[_Column, ...]) -> str:
+    return ", ".join("?" for _ in columns)
 
 
 _SCOPE_COLUMNS = _columns(Scope)
 _RECORD_COLUMNS = _columns(Record)
 _FEED_COLUMNS = _columns(FeedEntry)
+
+#: How each stored class is selected, and read back from its rows. Built
+#: once here, so nothing in the module changes while stores run.
+_SELECTS: dict[type, str] = {
+    Scope: _names(_SCOPE_COLUMNS),
+    Record: _names(_RECORD_COLUMNS),
+    FeedEntry: _names(_FEED_COLUMNS),
+}
+_READERS: dict[type, _Reader] = {cls: _reader(cls) for cls in (Scope, Record, FeedEntry)}
+
+# Every column but the key, which SQLite assigns.
+_RECORD_VALUES = _RECORD_COLUMNS[1:]
+_INSERT_RECORD = (
+    f"INSERT INTO {_RECORDS} ({_names(_RECORD_VALUES)}) VALUES ({_marks(_RECORD_VALUES)})"
+)
+_UPDATE_RECORD = (
+    f"UPDATE {_RECORDS} SET {', '.join(f'{c.name} = ?' for c in _RECORD_VALUES)} "
+    "WHERE local_key = ?"
+)
+_INSERT_ENTRY = f"INSERT INTO {_FEED} ({_names(_FEED_COLUMNS)}) VALUES ({_marks(_FEED_COLUMNS)})"
+# An upsert, not INSERT OR REPLACE: replacing deletes the row first, and the
+# cascade would take the scope's records with it.
+_PUT_SCOPE = (
+    f"INSERT INTO {_SCOPES} ({_names(_SCOPE_COLUMNS)}) VALUES ({_marks(_SCOPE_COLUMNS)}) "
+    f"ON CONFLICT (id) DO UPDATE SET "
+    f"{', '.join(f'{c.name} = excluded.{c.name}' for c in _SCOPE_COLUMNS[1:])}"
+)
 
 #: The schema, one statement each: ``executescript`` would commit the open transaction.
 _SCHEMA = (
@@ -68,14 +240,29 @@ _SCHEMA = (
     state TEXT NOT NULL,
     version TEXT,
     fingerprint TEXT,
-    content TEXT NOT NULL,
+    content BLOB,
     containers TEXT NOT NULL,
     logical_key TEXT,
     synced_at TEXT,
-    last_entry INTEGER NOT NULL
+    last_entry INTEGER NOT NULL,
+    edit_kind TEXT,
+    edit_content BLOB,
+    edit_fingerprint TEXT,
+    edit_containers TEXT,
+    edit_logical_key TEXT,
+    edit_recorded_at TEXT,
+    conflict_kind TEXT,
+    conflict_remote_version TEXT,
+    conflict_remote_fingerprint TEXT,
+    conflict_remote_content BLOB,
+    conflict_remote_containers TEXT,
+    conflict_remote_logical_key TEXT,
+    conflict_opened_at TEXT
 )""",
     f"""CREATE UNIQUE INDEX {_RECORDS}_by_object_id ON {_RECORDS} (scope, object_id)""",
     f"""CREATE INDEX {_RECORDS}_by_state ON {_RECORDS} (state, last_entry)""",
+    f"""CREATE INDEX {_RECORDS}_by_logical_key ON {_RECORDS} (scope, logical_key)""",
+    f"""CREATE INDEX {_RECORDS}_by_edit_logical_key ON {_RECORDS} (scope, edit_logical_key)""",
     f"""CREATE TABLE {_FEED} (
     number INTEGER PRIMARY KEY,
     scope TEXT NOT NULL,
@@ -87,55 +274,34 @@ _SCHEMA = (
 )
 
 
-def _containers(text: str) -> frozenset[str]:
-    """Read back the JSON list of strings a record's containers are stored as."""
-    value = json.loads(text)
-    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-        raise ValueError(f"Containers aren't a list of strings: {text!r}")
-    return frozenset(value)
-
-
-#: How the stored text of these columns turns back into a field's value;
-#: every other column is stored as the value itself.
-_DECODERS: dict[str, Callable[[Any], Any]] = {
-    "state": RecordState,
-    "kind": FeedEntryKind,
-    "containers": _containers,
-    "synced_at": datetime.fromisoformat,
-    "last_sync_at": datetime.fromisoformat,
-    "last_full_listing_at": datetime.fromisoformat,
-    "at": datetime.fromisoformat,
-}
-
-
-def _encode(value: Any) -> Any:
-    """A field's value as SQLite stores it."""
-    if isinstance(value, datetime):
-        return value.isoformat()
-    if isinstance(value, frozenset):
-        return json.dumps(sorted(value))
-    return value
-
-
-def _values(obj: Scope | Record | FeedEntry, columns: tuple[str, ...]) -> tuple[Any, ...]:
+def _values(obj: Scope | Record | FeedEntry, columns: tuple[_Column, ...]) -> tuple[Any, ...]:
     """The stored values of an object's fields, in ``columns`` order."""
-    return tuple(_encode(getattr(obj, name)) for name in columns)
+    values = []
+    for column in columns:
+        value = column.get(obj)
+        values.append(value if value is None or column.encode is None else column.encode(value))
+    return tuple(values)
 
 
-def _load(cls: type[_Row], row: sqlite3.Row) -> _Row:
+def _load(reader: _Reader, row: sqlite3.Row) -> Any:
     """Build an object from a row selected with its class's columns.
 
     Raises:
         StoreError: If a column holds a value the store never writes there.
     """
     values: dict[str, Any] = {}
-    for name in row.keys():
-        raw, decode = row[name], _DECODERS.get(name)
-        try:
-            values[name] = raw if raw is None or decode is None else decode(raw)
-        except (ValueError, TypeError) as exc:
-            raise StoreError(f"The store's {name} column holds a damaged value") from exc
-    return cls(**values)
+    for f, column, nested in reader.fields:
+        raw = row[column]
+        if nested is not None:
+            values[f.name] = None if raw is None else _load(nested, row)
+        elif raw is None or f.decode is None:
+            values[f.name] = raw
+        else:
+            try:
+                values[f.name] = f.decode(raw)
+            except (ValueError, TypeError) as exc:
+                raise StoreError(f"The store's {column} column holds a damaged value") from exc
+    return reader.cls(**values)
 
 
 class SQLiteStore(StateStore):
@@ -235,10 +401,9 @@ class SQLiteStore(StateStore):
         self, cls: type[_Row], table: str, clause: str, params: tuple[Any, ...] = ()
     ) -> list[_Row]:
         """Load the rows of ``table`` that ``clause`` selects, as ``cls``."""
-        rows = self._conn.execute(
-            f"SELECT {', '.join(_columns(cls))} FROM {table} {clause}", params
-        )
-        return [_load(cls, row) for row in rows]
+        reader = _READERS[cls]
+        rows = self._conn.execute(f"SELECT {_SELECTS[cls]} FROM {table} {clause}", params)
+        return [_load(reader, row) for row in rows]
 
     def _select_one(
         self, cls: type[_Row], table: str, clause: str, params: tuple[Any, ...]
@@ -246,27 +411,11 @@ class SQLiteStore(StateStore):
         found = self._select(cls, table, clause, params)
         return found[0] if found else None
 
-    def _insert(self, table: str, columns: tuple[str, ...], values: tuple[Any, ...]) -> int:
-        marks = ", ".join("?" for _ in columns)
-        cursor = self._conn.execute(
-            f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({marks})", values
-        )
-        # Typed as optional, but an INSERT always sets it to the new row's id.
-        return cast(int, cursor.lastrowid)
-
     def _get_scope(self, scope_id: str) -> Scope | None:
         return self._select_one(Scope, _SCOPES, "WHERE id = ?", (scope_id,))
 
     def _put_scope(self, scope: Scope) -> None:
-        # An upsert, not INSERT OR REPLACE: replacing deletes the row first,
-        # and the cascade would take the scope's records with it.
-        marks = ", ".join("?" for _ in _SCOPE_COLUMNS)
-        updates = ", ".join(f"{name} = excluded.{name}" for name in _SCOPE_COLUMNS[1:])
-        self._conn.execute(
-            f"INSERT INTO {_SCOPES} ({', '.join(_SCOPE_COLUMNS)}) VALUES ({marks}) "
-            f"ON CONFLICT (id) DO UPDATE SET {updates}",
-            _values(scope, _SCOPE_COLUMNS),
-        )
+        self._conn.execute(_PUT_SCOPE, _values(scope, _SCOPE_COLUMNS))
 
     def _delete_scope(self, scope_id: str) -> None:
         self._conn.execute(f"DELETE FROM {_SCOPES} WHERE id = ?", (scope_id,))
@@ -275,16 +424,12 @@ class SQLiteStore(StateStore):
         return self._select(Scope, _SCOPES, "ORDER BY id")
 
     def _insert_record(self, record: Record) -> int:
-        columns = _RECORD_COLUMNS[1:]
-        return self._insert(_RECORDS, columns, _values(record, columns))
+        cursor = self._conn.execute(_INSERT_RECORD, _values(record, _RECORD_VALUES))
+        # Typed as optional, but an INSERT always sets it to the new row's id.
+        return cast(int, cursor.lastrowid)
 
     def _update_record(self, record: Record) -> None:
-        columns = _RECORD_COLUMNS[1:]
-        assignments = ", ".join(f"{name} = ?" for name in columns)
-        self._conn.execute(
-            f"UPDATE {_RECORDS} SET {assignments} WHERE local_key = ?",
-            (*_values(record, columns), record.local_key),
-        )
+        self._conn.execute(_UPDATE_RECORD, (*_values(record, _RECORD_VALUES), record.local_key))
 
     def _delete_record(self, local_key: int) -> None:
         self._conn.execute(f"DELETE FROM {_RECORDS} WHERE local_key = ?", (local_key,))
@@ -295,6 +440,18 @@ class SQLiteStore(StateStore):
     def _find_record(self, scope_id: str, object_id: str) -> Record | None:
         return self._select_one(
             Record, _RECORDS, "WHERE scope = ? AND object_id = ?", (scope_id, object_id)
+        )
+
+    def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
+        # A UNION, not an OR: SQLite answers each half from its own index,
+        # and would scan the table for the OR.
+        return self._select(
+            Record,
+            _RECORDS,
+            f"WHERE local_key IN (SELECT local_key FROM {_RECORDS} WHERE scope = ? "
+            f"AND logical_key = ? UNION SELECT local_key FROM {_RECORDS} WHERE scope = ? "
+            "AND edit_logical_key = ?) ORDER BY local_key",
+            (scope_id, logical_key, scope_id, logical_key),
         )
 
     def _scope_records(self, scope_id: str) -> list[Record]:
@@ -319,7 +476,7 @@ class SQLiteStore(StateStore):
         self._conn.execute(f"UPDATE {_META} SET feed_head = feed_head + 1")
         number: int = self._meta("feed_head")[0]
         entry = FeedEntry(number, scope_id, kind, local_key, object_id, at)
-        self._insert(_FEED, _FEED_COLUMNS, _values(entry, _FEED_COLUMNS))
+        self._conn.execute(_INSERT_ENTRY, _values(entry, _FEED_COLUMNS))
         return entry
 
     def _entries(self, after: int, limit: int) -> list[FeedEntry]:
