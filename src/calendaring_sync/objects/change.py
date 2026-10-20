@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from calendaring_sync._text import check_content, check_text
+from calendaring_sync._text import check_data
 
 
 @dataclass(frozen=True)
@@ -46,12 +46,8 @@ class Changed:
     logical_key: str | None = None
 
     def __post_init__(self) -> None:
-        check_content(self.content)
-        check_text(
-            version=self.version,
-            fingerprint=self.fingerprint,
-            containers=self.containers,
-            logical_key=self.logical_key,
+        check_data(
+            self.content, self.fingerprint, self.containers, self.logical_key, version=self.version
         )
 
 

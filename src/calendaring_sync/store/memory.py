@@ -97,12 +97,16 @@ class MemoryStore(StateStore):
     def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
         return [
             r
-            for r in self._scope_records(scope_id)
+            for r in self._scope_records(scope_id, None)
             if logical_key in (r.logical_key, r.edit and r.edit.logical_key)
         ]
 
-    def _scope_records(self, scope_id: str) -> list[Record]:
-        return [r for r in self._ordered_records() if r.scope == scope_id]
+    def _scope_records(self, scope_id: str, states: frozenset[RecordState] | None) -> list[Record]:
+        return [
+            r
+            for r in self._ordered_records()
+            if r.scope == scope_id and (states is None or r.state in states)
+        ]
 
     def _removed_records(self, through: int) -> list[Record]:
         return [

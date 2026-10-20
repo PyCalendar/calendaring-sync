@@ -7,14 +7,11 @@ from __future__ import annotations
 
 from enum import StrEnum
 
+from calendaring_sync.objects._data import REMOTE, data
 from calendaring_sync.objects.change import Changed, Removed
 from calendaring_sync.objects.conflict import Conflict, ConflictKind
 from calendaring_sync.objects.edit import EditKind, LocalEdit
 from calendaring_sync.objects.record import Record
-
-#: What "the same data" compares, in every copy of an object. A conflict
-#: holds the server's copy under the same names with ``remote_`` in front.
-_DATA_FIELDS = ("fingerprint", "content", "containers", "logical_key")
 
 #: A copy of an object: the synced copy, a server's change, or a local edit.
 Copy = Record | Changed | LocalEdit
@@ -39,10 +36,6 @@ class ChangeClass(StrEnum):
     CONFLICT = "conflict"
 
 
-def _data(copy: object, prefix: str = "") -> tuple[object, ...]:
-    return tuple(getattr(copy, prefix + name) for name in _DATA_FIELDS)
-
-
 def _same(a: tuple[object, ...], b: tuple[object, ...]) -> bool:
     """Whether two copies' data match.
 
@@ -59,18 +52,29 @@ def _same(a: tuple[object, ...], b: tuple[object, ...]) -> bool:
 
 def same_data(a: Copy, b: Copy) -> bool:
     """Whether two copies of an object hold the same data."""
-    return _same(_data(a), _data(b))
+    return _same(data(a), data(b))
 
 
 def same_remote(conflict: Conflict, change: Changed | Removed) -> bool:
     """Whether the server reports again what an open conflict already holds."""
     if conflict.remote_content is None or isinstance(change, Removed):
         return conflict.remote_content is None and isinstance(change, Removed)
-    return _same(_data(conflict, "remote_"), _data(change))
+    return _same(data(conflict, REMOTE), data(change))
+
+
+def same_conflict(a: Conflict, b: Conflict) -> bool:
+    """Whether two copies of a conflict say the same thing, whatever the server's version."""
+    if (a.kind, a.holder) != (b.kind, b.holder):
+        return False
+    return _same(data(a, REMOTE), data(b, REMOTE))
 
 
 def classify(
-    synced: Record | None, remote: Changed | Removed | None, local: LocalEdit | None
+    synced: Record | None,
+    remote: Changed | Removed | None,
+    local: LocalEdit | None,
+    *,
+    in_flight: bool = False,
 ) -> tuple[ChangeClass, ConflictKind | None]:
     """Classify one object from its synced side, the server's report and the local edit.
 
@@ -85,6 +89,9 @@ def classify(
         remote: The server's new copy, ``Removed`` if the server removed it,
             or ``None`` if the server reported nothing new.
         local: The record's :term:`pending edit`, or ``None``.
+        in_flight: Whether ``local`` was pushed and the push's outcome is
+            unknown. A create that then comes back at its own id is your
+            own write, whatever the server made of its content.
 
     Returns:
         The class, and the conflict's kind when the class is ``CONFLICT``.
@@ -125,6 +132,8 @@ def classify(
         case EditKind.DELETE, Removed():
             # Both sides deleted the object.
             return ChangeClass.DELETED_REMOTE, None
+        case EditKind.CREATE, Changed() if in_flight:
+            return ChangeClass.UNCHANGED, None
         case EditKind.CREATE, Changed():
             return ChangeClass.CONFLICT, ConflictKind.BOTH_CREATED
         case _:

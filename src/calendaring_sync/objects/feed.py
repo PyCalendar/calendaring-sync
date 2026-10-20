@@ -26,6 +26,12 @@ class FeedEntryKind(StrEnum):
     CONFLICT_UPDATED = "conflict_updated"
     #: An open conflict ended, and the record holds what it ended with.
     CONFLICT_RESOLVED = "conflict_resolved"
+    #: A :term:`push` reached the server: the record holds your edit as
+    #: synced, or is removed for a delete.
+    PUSHED = "pushed"
+    #: A :term:`push` didn't go through, and the edit is pending again for
+    #: a later sync.
+    PUSH_FAILED = "push_failed"
 
 
 @dataclass(frozen=True)

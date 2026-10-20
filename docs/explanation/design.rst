@@ -122,7 +122,7 @@ A session is ``ingesting`` while pages remain and ``ingested`` once the token is
        note right of ingesting: no pushes while pages remain
        note right of pushing: no ingests until it ends
 
-Before a push goes out, the core marks it :term:`in flight` in the store, in one step that fails if another process got there first, so two processes can't send the same edit. Each push has one of five outcomes:
+Before a push goes out, the adapter :term:`claims <claim>` it: the core marks it :term:`in flight` in the store, in one step that fails if another process got there first, so two processes can't send the same edit. Each push has one of five outcomes:
 
 - applied: the edit becomes the synced content
 - rejected: the server refused the write because something changed since your last sync, and the edit stays pending
@@ -130,14 +130,14 @@ Before a push goes out, the core marks it :term:`in flight` in the store, in one
 - refused because another object holds its :term:`logical key`, which becomes a conflict
 - unknown: the request may or may not have reached the server
 
-If the process stops while a push is in flight, the push is unknown the next time you open the store. The next complete :term:`ingest` settles each unknown push:
+An unknown push stays in flight, and so does one whose process stopped before the answer arrived. The next complete :term:`ingest` of its scope, in any process, settles it:
 
 - a create that comes back under the id it chose reached the server, and the core stores the server's copy; where the server picks the id, a create that comes back with the logical key it was sent with counts the same, but only if the adapter says that key is unique
 - an update that comes back with your fingerprint reached the server, and one that comes back with another fingerprint is a conflict, since someone else changed the object too
 - a delete that comes back removed reached the server
 - a push the change set doesn't mention didn't reach the server, and its edit is pending again
 
-Treating an unknown push as failed could create the same object twice.
+Treating an unknown push as failed could create the same object twice. An outcome that arrives after an ingest settled its push still counts while the record holds the same edit, and changes nothing once the edit has changed or the server's side decided it. Two processes syncing one scope at the same moment can therefore send one edit twice: the second write is rejected where the adapter guards it with the object's version, and nothing is lost either way.
 
 Why the server's answer to a write isn't trusted
 ================================================
@@ -191,7 +191,7 @@ The table lists every transition with its conditions, including the ones the dia
      - Pending
    * - pending
      - Edit back to the synced content, or discarded
-     - Synced
+     - Synced; a create the server never had is deleted from the store instead
    * - pending
      - Remote change or removal ingested
      - Conflict, unless both sides arrived at the same content or both deleted
@@ -218,7 +218,7 @@ The table lists every transition with its conditions, including the ones the dia
      - Conflict with the new remote side; synced if it now equals your edit, pending again if the server is back at the synced content, or removed if both sides deleted the object
    * - conflict
      - Resolved
-     - Synced, pending, or removed, depending on the resolution
+     - Synced, pending, or removed, depending on the resolution; a create the server refused is deleted from the store when you discard it or push it as an update to the object holding its logical key
    * - removed
      - Remote change: the server holds an object at that id again
      - Synced with the new content, as the same record
@@ -268,9 +268,9 @@ Each :term:`conflict record` has one of five kinds:
 
 Later remote changes update the record's remote side. The conflict resolves itself when the server reaches your edit, goes back to the synced content, or removes an object you deleted too.
 
-The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. You resolve a record with your edit, the server's version, merged content, or a delete, and the core pushes the result as a change to the server's current version. You can't push a create the server refused for its UID again unchanged, so you can discard it, push it as an update to the object that holds the UID, or replace it with merged content, possibly with a new UID.
+The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. You resolve a record with your edit (``KeepEdit``), the server's version (``TakeServer``), merged content (``Merge``), or a delete (``Delete``), and the core pushes the result as a change to the server's current version. You can't push a create the server refused for its UID again unchanged, so you can discard it (``TakeServer`` or ``Delete``), push it as an update to the object that holds the UID (``UpdateHolder``), or replace it with merged content, possibly with a new UID (``Merge``).
 
-``resolve_conflicts(resolver)`` passes each open record to your resolver, outside any sync. Each resolution is its own transaction: ``None`` leaves a record open, and an exception stops the loop and keeps the resolutions before it.
+``resolve(record, resolution)`` resolves one record you read, and refuses if its conflict changed since, so a decision is never applied to news you haven't seen. ``resolve_conflicts(resolver)`` passes each open record to your resolver, outside any sync, and resolves each answer the same way. Each resolution is its own transaction: ``None`` leaves a record open, a record that changed while your resolver ran waits for the next call, and an exception stops the loop and keeps the resolutions before it.
 
 A removal on the server against a local edit is always a conflict, never resolved automatically, because that would delete your edit without asking.
 

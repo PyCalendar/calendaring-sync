@@ -20,7 +20,7 @@ class RecordState(StrEnum):
     SYNCED = "synced"
     #: Holds a :term:`pending edit`.
     PENDING = "pending"
-    #: Its :term:`push` was sent, and how it ended isn't known yet.
+    #: Its :term:`push` was :term:`claimed <claim>`, and how it ended isn't known yet.
     IN_FLIGHT = "in_flight"
     #: Holds an open :term:`conflict`.
     CONFLICT = "conflict"

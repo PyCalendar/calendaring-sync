@@ -16,33 +16,44 @@ import re
 import runpy
 import sqlite3
 import sys
+from collections import Counter
 from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import AbstractContextManager, ExitStack, contextmanager, suppress
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
+from functools import partial
 from pathlib import Path
+from typing import cast
 from unittest.mock import patch
 
 import pytest
 
 import calendaring_sync
 from calendaring_sync import (
+    Applied,
     Change,
     Changed,
     ChangeSet,
     Conflict,
     ConflictKind,
+    Delete,
     DuplicateObjectError,
     EditKind,
-    EditRefusedError,
     FeedEntryKind,
+    Gone,
+    KeepEdit,
     LocalEdit,
+    LogicalKeyTaken,
     MemoryStore,
+    Merge,
     OpenConflictError,
+    PushInFlightError,
+    PushOutcome,
     Record,
     RecordState,
     RecordValueError,
+    Rejected,
     Removed,
     RemovedRecordError,
     Replica,
@@ -53,18 +64,23 @@ from calendaring_sync import (
     SessionState,
     SQLiteStore,
     StaleChangeSetError,
+    StaleConflictError,
     StateStore,
     StoreBusyError,
     StoreError,
     StoreVersionError,
+    TakeServer,
     TransactionError,
     TransactionPermissionError,
     TransactionRequiredError,
     TrimmedFeedError,
     Unchanged,
     UnexpectedStoreError,
+    Unknown,
+    UnknownHolderError,
     UnknownRecordError,
     UnknownScopeError,
+    UpdateHolder,
 )
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
 from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
@@ -161,9 +177,21 @@ def _page(
 
 
 def _open_session(
-    replica: Replica, scope: str = _SCOPE, *, scheme: str = _SCHEME, media: str = _MEDIA
+    replica: Replica,
+    scope: str = _SCOPE,
+    *,
+    scheme: str = _SCHEME,
+    media: str = _MEDIA,
+    guarded_by_version: bool = False,
+    unique_logical_key: bool = False,
 ) -> AbstractContextManager[Session]:
-    return replica.session(scope, fingerprint_scheme=scheme, media_type=media)
+    return replica.session(
+        scope,
+        fingerprint_scheme=scheme,
+        media_type=media,
+        guarded_by_version=guarded_by_version,
+        unique_logical_key=unique_logical_key,
+    )
 
 
 def _enter(context: AbstractContextManager[object]) -> None:
@@ -173,7 +201,8 @@ def _enter(context: AbstractContextManager[object]) -> None:
 
 
 def _sync(replica: Replica, *pages: ChangeSet) -> SessionState:
-    with _open_session(replica) as session:
+    """Ingest change sets in one session, opened for their scope; return where it ended."""
+    with _open_session(replica, pages[0].scope) as session:
         for change_set in pages:
             session.ingest(change_set)
         return session.state
@@ -275,6 +304,13 @@ _BAD_RECORDS = {
     "part of a removed server copy": replace(
         _CONFLICTED, conflict=replace(_GONE, remote_version="v2")
     ),
+    "a refused create holding the server's copy": replace(
+        _CONFLICTED,
+        content=None,
+        edit=replace(_EDIT, kind=EditKind.CREATE),
+        conflict=replace(_CONFLICT, kind=ConflictKind.LOGICAL_KEY_TAKEN),
+    ),
+    "a holder on another kind": replace(_CONFLICTED, conflict=replace(_CONFLICT, holder="b")),
 }
 
 
@@ -336,6 +372,26 @@ def _change(
     )
 
 
+def _create(
+    replica: Replica,
+    fingerprint: str,
+    *,
+    scope: str = _SCOPE,
+    containers: frozenset[str] = frozenset(),
+    logical_key: str | None = None,
+    object_id: str | None = None,
+) -> int:
+    """Record a create holding the content a test gives ``fingerprint``; return its local key."""
+    return replica.create(
+        scope,
+        _content(fingerprint),
+        fingerprint=fingerprint,
+        containers=containers,
+        logical_key=logical_key,
+        object_id=object_id,
+    )
+
+
 def _step(replica: Replica, local_key: int, step: str) -> None:
     """Record one edit written as ``change <fingerprint>``, ``delete`` or ``discard``."""
     action, *fingerprint = step.split()
@@ -345,14 +401,17 @@ def _step(replica: Replica, local_key: int, step: str) -> None:
         getattr(replica, action)(local_key)
 
 
-def _edit_locally(replica: Replica, local: str | None, object_id: str = "a") -> tuple[int, str]:
+def _edit_locally(
+    replica: Replica, local: str | None, object_id: str = "a", *, logical_key: str | None = None
+) -> tuple[int, str]:
     """Give a seeded scope one local edit; return its record's key and object id.
 
-    A create gets the id ``n``; every other edit goes to ``object_id``, a
-    seeded object, and a change makes it ``fl``.
+    A create gets the id ``n`` and ``logical_key``; every other edit goes to
+    ``object_id``, a seeded object, and a change makes it ``fl``.
     """
     if local == "create":
-        return replica.create(_SCOPE, _content("fl"), fingerprint="fl", object_id="n"), "n"
+        created = _create(replica, "fl", logical_key=logical_key, object_id="n")
+        return created, "n"
     key = _key(replica, object_id)
     if local is not None:
         _step(replica, key, "change fl" if local == "change" else local)
@@ -375,13 +434,6 @@ def _summary(record: Record | None) -> tuple[object, ...] | None:
     )
 
 
-def _in_conflict(replica: Replica, object_id: str, since: str = "T1", token: str = "T2") -> int:
-    """Change a seeded object locally while the server changes it too; return its local key."""
-    key, _ = _edit_locally(replica, "change", object_id)
-    _sync(replica, _page(since, token, {object_id: _changed("fx", "v2")}))
-    return key
-
-
 def _edited(replica: Replica) -> Replica:
     """A seeded scope at token T2 where a holds a pending change and b an open conflict."""
     _seeded(replica)
@@ -394,6 +446,96 @@ def _a_removed(replica: Replica) -> Replica:
     """A seeded scope at token T2, where a was removed."""
     _sync(_seeded(replica), _page("T1", "T2", {"a": Removed()}))
     return replica
+
+
+@contextmanager
+def _pushing(
+    replica: Replica, since: str = "T1", token: str = "T2", *, guarded_by_version: bool = False
+) -> Iterator[Session]:
+    """A session that ingested a change set with nothing in it, so it may push."""
+    with _open_session(replica, guarded_by_version=guarded_by_version) as session:
+        session.ingest(_page(since, token, {}))
+        yield session
+
+
+def _claim(session: Session, local_key: int) -> Record:
+    """Claim a record the test knows is pending."""
+    claimed = session.claim(local_key)
+    assert claimed is not None
+    return claimed
+
+
+def _push(
+    replica: Replica,
+    local_key: int,
+    outcome: PushOutcome | None,
+    since: str = "T1",
+    token: str = "T2",
+) -> None:
+    """Push one record in a session of its own.
+
+    ``None`` leaves the push in flight, as a process that stops before the
+    server answers does.
+    """
+    with _pushing(replica, since, token) as session:
+        claimed = _claim(session, local_key)
+        if outcome is not None:
+            assert session.settle(claimed, outcome)
+
+
+def _refused_create(
+    replica: Replica,
+    holder: str | None,
+    since: str = "T1",
+    token: str = "T2",
+    *,
+    logical_key: str | None = "u",
+) -> int:
+    """Push a create with id n that the server refuses for its logical key; return its local key."""
+    key, _ = _edit_locally(replica, "create", logical_key=logical_key)
+    _push(replica, key, LogicalKeyTaken(holder), since, token)
+    return key
+
+
+# The local edit and the server's report that open each kind of conflict an
+# ingest stores.
+_OPENED_BY = {
+    ConflictKind.BOTH_CHANGED: ("change", "fx"),
+    ConflictKind.REMOVED_REMOTELY: ("change", "removed"),
+    ConflictKind.DELETED_LOCALLY: ("delete", "fx"),
+    ConflictKind.BOTH_CREATED: ("create", "fx"),
+}
+
+
+def _in_conflict(
+    replica: Replica,
+    object_id: str = "a",
+    since: str = "T1",
+    token: str = "T2",
+    *,
+    kind: ConflictKind = ConflictKind.BOTH_CHANGED,
+) -> int:
+    """Open a conflict of ``kind`` in a seeded scope; return its local key.
+
+    A conflict about a create is at the id n, and a refused create names b
+    as the object holding its logical key u.
+    """
+    if kind is ConflictKind.LOGICAL_KEY_TAKEN:
+        return _refused_create(replica, "b", since, token)
+    local, remote = _OPENED_BY[kind]
+    key, object_id = _edit_locally(replica, local, object_id)
+    _sync(replica, _page(since, token, {object_id: _remote(remote)}))
+    return key
+
+
+def _two_conflicts(replica: Replica) -> tuple[int, int]:
+    """Seed a scope that ends at T3, where a and b both changed on both sides; return their keys."""
+    return _in_conflict(_seeded(replica)), _in_conflict(replica, "b", "T2", "T3")
+
+
+def _seeded_edit(replica: Replica, local: str | None) -> tuple[int, str]:
+    """Seed a scope and give it one local edit, as ``_edit_locally`` does."""
+    return _edit_locally(_seeded(replica), local)
 
 
 def _assert_refused(
@@ -423,6 +565,10 @@ def _assert_refused(
     assert _snapshot(replica, store) == before
 
 
+# Examples that continue from the replica the Replica class example builds.
+_CONTINUING = ("calendaring_sync.replica.Replica.", "calendaring_sync.replica.Session")
+
+
 def _docstring_examples() -> list[doctest.DocTest]:
     """Every docstring example in the package; a replica method's start from the class's."""
     finder = doctest.DocTestFinder()
@@ -435,7 +581,7 @@ def _docstring_examples() -> list[doctest.DocTest]:
     ]
     start = next(t for t in tests if t.name == "calendaring_sync.replica.Replica").examples
     for test in tests:
-        if test.name.startswith("calendaring_sync.replica.Replica."):
+        if test.name.startswith(_CONTINUING):
             test.examples = start + test.examples
     return tests
 
@@ -460,6 +606,7 @@ class TestPackage:
             RecordState.PENDING: edited - conflicted,
             RecordState.CONFLICT: conflicted,
         }
+        assert benchmark.entries_after_pushes(size) == {FeedEntryKind.PUSHED: edited}
 
     def test_version_is_set(self):
         assert isinstance(calendaring_sync.__version__, str)
@@ -692,9 +839,9 @@ class TestFullListing:
         _change(replica, _key(replica, "a"), "fl")
         replica.delete(_key(replica, "b"))
         creates = [
-            replica.create(_SCOPE, _content("fn"), fingerprint="fn", object_id="n"),
-            replica.create(_SCOPE, _content("n1"), fingerprint="n1"),
-            replica.create(_SCOPE, _content("n2"), fingerprint="n2"),
+            _create(replica, "fn", object_id="n"),
+            _create(replica, "n1"),
+            _create(replica, "n2"),
         ]
         _sync(replica, _page("T1", "L", {}, full=True))
         assert [_summary(replica.find_record(_SCOPE, o)) for o in ("a", "b", "c")] == [
@@ -887,14 +1034,13 @@ class TestScopes:
             replica.drop_scope,
             lambda scope: replica.find_record(scope, "a"),
             lambda scope: replica.find_by_logical_key(scope, "u"),
-            lambda scope: replica.create(scope, _content("fn"), fingerprint="fn"),
+            lambda scope: _create(replica, "fn", scope=scope),
         ):
             _assert_refused(replica, store, lambda call=call: call("nope"), UnknownScopeError)
 
     def test_two_scopes_stay_independent(self, replica):
         _a_removed(replica)
-        with _open_session(replica, _OTHER) as session:
-            session.ingest(_page(None, "O1", {"a": _changed("other-a")}, full=True, scope=_OTHER))
+        _sync(replica, _page(None, "O1", {"a": _changed("other-a")}, full=True, scope=_OTHER))
         assert [s.id for s in replica.scopes()] == [_SCOPE, _OTHER]
         assert replica.records(_OTHER)[0].state is RecordState.SYNCED
         assert replica.scope(_OTHER).token == "O1"
@@ -903,7 +1049,7 @@ class TestScopes:
 
     def test_drop_scope(self, replica, store):
         _edited(replica)
-        created = replica.create(_SCOPE, _content("fn"), fingerprint="fn")
+        created = _create(replica, "fn")
         with store.transaction():
             in_flight = store.insert_record(_local_record(RecordState.IN_FLIGHT, object_id="f"))
         pending, head = [_key(replica), created, in_flight], replica.feed_head()
@@ -1000,6 +1146,112 @@ _SETTLED = [
     ("change", "fx", "fx", _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED), []),
 ]
 
+# How a push ended, recorded with settle(): the local edit, the outcome,
+# then what the record ends up as and the feed entries settling wrote.
+_OUTCOMES = [
+    ("change", Applied(), _SYNCED, [FeedEntryKind.PUSHED]),
+    ("create", Applied(), _SYNCED, [FeedEntryKind.PUSHED]),
+    ("delete", Applied(), _REMOVED, [FeedEntryKind.PUSHED]),
+    ("delete", Gone(), _REMOVED, [FeedEntryKind.PUSHED]),
+    ("change", Rejected(), _pending(EditKind.CHANGE), [FeedEntryKind.PUSH_FAILED]),
+    ("delete", Rejected(), _pending(EditKind.DELETE), [FeedEntryKind.PUSH_FAILED]),
+    ("create", Rejected(), _pending(EditKind.CREATE), [FeedEntryKind.PUSH_FAILED]),
+    (
+        "change",
+        Gone(),
+        _conflicted(EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
+    (
+        "create",
+        LogicalKeyTaken("b"),
+        _conflicted(EditKind.CREATE, ConflictKind.LOGICAL_KEY_TAKEN),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
+    (
+        "create",
+        LogicalKeyTaken(),
+        _conflicted(EditKind.CREATE, ConflictKind.LOGICAL_KEY_TAKEN),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
+    ("change", Unknown(), (RecordState.IN_FLIGHT, EditKind.CHANGE, None), []),
+]
+
+# A push whose outcome never arrived, met by the next complete ingest: the
+# local edit, what the server reported, then what the record ends up as and
+# the feed entries the ingest wrote.
+_LEFT_IN_FLIGHT = [
+    ("change", None, _pending(EditKind.CHANGE), [FeedEntryKind.PUSH_FAILED]),
+    ("change", "fa", _pending(EditKind.CHANGE), [FeedEntryKind.PUSH_FAILED]),
+    ("change", "fl", _SYNCED, [FeedEntryKind.PUSHED]),
+    (
+        "change",
+        "fx",
+        _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
+    (
+        "change",
+        "removed",
+        _conflicted(EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
+    ("delete", None, _pending(EditKind.DELETE), [FeedEntryKind.PUSH_FAILED]),
+    ("delete", "fa", _pending(EditKind.DELETE), [FeedEntryKind.PUSH_FAILED]),
+    (
+        "delete",
+        "fx",
+        _conflicted(EditKind.DELETE, ConflictKind.DELETED_LOCALLY),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
+    ("delete", "removed", _REMOVED, [FeedEntryKind.PUSHED]),
+    ("create", None, _pending(EditKind.CREATE), [FeedEntryKind.PUSH_FAILED]),
+    ("create", "removed", _pending(EditKind.CREATE), [FeedEntryKind.PUSH_FAILED]),
+    ("create", "fl", _SYNCED, [FeedEntryKind.PUSHED]),
+    # The server rewrote what it stored, and it's still your own write.
+    ("create", "fx", _SYNCED, [FeedEntryKind.PUSHED]),
+]
+
+# An outcome arriving after another process's ingest already settled the
+# push: what that ingest saw (None for nothing, "edited" for nothing and
+# then a new local edit), the outcome, then what settle() returns, what the
+# record ends up as and the feed entries settling wrote.
+_SETTLED_LATE = [
+    (None, Applied(), True, _SYNCED, [FeedEntryKind.PUSHED]),
+    (None, Rejected(), True, _pending(EditKind.CHANGE), []),
+    (None, Unknown(), True, _pending(EditKind.CHANGE), []),
+    ("edited", Applied(), False, _pending(EditKind.CHANGE), []),
+    ("fl", Applied(), False, _SYNCED, []),
+    ("fx", Rejected(), False, _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED), []),
+]
+
+_MERGED = Merge(_content("fm"), fingerprint="fm")
+
+# Each conflict resolved each way: the conflict's kind, the resolution, then
+# what the record ends up as, or None once it's gone.
+_RESOLVED = [
+    (ConflictKind.BOTH_CHANGED, TakeServer(), _SYNCED),
+    (ConflictKind.BOTH_CHANGED, KeepEdit(), _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CHANGED, _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CHANGED, Delete(), _pending(EditKind.DELETE)),
+    (ConflictKind.REMOVED_REMOTELY, TakeServer(), _REMOVED),
+    (ConflictKind.REMOVED_REMOTELY, KeepEdit(), _pending(EditKind.CREATE)),
+    (ConflictKind.REMOVED_REMOTELY, _MERGED, _pending(EditKind.CREATE)),
+    (ConflictKind.REMOVED_REMOTELY, Delete(), _REMOVED),
+    (ConflictKind.DELETED_LOCALLY, TakeServer(), _SYNCED),
+    (ConflictKind.DELETED_LOCALLY, KeepEdit(), _pending(EditKind.DELETE)),
+    (ConflictKind.DELETED_LOCALLY, _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.DELETED_LOCALLY, Delete(), _pending(EditKind.DELETE)),
+    (ConflictKind.BOTH_CREATED, TakeServer(), _SYNCED),
+    (ConflictKind.BOTH_CREATED, KeepEdit(), _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CREATED, _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CREATED, Delete(), _pending(EditKind.DELETE)),
+    (ConflictKind.LOGICAL_KEY_TAKEN, TakeServer(), None),
+    (ConflictKind.LOGICAL_KEY_TAKEN, _MERGED, _pending(EditKind.CREATE)),
+    (ConflictKind.LOGICAL_KEY_TAKEN, Delete(), None),
+    (ConflictKind.LOGICAL_KEY_TAKEN, UpdateHolder(), None),
+]
+
 # Local edits in a row: where the record starts (synced as fa, or a
 # create), the edits, then what the record ends up as, or None once it's gone.
 _EDITED = [
@@ -1041,12 +1293,14 @@ _CONTENTS = [
 # A string no store can keep: a lone surrogate.
 _BAD_TEXT = "a\ud800b"
 
+# Content that isn't bytes, typed as bytes so the calls refusing it type-check.
+_NOT_BYTES = cast(bytes, "text of fa")
+
 
 class TestLocalEdits:
     @pytest.mark.parametrize("start, steps, expected", _EDITED)
     def test_edits_collapse(self, replica, start, steps, expected):
-        _seeded(replica)
-        key, _ = _edit_locally(replica, "create" if start == "create" else None)
+        key, _ = _seeded_edit(replica, "create" if start == "create" else None)
         head = replica.feed_head()
         for step in steps:
             _step(replica, key, step)
@@ -1058,10 +1312,9 @@ class TestLocalEdits:
 
     def test_create_keeps_what_it_was_given(self, replica, clock):
         _seeded(replica)
-        key = replica.create(
-            _SCOPE,
-            _content("fn"),
-            fingerprint="fn",
+        key = _create(
+            replica,
+            "fn",
             containers=frozenset({"x", "y"}),
             logical_key="u",
             object_id="n",
@@ -1077,11 +1330,11 @@ class TestLocalEdits:
         _assert_refused(
             replica,
             store,
-            lambda: replica.create(_SCOPE, _content("fn"), fingerprint="fn", object_id="b"),
+            lambda: _create(replica, "fn", object_id="b"),
             DuplicateObjectError,
         )
         removed = replica.find_record(_SCOPE, "a")
-        key = replica.create(_SCOPE, _content("fn"), fingerprint="fn", object_id="a")
+        key = _create(replica, "fn", object_id="a")
         record = replica.record(key)
         assert key == removed.local_key
         assert _summary(record) == _pending(EditKind.CREATE)
@@ -1100,7 +1353,7 @@ class TestLocalEdits:
         refused = {
             _key(replica, "a"): RemovedRecordError,
             _key(replica, "b"): OpenConflictError,
-            in_flight: EditRefusedError,
+            in_flight: PushInFlightError,
             999: UnknownRecordError,
         }
         for key, error in refused.items():
@@ -1119,8 +1372,7 @@ class TestLocalEdits:
 class TestConflicts:
     @pytest.mark.parametrize("local, remote, expected, feed", _CLASSIFIED)
     def test_ingest_classifies_against_the_local_edit(self, replica, local, remote, expected, feed):
-        _seeded(replica)
-        key, object_id = _edit_locally(replica, local)
+        key, object_id = _seeded_edit(replica, local)
         head = replica.feed_head()
         _sync(replica, _page("T1", "T2", {} if remote is None else {object_id: _remote(remote)}))
         assert _summary(replica.record(key)) == expected
@@ -1130,8 +1382,7 @@ class TestConflicts:
     def test_an_open_conflict_meets_the_next_report(
         self, replica, local, opening, following, expected, feed
     ):
-        _seeded(replica)
-        key, object_id = _edit_locally(replica, local)
+        key, object_id = _seeded_edit(replica, local)
         _sync(replica, _page("T1", "T2", {object_id: _remote(opening)}))
         opened_at = replica.record(key).conflict.opened_at
         head = replica.feed_head()
@@ -1143,18 +1394,8 @@ class TestConflicts:
             assert record.conflict.opened_at == opened_at
             assert record.conflict.remote_version == (None if following == "removed" else "v3")
 
-    def test_an_ingest_leaves_a_push_in_flight_alone(self, replica, store):
-        _seeded(replica)
-        with store.transaction():
-            key = store.insert_record(_local_record(RecordState.IN_FLIGHT, object_id="f"))
-        before, head = replica.record(key), replica.feed_head()
-        _sync(replica, _page("T1", "T2", {"f": _changed("fx", "v2")}))
-        _sync(replica, _page("T2", "T3", {"f": Removed()}))
-        assert (replica.record(key), replica.feed_head()) == (before, head)
-
     def test_a_version_only_change_moves_the_version_under_an_edit(self, replica):
-        _seeded(replica)
-        key, _ = _edit_locally(replica, "change")
+        key, _ = _seeded_edit(replica, "change")
         _sync(replica, _page("T1", "T2", {"a": _changed("fa", "v2", content=b"rewritten")}))
         record = replica.record(key)
         assert (record.state, record.version, record.content) == (
@@ -1169,8 +1410,7 @@ class TestConflicts:
         [("fx", ConflictKind.BOTH_CHANGED, "v2"), ("removed", ConflictKind.REMOVED_REMOTELY, None)],
     )
     def test_an_open_conflict_waits_for_news(self, replica, opening, kind, known):
-        _seeded(replica)
-        key, _ = _edit_locally(replica, "change")
+        key, _ = _seeded_edit(replica, "change")
         _sync(replica, _page("T1", "T2", {"a": _remote(opening)}))
         # The server's version of the conflicted copy, none once it removed it.
         assert replica.known_versions(_SCOPE).get("a") == known
@@ -1211,6 +1451,447 @@ class TestConflicts:
         assert _feed(replica, head) == []
 
 
+class TestPushes:
+    def test_to_push_lists_pending_edits_by_local_key(self, replica):
+        _edited(replica)
+        created = _create(replica, "fn")
+        with _pushing(replica, "T2", "T3") as session:
+            assert [r.local_key for r in session.to_push()] == [_key(replica), created]
+
+    def test_a_guarded_push_waits_for_a_version(self, replica):
+        _seeded(replica)
+        key = _key(replica)
+        _change(replica, key, "fl")
+        _push(replica, key, Applied())
+        _change(replica, key, "fy")
+        created = _create(replica, "fn")
+        with _pushing(replica, "T2", "T3") as session:
+            assert [r.local_key for r in session.to_push()] == [key, created]
+        # The applied push left no version, so a guarded push of the next
+        # edit would go out unguarded; it waits for an ingest that has one.
+        with _pushing(replica, "T3", "T4", guarded_by_version=True) as session:
+            assert [r.local_key for r in session.to_push()] == [created]
+            assert session.claim(key) is None
+        _sync(replica, _page("T4", "T5", {"a": _changed("fl", "v5")}))
+        with _pushing(replica, "T5", "T6", guarded_by_version=True) as session:
+            assert [r.local_key for r in session.to_push()] == [key, created]
+            assert _claim(session, key).version == "v5"
+
+    @pytest.mark.parametrize("local, outcome, expected, feed", _OUTCOMES)
+    def test_settle_records_how_a_push_ended(self, replica, local, outcome, expected, feed):
+        key, _ = _seeded_edit(replica, local)
+        head = replica.feed_head()
+        _push(replica, key, outcome)
+        record = replica.record(key)
+        assert _summary(record) == expected
+        assert [kind for kind, _ in _feed(replica, head)] == feed
+        if expected == _SYNCED:
+            # The server may store the edit rewritten, so it gives no version to keep.
+            assert (record.version, record.fingerprint, record.content) == (
+                None,
+                "fl",
+                _content("fl"),
+            )
+        if isinstance(outcome, LogicalKeyTaken):
+            assert record.conflict.holder == outcome.holder
+
+    @pytest.mark.parametrize(
+        "local, outcome, message",
+        [
+            ("create", Gone(), "can't be gone"),
+            ("change", LogicalKeyTaken(), "Only a create"),
+            ("delete", LogicalKeyTaken("b"), "Only a create"),
+            ("delete", Applied("x"), "no object id"),
+            ("create without an id", Applied(), "needs the object id"),
+            ("not claimed", Applied(), "takes a record"),
+        ],
+    )
+    def test_an_outcome_no_push_can_have_is_refused(self, replica, store, local, outcome, message):
+        _seeded(replica)
+        if local == "create without an id":
+            key = _create(replica, "fl")
+        else:
+            key, _ = _edit_locally(replica, "change" if local == "not claimed" else local)
+        with _pushing(replica) as session:
+            claimed = _claim(session, key)
+            if local == "not claimed":
+                claimed = replace(claimed, state=RecordState.PENDING)
+            _assert_refused(
+                replica,
+                store,
+                lambda: session.settle(claimed, outcome),
+                ValueError,
+                message,
+                before_a_transaction=True,
+            )
+
+    def test_pushing_follows_the_session_order(self, replica, store):
+        key, _ = _seeded_edit(replica, "change")
+
+        def refused(call: Callable[[], object], match: str) -> None:
+            _assert_refused(replica, store, call, SessionError, match, before_a_transaction=True)
+
+        with _open_session(replica) as session:
+            for page in (_page("T1", "C", {}, truncated=True), _page("C", "T2", {})):
+                refused(session.to_push, "after it ingested its last page")
+                refused(lambda: session.claim(key), "after it ingested its last page")
+                session.ingest(page)
+            unclaimed = replace(replica.record(key), state=RecordState.IN_FLIGHT)
+            refused(lambda: session.settle(unclaimed, Applied()), "Only a session that claimed")
+            claimed = _claim(session, key)
+            refused(lambda: session.ingest(_page("T2", "T3", {})), "already pushed")
+        refused(session.to_push, "has ended")
+        refused(lambda: session.claim(key), "has ended")
+        refused(lambda: session.settle(claimed, Applied()), "has ended")
+
+    def test_claim_passes_over_what_has_nothing_to_push(self, replica):
+        _edited(replica)
+        a, b = _key(replica, "a"), _key(replica, "b")
+        with _pushing(replica, "T2", "T3") as session:
+            assert session.state is SessionState.INGESTED
+            assert _claim(session, a).state is RecordState.IN_FLIGHT
+            assert session.state is SessionState.PUSHING
+            assert [session.claim(key) for key in (a, b, 999)] == [None, None, None]
+
+    def test_claim_refuses_what_it_cant_push(self, replica, store):
+        key, _ = _seeded_edit(replica, "change")
+        _sync(replica, _page(None, "O1", {}, full=True, scope=_OTHER))
+        elsewhere = _create(replica, "fn", scope=_OTHER)
+        with _pushing(replica) as session:
+            for call, match in [
+                (lambda: session.claim(elsewhere), "belongs to scope"),
+                (lambda: session.claim(key, object_id="x"), "already has object id"),
+            ]:
+                _assert_refused(replica, store, call, ValueError, match)
+            _assert_refused(
+                replica,
+                store,
+                lambda: session.claim(key, object_id=_BAD_TEXT),
+                ValueError,
+                "^object_id ",
+                before_a_transaction=True,
+            )
+
+    @pytest.mark.parametrize("at_claim", [True, False], ids=["claimed", "applied"])
+    @pytest.mark.parametrize("object_id", ["x", "a", "b"])
+    def test_a_create_takes_the_id_it_goes_out_under(self, replica, store, at_claim, object_id):
+        _a_removed(replica)
+        key = _create(replica, "fn")
+        with _pushing(replica, "T2", "T3") as session:
+            if at_claim:
+                give = partial(session.claim, key, object_id=object_id)
+            else:
+                give = partial(session.settle, _claim(session, key), Applied(object_id))
+            if object_id == "b":
+                _assert_refused(replica, store, give, DuplicateObjectError)
+                return
+            give()
+        # A removed record holding the id hands it over.
+        assert replica.find_record(_SCOPE, object_id).local_key == key
+        # The server's copy at that id is the create, whether it's in flight or applied.
+        _sync(replica, _page("T3", "T4", {object_id: _changed("fx", "v4")}))
+        assert _summary(replica.record(key)) == _SYNCED
+
+    def test_each_push_is_claimed_and_settled_once(self, make_store, clock):
+        first = _seeded(Replica(make_store(), clock=clock))
+        keys = [_edit_locally(first, "change", object_id)[0] for object_id in "ab"]
+        keys += [_create(first, f"n{i}", object_id=f"n{i}") for i in range(6)]
+        head = first.feed_head()
+        handles = [Replica(make_store(), clock=clock) for _ in range(8)]
+
+        def push_all(session: Session) -> list[int]:
+            pushed = []
+            for key in keys:
+                claimed = session.claim(key)
+                if claimed is not None:
+                    assert session.settle(claimed, Applied())
+                    pushed.append(key)
+            return pushed
+
+        with ExitStack() as stack:
+            sessions = [stack.enter_context(_open_session(handle)) for handle in handles]
+            # Every handle ingests first, since an ingest settles pushes in flight.
+            for n, session in enumerate(sessions, 1):
+                session.ingest(_page(f"T{n}", f"T{n + 1}", {}))
+            with ThreadPoolExecutor(len(sessions)) as pool:
+                pushed = [
+                    key for keys_pushed in pool.map(push_all, sessions) for key in keys_pushed
+                ]
+        assert sorted(pushed) == sorted(keys)
+        assert {_summary(first.record(key)) for key in keys} == {_SYNCED}
+        entries = first.read_feed(head)
+        assert Counter(e.local_key for e in entries) == Counter(keys)
+        assert {e.kind for e in entries} == {FeedEntryKind.PUSHED}
+
+    @pytest.mark.parametrize("following, outcome, settled, expected, feed", _SETTLED_LATE)
+    def test_a_late_outcome_counts_only_for_the_same_edit(
+        self, make_store, clock, following, outcome, settled, expected, feed
+    ):
+        pusher = _seeded(Replica(make_store(), clock=clock))
+        syncer = Replica(make_store(), clock=clock)
+        key, _ = _edit_locally(pusher, "change")
+        with _pushing(pusher) as session:
+            claimed = _claim(session, key)
+            # Another process syncs while the server's answer is on its way.
+            reported = {} if following in (None, "edited") else {"a": _remote(following, "v3")}
+            _sync(syncer, _page("T2", "T3", reported))
+            if following == "edited":
+                _change(syncer, key, "fy")
+            head = pusher.feed_head()
+            assert session.settle(claimed, outcome) is settled
+        assert _summary(pusher.record(key)) == expected
+        assert [kind for kind, _ in _feed(pusher, head)] == feed
+
+    @pytest.mark.parametrize("local, remote, expected, feed", _LEFT_IN_FLIGHT)
+    def test_the_next_complete_ingest_settles_a_push_left_in_flight(
+        self, replica, local, remote, expected, feed
+    ):
+        key, object_id = _seeded_edit(replica, local)
+        _push(replica, key, None)
+        head = replica.feed_head()
+        reported = {} if remote is None else {object_id: _remote(remote, "v3")}
+        # A unique key changes nothing for a push that has an id.
+        with _open_session(replica, unique_logical_key=True) as session:
+            session.ingest(_page("T2", "C", {}, truncated=True))
+            assert _summary(replica.record(key)) == (RecordState.IN_FLIGHT, EditKind(local), None)
+            session.ingest(_page("C", "T3", reported))
+        assert _summary(replica.record(key)) == expected
+        assert [kind for kind, _ in _feed(replica, head)] == feed
+
+    def test_a_listing_settles_pushes_it_never_mentions(self, replica):
+        _seeded(replica)
+        keys = {
+            "change": _edit_locally(replica, "change")[0],
+            "delete": _edit_locally(replica, "delete", "b")[0],
+            "create": _edit_locally(replica, "create")[0],
+            "create without an id": _create(replica, "fm"),
+        }
+        with _pushing(replica) as session:
+            for key in keys.values():
+                session.claim(key)
+        head = replica.feed_head()
+        _sync(replica, _page("T2", "L", {}, full=True))
+        assert {name: _summary(replica.record(key)) for name, key in keys.items()} == {
+            "change": _conflicted(EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY),
+            "delete": _REMOVED,
+            "create": _pending(EditKind.CREATE),
+            "create without an id": _pending(EditKind.CREATE),
+        }
+        assert [kind for kind, _ in _feed(replica, head)] == [
+            FeedEntryKind.CONFLICT_OPENED,
+            FeedEntryKind.PUSHED,
+            FeedEntryKind.PUSH_FAILED,
+            FeedEntryKind.PUSH_FAILED,
+        ]
+
+    @pytest.mark.parametrize("unique, creates", [(True, 1), (False, 1), (True, 2)])
+    def test_a_create_without_an_id_is_known_by_a_unique_key(self, replica, unique, creates):
+        _seeded(replica)
+        keys = [_create(replica, "fl", logical_key="u") for _ in range(creates)]
+        with _pushing(replica) as session:
+            for key in keys:
+                session.claim(key)
+        head = replica.feed_head()
+        with _open_session(replica, unique_logical_key=unique) as session:
+            session.ingest(_page("T2", "T3", {"new": _changed("fx", "v3", logical_key="u")}))
+        new = replica.find_record(_SCOPE, "new")
+        feed = [kind for kind, _ in _feed(replica, head)]
+        # Only a key that one create holds, in a scope where keys are unique,
+        # tells which create the new object is.
+        if unique and creates == 1:
+            assert (new.local_key, _summary(new)) == (keys[0], _SYNCED)
+            assert feed == [FeedEntryKind.PUSHED]
+        else:
+            assert new.local_key not in keys
+            assert [_summary(replica.record(key)) for key in keys] == [
+                _pending(EditKind.CREATE)
+            ] * creates
+            assert feed == [FeedEntryKind.CHANGED] + [FeedEntryKind.PUSH_FAILED] * creates
+
+    @pytest.mark.parametrize(
+        "changes, expected",
+        [
+            ({}, _pending(EditKind.CHANGE)),
+            ({"b": _changed("fx", "v3")}, _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED)),
+        ],
+    )
+    def test_a_scope_wide_rejection_is_pushed_again(self, replica, changes, expected):
+        _seeded(replica)
+        keys = [_edit_locally(replica, "change", object_id)[0] for object_id in "ab"]
+        with _pushing(replica) as session:
+            for key in keys:
+                session.settle(_claim(session, key), Rejected())
+        # Only an object the server changed since is a conflict; the rest go out again.
+        with _open_session(replica) as session:
+            session.ingest(_page("T2", "T3", changes))
+            to_push = [r.local_key for r in session.to_push()]
+        assert [_summary(replica.record(key)) for key in keys] == [
+            _pending(EditKind.CHANGE),
+            expected,
+        ]
+        assert to_push == [key for key in keys if replica.record(key).state is RecordState.PENDING]
+
+
+class TestResolutions:
+    @pytest.mark.parametrize("kind, resolution, expected", _RESOLVED)
+    def test_each_resolution_of_each_conflict(self, replica, kind, resolution, expected):
+        key = _in_conflict(_seeded(replica), kind=kind)
+        conflict = replica.record(key).conflict
+        head = replica.feed_head()
+        replica.resolve(replica.record(key), resolution)
+        record = replica.record(key)
+        assert _summary(record) == expected
+        assert [kind for kind, _ in _feed(replica, head)] == [FeedEntryKind.CONFLICT_RESOLVED]
+        if record is not None and record.state is not RecordState.REMOVED:
+            # Whatever is pushed next goes out against the server's current copy.
+            assert (record.version, record.content) == (
+                conflict.remote_version,
+                conflict.remote_content,
+            )
+        if isinstance(resolution, Merge):
+            assert record is not None
+            assert (record.edit and record.edit.content) == resolution.content
+
+    @pytest.mark.parametrize(
+        "kind, resolution, message",
+        [
+            *((kind, UpdateHolder(), "^Only a create refused") for kind in _OPENED_BY),
+            (ConflictKind.LOGICAL_KEY_TAKEN, KeepEdit(), "can't be pushed again unchanged$"),
+            (None, TakeServer(), "takes a record in conflict$"),
+        ],
+    )
+    def test_a_resolution_that_does_not_fit_is_refused(
+        self, replica, store, kind, resolution, message
+    ):
+        _seeded(replica)
+        key = _key(replica) if kind is None else _in_conflict(replica, kind=kind)
+        record = replica.record(key)
+        _assert_refused(
+            replica,
+            store,
+            lambda: replica.resolve(record, resolution),
+            ValueError,
+            message,
+            before_a_transaction=True,
+        )
+
+    def test_a_merge_the_server_already_holds_is_synced(self, replica):
+        key = _in_conflict(_seeded(replica))
+        replica.resolve(replica.record(key), Merge(_content("fx"), fingerprint="fx"))
+        assert _summary(replica.record(key)) == _SYNCED
+
+    @pytest.mark.parametrize("following", ["fx", "fy", "removed", "fl"])
+    def test_a_conflict_that_moved_on_is_stale(self, replica, store, following):
+        key = _in_conflict(_seeded(replica))
+        read = replica.record(key)
+        _sync(replica, _page("T2", "T3", {"a": _remote(following, "v3")}))
+        if following == "fx":
+            # Only the version moved, and the edit goes out against the new one.
+            replica.resolve(read, KeepEdit())
+            record = replica.record(key)
+            assert (record.state, record.version) == (RecordState.PENDING, "v3")
+        else:
+            _assert_refused(
+                replica, store, lambda: replica.resolve(read, KeepEdit()), StaleConflictError
+            )
+
+    @pytest.mark.parametrize(
+        "holder, keyed, logical_key",
+        [
+            ("b", [], "u"),
+            ("b", [], None),
+            (None, ["b"], "u"),
+            ("z", ["b"], "u"),
+            (None, [], "u"),
+            (None, ["a", "b"], "u"),
+            # Only b has no key, which isn't the key the create had: it had none.
+            (None, [], None),
+        ],
+    )
+    def test_a_refused_create_goes_to_the_key_holder(
+        self, replica, store, holder, keyed, logical_key
+    ):
+        _seeded(replica)
+        key = _refused_create(replica, holder, logical_key=logical_key)
+        changes: dict[str, Change] = {"a": Removed()} if logical_key is None else {}
+        changes |= {o: _changed(f"f{o}", "v2", logical_key="u") for o in keyed}
+        _sync(replica, _page("T2", "T3", changes))
+        refused = replica.record(key)
+        if holder is None and len(keyed) != 1:
+            _assert_refused(
+                replica, store, lambda: replica.resolve(refused, UpdateHolder()), UnknownHolderError
+            )
+            return
+        replica.resolve(refused, UpdateHolder())
+        assert replica.record(key) is None
+        b = replica.find_record(_SCOPE, "b")
+        assert _summary(b) == _pending(EditKind.CHANGE)
+        assert (b.edit.content, b.edit.logical_key) == (_content("fl"), logical_key)
+
+    @pytest.mark.parametrize(
+        "holding, error", [("conflict", OpenConflictError), ("in flight", PushInFlightError)]
+    )
+    def test_a_holder_that_takes_no_edit(self, replica, store, holding, error):
+        key = _refused_create(_seeded(replica), "b")
+        if holding == "conflict":
+            _in_conflict(replica, "b", "T2", "T3")
+        else:
+            _push(replica, _edit_locally(replica, "change", "b")[0], None, "T2", "T3")
+        refused = replica.record(key)
+        _assert_refused(replica, store, lambda: replica.resolve(refused, UpdateHolder()), error)
+
+    def test_resolve_conflicts_resolves_each_answer(self, replica):
+        a, b = _two_conflicts(replica)
+        # A conflict in another scope comes after them.
+        _sync(replica, _page(None, "O1", {"a": _changed("fa")}, full=True, scope=_OTHER))
+        other = replica.find_record(_OTHER, "a").local_key
+        _change(replica, other, "fl")
+        _sync(replica, _page("O1", "O2", {"a": _changed("fx", "v2")}, scope=_OTHER))
+        seen = []
+
+        def resolver(record: Record) -> TakeServer | None:
+            seen.append(record.local_key)
+            return None if record.local_key == a else TakeServer()
+
+        assert replica.resolve_conflicts(resolver) == 2
+        assert seen == [a, b, other]
+        assert [_summary(replica.record(key)) for key in (a, b, other)] == [
+            _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED),
+            _SYNCED,
+            _SYNCED,
+        ]
+        assert replica.resolve_conflicts(lambda record: None) == 0
+
+    def test_resolve_conflicts_skips_a_conflict_that_moved_on(self, replica):
+        a, b = _two_conflicts(replica)
+
+        def resolver(record: Record) -> TakeServer:
+            if record.local_key == a:
+                # A sync brings news about b while the application decides about a.
+                _sync(replica, _page("T3", "T4", {"b": _changed("fy", "v4")}))
+            return TakeServer()
+
+        assert replica.resolve_conflicts(resolver) == 1
+        assert replica.record(b).state is RecordState.CONFLICT
+        assert replica.resolve_conflicts(lambda record: TakeServer()) == 1
+        assert replica.record(b).content == _content("fy")
+
+    def test_an_error_from_the_resolver_keeps_earlier_resolutions(self, replica):
+        a, b = _two_conflicts(replica)
+
+        def resolver(record: Record) -> TakeServer:
+            if record.local_key == b:
+                raise RuntimeError("the application failed")
+            return TakeServer()
+
+        with pytest.raises(RuntimeError, match="the application failed"):
+            replica.resolve_conflicts(resolver)
+        assert [replica.record(key).state for key in (a, b)] == [
+            RecordState.SYNCED,
+            RecordState.CONFLICT,
+        ]
+
+
 class TestLocalCopy:
     def test_find_record(self, replica):
         _a_removed(replica)
@@ -1221,7 +1902,7 @@ class TestLocalCopy:
     def test_find_by_logical_key(self, replica):
         objects = {"a": _changed("fa", logical_key="u1"), "b": _changed("fb", logical_key="u2")}
         _sync(replica, _page(None, "T1", objects, full=True))
-        created = replica.create(_SCOPE, _content("fn"), fingerprint="fn", logical_key="u1")
+        created = _create(replica, "fn", logical_key="u1")
         _sync(replica, _page("T1", "T2", {"a": Removed()}))
         found = replica.find_by_logical_key(_SCOPE, "u1")
         assert [r.local_key for r in found] == [_key(replica), created]
@@ -1238,12 +1919,23 @@ class TestLocalCopy:
         assert replica.record(created).edit.content == content
 
     def test_invalid_text_and_content_are_refused(self, replica, store):
-        with pytest.raises(ValueError, match="^fingerprint holds a lone surrogate at 1"):
-            Changed("v1", _BAD_TEXT, b"c")
-        with pytest.raises(TypeError, match="^content must be bytes, not str"):
-            Changed("v1", "fa", "text of fa")  # type: ignore[arg-type]
-        with pytest.raises(ValueError, match="^object_ids "):
-            _page(None, "T1", {_BAD_TEXT: Removed()})
+        # The values an adapter or the application builds check themselves.
+        built: list[tuple[Callable[[], object], type[Exception], str]] = [
+            (
+                lambda: Changed("v1", _BAD_TEXT, b"c"),
+                ValueError,
+                "^fingerprint holds a lone surrogate at 1",
+            ),
+            (lambda: Changed("v1", "fa", _NOT_BYTES), TypeError, "^content must be bytes, not str"),
+            (lambda: _page(None, "T1", {_BAD_TEXT: Removed()}), ValueError, "^object_ids "),
+            (lambda: Applied(_BAD_TEXT), ValueError, "^object_id "),
+            (lambda: LogicalKeyTaken(_BAD_TEXT), ValueError, "^holder "),
+            (lambda: Merge(b"c", fingerprint=_BAD_TEXT), ValueError, "^fingerprint "),
+            (lambda: Merge(_NOT_BYTES, fingerprint="f"), TypeError, "^content "),
+        ]
+        for build, error, match in built:
+            with pytest.raises(error, match=match):
+                build()
         _seeded(replica)
         key = _key(replica)
         refused: list[tuple[Callable[[], object], type[Exception], str]] = [
@@ -1260,8 +1952,8 @@ class TestLocalCopy:
                 ValueError,
                 "^logical_key ",
             ),
-            (lambda: replica.create(_SCOPE, "c", fingerprint="f"), TypeError, "^content "),  # type: ignore[arg-type]
-            (lambda: replica.change(key, "c", fingerprint="f"), TypeError, "^content "),  # type: ignore[arg-type]
+            (lambda: replica.create(_SCOPE, _NOT_BYTES, fingerprint="f"), TypeError, "^content "),
+            (lambda: replica.change(key, _NOT_BYTES, fingerprint="f"), TypeError, "^content "),
         ]
         for call, error, match in refused:
             _assert_refused(replica, store, call, error, match, before_a_transaction=True)
@@ -1373,14 +2065,13 @@ class TestStores:
         def write(n: int) -> None:
             scope = f"scope-{n}"
             objects = {f"o{i}": _changed(f"f{n}-{i}") for i in range(20)}
-            with _open_session(replica, scope) as session:
-                session.ingest(_page(None, "T1", objects, full=True, scope=scope))
+            _sync(replica, _page(None, "T1", objects, full=True, scope=scope))
             if n % 2:
                 replica.drop_scope(scope)
 
         def edit(n: int) -> None:
             for i in range(3):
-                key = replica.create(_SCOPE, _content(f"n{n}-{i}"), fingerprint=f"n{n}-{i}")
+                key = _create(replica, f"n{n}-{i}")
                 _change(replica, key, f"m{n}-{i}")
 
         def read(_: int) -> None:
@@ -1425,6 +2116,27 @@ class TestStores:
         with store.transaction(), pytest.raises(DuplicateObjectError):
             store.update_record(_local_record(b.state, object_id="a", local_key=b.local_key))
 
+    @pytest.mark.parametrize(
+        "states, expected",
+        [
+            (None, ["a", "b"]),
+            (frozenset(), []),
+            (frozenset({RecordState.PENDING}), ["a"]),
+            (frozenset({RecordState.PENDING, RecordState.CONFLICT}), ["a", "b"]),
+            (frozenset({RecordState.SYNCED, RecordState.REMOVED}), []),
+        ],
+    )
+    def test_scope_records_by_state(self, replica, store, states, expected):
+        _edited(replica)
+        with (
+            store.transaction(write=False),
+            patch.object(store, "_scope_records", wraps=store._scope_records) as hook,
+        ):
+            records = store.scope_records(_SCOPE, states=states)
+        assert [r.object_id for r in records] == expected
+        # An empty set is answered by the base class, so no store sees one.
+        assert hook.called == (states != frozenset())
+
     @pytest.mark.parametrize("record", _BAD_RECORDS.values(), ids=_BAD_RECORDS)
     def test_records_holding_what_their_state_cant_are_refused(self, store, record):
         with _write_with_scope(store):
@@ -1438,14 +2150,13 @@ class TestStores:
         with store.transaction(write=False):
             assert store.scope_records(_SCOPE) == [_local_record(RecordState.SYNCED, local_key=key)]
 
-    @pytest.mark.parametrize("conflict", [_CONFLICT, _GONE], ids=["kept", "removed"])
-    def test_a_refused_create_may_hold_either_server_side(self, store, conflict):
-        edit = replace(_EDIT, kind=EditKind.CREATE)
+    @pytest.mark.parametrize("holder", [None, "b"])
+    def test_a_refused_create_keeps_its_holder(self, store, holder):
         record = replace(
-            _local_record(RecordState.CONFLICT),
+            _CONFLICTED,
             content=None,
-            edit=edit,
-            conflict=replace(conflict, kind=ConflictKind.LOGICAL_KEY_TAKEN),
+            edit=replace(_EDIT, kind=EditKind.CREATE),
+            conflict=replace(_GONE, kind=ConflictKind.LOGICAL_KEY_TAKEN, holder=holder),
         )
         with _write_with_scope(store):
             key = store.insert_record(record)
@@ -1616,10 +2327,9 @@ class TestSQLiteStore:
     def test_state_survives_reopening(self, db_path, clock):
         with SQLiteStore(db_path) as store:
             replica = _edited(Replica(store, clock=clock))
-            replica.create(
-                _SCOPE,
-                _content("fn"),
-                fingerprint="fn",
+            created = _create(
+                replica,
+                "fn",
                 containers=frozenset({"x", "y"}),
                 logical_key="u",
             )
@@ -1629,11 +2339,15 @@ class TestSQLiteStore:
             _sync(replica, _page("T2", "T3", changes))
             replica.delete(_key(replica, "c"))
             _sync(replica, _page("T3", "T4", {"d": Removed()}))
+            # A create refused with the object holding its key, and a push in flight.
+            with _pushing(replica, "T4", "T5") as session:
+                session.settle(_claim(session, created), LogicalKeyTaken("b"))
+                session.claim(_key(replica))
             expected = _snapshot(replica, store)
             assert [_summary(r) for r in replica.records(_SCOPE)] == [
-                _pending(EditKind.CHANGE),
+                (RecordState.IN_FLIGHT, EditKind.CHANGE, None),
                 _conflicted(EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY),
-                _pending(EditKind.CREATE),
+                _conflicted(EditKind.CREATE, ConflictKind.LOGICAL_KEY_TAKEN),
                 _pending(EditKind.DELETE),
                 _REMOVED,
             ]

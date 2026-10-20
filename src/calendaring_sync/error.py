@@ -59,9 +59,13 @@ class RecordValueError(CalendaringSyncError, ValueError):
 class EditRefusedError(CalendaringSyncError):
     """The :term:`record` is in a state that takes no :term:`local edit`.
 
-    Raised as itself for a record whose :term:`push` is :term:`in flight`.
-    Its subclasses cover a record in :term:`conflict` and a removed one.
+    Its subclasses say which: a :term:`push` :term:`in flight`, an open
+    :term:`conflict`, or a record the server removed.
     """
+
+
+class PushInFlightError(EditRefusedError):
+    """The :term:`record`'s :term:`push` is :term:`in flight`; edit it once the push has ended."""
 
 
 class OpenConflictError(EditRefusedError):
@@ -70,6 +74,24 @@ class OpenConflictError(EditRefusedError):
 
 class RemovedRecordError(EditRefusedError):
     """The :term:`record` was removed from the server, so there's nothing to edit."""
+
+
+class StaleConflictError(CalendaringSyncError):
+    """The :term:`conflict` changed since your application read it, so a resolution isn't applied.
+
+    The record ended, or its edit or the server's side moved on. Read it
+    again and decide on what it holds now.
+    """
+
+
+class UnknownHolderError(CalendaringSyncError):
+    """No single record is known to hold what a refused create was refused for.
+
+    The server named no record that's still there, and none or several hold
+    the create's :term:`logical key`, or it was sent without one. So the
+    create can't be pushed as a change to one of them. Resolve it another
+    way, or sync first.
+    """
 
 
 class ScopeMismatchError(CalendaringSyncError):

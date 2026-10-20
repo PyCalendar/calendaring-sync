@@ -33,13 +33,13 @@ Tests live inside the package, in ``src/calendaring_sync/tests/``. ``test_classi
 Checking performance
 ====================
 
-If your change touches ingesting, local edits or a store, run the benchmarks on ``main`` and on your branch, on the same machine, and compare:
+If your change touches ingesting, local edits, pushes or a store, run the benchmarks on ``main`` and on your branch, on the same machine, and compare:
 
 .. code-block:: bash
 
     python -m calendaring_sync.tests.benchmark
 
-It times a full listing of a large scope, a second listing over local edits and conflicts, and a run of single edits, each on a fresh SQLite store. Times differ between machines, so only the comparison means anything. Explain any slowdown beyond run-to-run noise in your pull request. ``--size`` and ``--runs`` change the scope's size and the number of runs.
+It times a full listing of a large scope, a second listing over local edits and conflicts, a run of single edits, and pushes of those edits, each on a fresh SQLite store. Times differ between machines, so only the comparison means anything. Explain any slowdown beyond run-to-run noise in your pull request. ``--size`` and ``--runs`` change the scope's size and the number of runs.
 
 Previewing docs
 ===============
