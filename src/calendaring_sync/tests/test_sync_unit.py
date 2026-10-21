@@ -13,6 +13,7 @@ import dataclasses
 import doctest
 import importlib
 import inspect
+import pickle
 import pkgutil
 import re
 import runpy
@@ -87,6 +88,7 @@ from calendaring_sync import (
 )
 from calendaring_sync._checks import _CHECKED_WHEN_BUILT, _fields, argument_check
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
+from calendaring_sync.store.memory import _Data
 from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
 from calendaring_sync.tests import benchmark
 
@@ -2360,6 +2362,54 @@ class TestStores:
         with make_store() as store:
             with store.transaction(write=False):
                 assert store.scopes() == []
+
+    def test_a_memory_store_can_keep_its_data_elsewhere(self, tmp_path, clock):
+        path = tmp_path / "store.pickle"
+        store = _PickledStore(path)
+        replica = _edited(Replica(store, clock=clock))
+        expected = _snapshot(replica, store)
+        # Reads load the data but never save it.
+        with patch.object(store, "_save", wraps=store._save) as save:
+            replica.records(_SCOPE)
+            replica.read_feed()
+        assert not save.called
+        # A write that fails saves nothing.
+        with pytest.raises(RuntimeError), store.transaction():
+            store.put_scope(replace(_new_scope(), id=_OTHER))
+            raise RuntimeError
+        reopened = _PickledStore(path)
+        again = Replica(reopened, clock=clock)
+        assert _snapshot(again, reopened) == expected
+        # A save that fails fails the write, keeps the last data and leaves the store usable.
+        with patch.object(reopened, "_save", side_effect=OSError("disk full")):
+            _assert_refused(
+                again,
+                reopened,
+                lambda: _sync(again, _page("T2", "T3", {"a": Removed()})),
+                UnexpectedStoreError,
+                "failed unexpectedly with OSError",
+            )
+        _sync(again, _page("T2", "T3", {"a": Removed()}))
+        expected = _snapshot(again, reopened)
+        third = _PickledStore(path)
+        assert _snapshot(Replica(third, clock=clock), third) == expected
+
+
+class _PickledStore(MemoryStore):
+    """A memory store that saves its data to a file with :mod:`pickle`."""
+
+    def __init__(self, path: Path) -> None:
+        super().__init__()
+        self._path = path
+
+    def _load(self) -> _Data:
+        if not self._path.exists():
+            return super()._load()
+        data: _Data = pickle.loads(self._path.read_bytes())
+        return data
+
+    def _save(self, data: _Data) -> None:
+        self._path.write_bytes(pickle.dumps(data))
 
 
 # Dataclasses the SQLite store can't map: a column holds one type, and the
