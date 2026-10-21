@@ -132,12 +132,12 @@ Before a push goes out, the adapter :term:`claims <claim>` it: the core marks it
 
 An unknown push stays in flight, and so does one whose process stopped before the answer arrived. The next complete :term:`ingest` of its scope, in any process, settles it:
 
-- a create that comes back under the id it chose reached the server, and the core stores the server's copy; where the server picks the id, a create that comes back with the logical key it was sent with counts the same, but only if the adapter says that key is unique
+- a create that comes back with what you sent, under the id it chose, reached the server; where the server picks the id, a new object with the same logical key and what you sent counts the same, but only if the adapter says that key is unique. A different object at the id the create chose is a conflict, and one that only shares its logical key is another object, so the create goes out again
 - an update that comes back with your fingerprint reached the server, and one that comes back with another fingerprint is a conflict, since someone else changed the object too
 - a delete that comes back removed reached the server
 - a push the change set doesn't mention didn't reach the server, and its edit is pending again
 
-Treating an unknown push as failed could create the same object twice. An outcome that arrives after an ingest settled its push still counts while the record holds the same edit, and changes nothing once the edit has changed or the server's side decided it. Two processes syncing one scope at the same moment can therefore send one edit twice: the second write is rejected where the adapter guards it with the object's version, and nothing is lost either way.
+Treating an unknown push as failed could create the same object twice. An outcome that arrives after an ingest settled its push still counts while the record holds the same edit and no one has claimed it again, and changes nothing otherwise. Two processes syncing one scope at the same moment can therefore send one edit twice. A second change or delete is rejected where the adapter guards it with the object's version. A create whose id the server picks has no such guard, so the server can end up with the object twice, unless the adapter says logical keys are unique: then the server refuses the second create for its key, which becomes a conflict. Nothing you edited is lost either way.
 
 Why the server's answer to a write isn't trusted
 ================================================
@@ -270,7 +270,7 @@ Later remote changes update the record's remote side. The conflict resolves itse
 
 The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. You resolve a record with your edit (``KeepEdit``), the server's version (``TakeServer``), merged content (``Merge``), or a delete (``Delete``), and the core pushes the result as a change to the server's current version. You can't push a create the server refused for its UID again unchanged, so you can discard it (``TakeServer`` or ``Delete``), push it as an update to the object that holds the UID (``UpdateHolder``), or replace it with merged content, possibly with a new UID (``Merge``).
 
-``resolve(record, resolution)`` resolves one record you read, and refuses if its conflict changed since, so a decision is never applied to news you haven't seen. ``resolve_conflicts(resolver)`` passes each open record to your resolver, outside any sync, and resolves each answer the same way. Each resolution is its own transaction: ``None`` leaves a record open, a record that changed while your resolver ran waits for the next call, and an exception stops the loop and keeps the resolutions before it.
+``resolve(record, resolution)`` resolves one record you read, and refuses if its conflict changed since, so a decision is never applied to news you haven't seen. ``resolve_conflicts(resolver)`` passes each open record to your resolver, never during an ingest, and resolves each answer the same way. Each resolution is its own transaction: ``None`` leaves a record open, a record that changed while your resolver ran waits for the next call, and an exception stops the loop and keeps the resolutions before it.
 
 A removal on the server against a local edit is always a conflict, never resolved automatically, because that would delete your edit without asking.
 

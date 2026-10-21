@@ -84,36 +84,24 @@ _EXPECTED: dict[tuple[str, str, str], tuple[ChangeClass, ConflictKind | None]] =
     ("none", "fx", "create"): (_CONFLICT, ConflictKind.BOTH_CREATED),
 }
 
-# A push in flight whose outcome never arrived classifies the same, except
-# that a create coming back at its own id is your own write, whatever the
-# server made of its content.
-_IN_FLIGHT = _EXPECTED | {
-    ("none", "fa", "create"): (ChangeClass.UNCHANGED, None),
-    ("none", "fx", "create"): (ChangeClass.UNCHANGED, None),
-}
-
 _EVERY = list(product(_SYNCED, _REMOTES, _LOCALS))
 _IMPOSSIBLE = [sides for sides in _EVERY if sides not in _EXPECTED]
 
 
-def _classify(
-    synced: str, remote: str, local: str, *, in_flight: bool = False
-) -> tuple[ChangeClass, ConflictKind | None]:
-    return classify(_SYNCED[synced], _REMOTES[remote], _LOCALS[local], in_flight=in_flight)
+def _classify(synced: str, remote: str, local: str) -> tuple[ChangeClass, ConflictKind | None]:
+    return classify(_SYNCED[synced], _REMOTES[remote], _LOCALS[local])
 
 
-@pytest.mark.parametrize("in_flight, expected", [(False, _EXPECTED), (True, _IN_FLIGHT)])
 @pytest.mark.parametrize("sides", _EXPECTED, ids="-".join)
-def test_every_possible_combination(sides, in_flight, expected):
-    assert _classify(*sides, in_flight=in_flight) == expected[sides]
+def test_every_possible_combination(sides):
+    assert _classify(*sides) == _EXPECTED[sides]
 
 
-@pytest.mark.parametrize("in_flight", [False, True])
 @pytest.mark.parametrize("sides", _IMPOSSIBLE, ids="-".join)
-def test_combinations_no_object_can_have_raise(sides, in_flight):
+def test_combinations_no_object_can_have_raise(sides):
     synced, _, local = sides
     with pytest.raises(ValueError):
-        _classify(*sides, in_flight=in_flight)
+        _classify(*sides)
     # Only these: nothing at all, a create of an object with a synced copy,
     # or a change or delete of one without.
     assert sides == ("none", "none", "none") or (local == "create") == (synced != "none")

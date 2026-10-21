@@ -45,7 +45,8 @@ class FeedEntry:
         kind: What happened.
         local_key: The :term:`local key` of the record the entry is about,
             ``None`` for a dropped scope. The record may since have been
-            :term:`purged <purge>`.
+            :term:`purged <purge>`, or deleted if it was a create the server
+            never had.
         object_id: The record's :term:`object id` when the entry was
             written, ``None`` for a dropped scope.
         at: When the entry was written.

@@ -29,6 +29,7 @@ from calendaring_sync.constants import FEED_PAGE_SIZE
 from calendaring_sync.error import (
     DuplicateObjectError,
     OpenConflictError,
+    PendingEditError,
     PushInFlightError,
     RemovedRecordError,
     ScopeMismatchError,
@@ -220,10 +221,10 @@ def _waits_for_version(record: Record, *, guarded: bool) -> bool:
     return guarded and record.version is None and not record.is_create
 
 
-def _check_outcome(scope_id: str, claimed: Record, outcome: PushOutcome) -> None:
+def _check_outcome(claimed_keys: set[int], claimed: Record, outcome: PushOutcome) -> None:
     """Raise ``ValueError`` unless the outcome is one a push of the claimed edit can have."""
     if (
-        claimed.scope != scope_id
+        claimed.local_key not in claimed_keys
         or claimed.state is not RecordState.IN_FLIGHT
         or claimed.edit is None
     ):
@@ -292,6 +293,8 @@ class Session:
         self._listing: bool | None = None
         self._mentioned: set[str] = set()
         self._closed = False
+        # The local keys this session claimed, the only ones it settles.
+        self._claimed: set[int] = set()
 
     @property
     def scope_id(self) -> str:
@@ -429,6 +432,7 @@ class Session:
         )
         if claimed is not None:
             self._state = SessionState.PUSHING
+            self._claimed.add(local_key)
         return claimed
 
     def settle(self, claimed: Record, outcome: PushOutcome) -> bool:
@@ -438,7 +442,7 @@ class Session:
         feed` entry for every outcome but ``Unknown``. If another process
         already settled this push, for example by ingesting while it was
         in flight, the outcome only counts while the record still holds the
-        same edit.
+        same edit and no one has claimed it again.
 
         Args:
             claimed: The record :meth:`claim` returned.
@@ -451,14 +455,14 @@ class Session:
 
         Raises:
             TransactionError: If a store transaction is already open in this thread.
-            SessionError: If the session isn't pushing, or has ended.
+            SessionError: If the session has ended.
             DuplicateObjectError: If ``Applied`` names an id a record that
                 isn't removed holds.
-            ValueError: If ``claimed`` isn't a claimed record of this scope,
-                or the outcome is one no push of its edit can have: ``Gone``
-                for a create, ``LogicalKeyTaken`` for anything but a create,
-                ``Applied`` with an id for a delete, or ``Applied`` without
-                one for a create that has none.
+            ValueError: If ``claimed`` isn't a record this session's
+                :meth:`claim` returned, or the outcome is one no push of its
+                edit can have: ``Gone`` for a create, ``LogicalKeyTaken`` for
+                anything but a create, ``Applied`` with an id for a delete, or
+                ``Applied`` without one for a create that has none.
 
         Examples:
             The server refused the write, so the edit is pending again:
@@ -475,11 +479,9 @@ class Session:
             >>> replica.record(key).state
             <RecordState.PENDING: 'pending'>
         """
-        _check_outcome(self._scope_id, claimed, outcome)
+        _check_outcome(self._claimed, claimed, outcome)
         if self._closed:
             raise SessionError("The session has ended")
-        if self._state is not SessionState.PUSHING:
-            raise SessionError("Only a session that claimed a push can settle one")
         return self._replica._settle(claimed, outcome)
 
     def _check_ready(self) -> None:
@@ -587,8 +589,8 @@ class Replica:
                 record has no version, so it never goes out unguarded.
             unique_logical_key: Whether no two objects in the scope can share
                 a :term:`logical key`. A create whose answer never arrived is
-                then recognized by its key at the next ingest, which a create
-                the server picks the id for needs.
+                then recognized at the next ingest by its key and the data it
+                was sent with, which a create the server picks the id for needs.
 
         Raises:
             TransactionError: If a store transaction is already open in this thread.
@@ -722,8 +724,12 @@ class Replica:
                     "but the store has no version for it"
                 )
             return
-        if record is None and isinstance(change, Changed) and change.logical_key in claimed:
-            record = claimed.pop(change.logical_key)
+        if record is None and isinstance(change, Changed) and change.logical_key is not None:
+            # A new object with the key is the create only if it holds what was sent;
+            # anything else is someone else's object, and the create goes out again.
+            create = claimed.get(change.logical_key)
+            if create is not None and create.edit is not None and same_data(change, create.edit):
+                record = claimed.pop(change.logical_key)
         in_flight = record is not None and record.state is RecordState.IN_FLIGHT
         live = None if record is None or record.state is RecordState.REMOVED else record
         if live is not None and live.conflict is not None and same_remote(live.conflict, change):
@@ -733,7 +739,7 @@ class Replica:
             return
         edit = None if live is None else live.edit
         synced = live if live is not None and live.content is not None else None
-        change_class, kind = classify(synced, change, edit, in_flight=in_flight)
+        change_class, kind = classify(synced, change, edit)
         was_conflict = live is not None and live.conflict is not None
         # A record leaving a conflict is reported as the conflict ending, and
         # one whose push was in flight as the push reaching the server.
@@ -1127,7 +1133,10 @@ class Replica:
             if object_id is not None:
                 self._free_object_id(scope_id, object_id, record.local_key)
             claimed = replace(
-                record, state=RecordState.IN_FLIGHT, object_id=object_id or record.object_id
+                record,
+                state=RecordState.IN_FLIGHT,
+                object_id=object_id or record.object_id,
+                claims=record.claims + 1,
             )
             self._store.update_record(claimed)
             return claimed
@@ -1136,9 +1145,12 @@ class Replica:
         now = self._clock()
         with self._store.transaction():
             record = self._store.get_record(claimed.local_key)
+            # Only the latest claim of the same edit counts: another process may
+            # have settled this push, and claimed the edit again since.
             if (
                 record is None
                 or record.edit != claimed.edit
+                or record.claims != claimed.claims
                 or record.state not in (RecordState.IN_FLIGHT, RecordState.PENDING)
             ):
                 return False
@@ -1183,14 +1195,17 @@ class Replica:
         )
 
     def _free_object_id(self, scope_id: str, object_id: str, owner: int) -> None:
-        """Make ``object_id`` free for record ``owner``: a removed record holding it is deleted.
+        """Make ``object_id`` free for record ``owner``.
+
+        A removed record holding it gives the id up but stays, as a
+        :term:`change feed` reader may still read it, until it's purged.
 
         Raises:
             DuplicateObjectError: If a record that isn't removed holds it.
         """
         removed = self._removed_holder(scope_id, object_id, owner)
         if removed is not None:
-            self._store.delete_record(removed.local_key)
+            self._store.update_record(replace(removed, object_id=None))
 
     def _removed_holder(
         self, scope_id: str, object_id: str, owner: int | None = None
@@ -1354,6 +1369,8 @@ class Replica:
                 refused create's logical key, or it was sent without one.
             OpenConflictError: For ``UpdateHolder``, if the holder is in conflict.
             PushInFlightError: For ``UpdateHolder``, if the holder's push is in flight.
+            PendingEditError: For ``UpdateHolder``, if the holder holds a
+                pending edit of its own, which this would replace.
             ValueError: If ``record`` isn't in conflict, or the resolution
                 doesn't fit its kind: ``KeepEdit`` for a create the server
                 refused for its logical key, or ``UpdateHolder`` for any other.
@@ -1383,6 +1400,10 @@ class Replica:
             stored = cast(Record, stored)
             if isinstance(resolution, UpdateHolder):
                 holder = self._editable(self._holder(stored).local_key)
+                if holder.edit is not None:
+                    raise PendingEditError(
+                        f"Record {holder.local_key} holds a pending edit of its own"
+                    )
                 edit = cast(LocalEdit, stored.edit)
                 self._store.update_record(_changed_to(holder, replace(edit, recorded_at=now)))
                 resolved = None
@@ -1457,8 +1478,9 @@ class Replica:
         """The one live record holding a refused create's logical key.
 
         The id the server named comes first; without one, or before that
-        object is synced, the key decides. A create sent without a key has
-        only the id to go by.
+        object is synced, the key of a synced copy decides, since the server
+        refused the create for an object it has. A create sent without a key
+        has only the id to go by.
 
         Raises:
             UnknownHolderError: If no single record holds it.
@@ -1476,7 +1498,7 @@ class Replica:
         holders = [
             other
             for other in keyed
-            if other.local_key != record.local_key and other.state is not RecordState.REMOVED
+            if other.logical_key == edit.logical_key and other.state is not RecordState.REMOVED
         ]
         if len(holders) != 1:
             raise UnknownHolderError(

@@ -73,8 +73,6 @@ def classify(
     synced: Record | None,
     remote: Changed | Removed | None,
     local: LocalEdit | None,
-    *,
-    in_flight: bool = False,
 ) -> tuple[ChangeClass, ConflictKind | None]:
     """Classify one object from its synced side, the server's report and the local edit.
 
@@ -89,9 +87,6 @@ def classify(
         remote: The server's new copy, ``Removed`` if the server removed it,
             or ``None`` if the server reported nothing new.
         local: The record's :term:`pending edit`, or ``None``.
-        in_flight: Whether ``local`` was pushed and the push's outcome is
-            unknown. A create that then comes back at its own id is your
-            own write, whatever the server made of its content.
 
     Returns:
         The class, and the conflict's kind when the class is ``CONFLICT``.
@@ -132,8 +127,6 @@ def classify(
         case EditKind.DELETE, Removed():
             # Both sides deleted the object.
             return ChangeClass.DELETED_REMOTE, None
-        case EditKind.CREATE, Changed() if in_flight:
-            return ChangeClass.UNCHANGED, None
         case EditKind.CREATE, Changed():
             return ChangeClass.CONFLICT, ConflictKind.BOTH_CREATED
         case _:

@@ -48,6 +48,7 @@ from calendaring_sync import (
     MemoryStore,
     Merge,
     OpenConflictError,
+    PendingEditError,
     PushInFlightError,
     PushOutcome,
     Record,
@@ -1208,14 +1209,20 @@ _LEFT_IN_FLIGHT = [
     ("create", None, _pending(EditKind.CREATE), [FeedEntryKind.PUSH_FAILED]),
     ("create", "removed", _pending(EditKind.CREATE), [FeedEntryKind.PUSH_FAILED]),
     ("create", "fl", _SYNCED, [FeedEntryKind.PUSHED]),
-    # The server rewrote what it stored, and it's still your own write.
-    ("create", "fx", _SYNCED, [FeedEntryKind.PUSHED]),
+    # Another object at the create's id isn't the create.
+    (
+        "create",
+        "fx",
+        _conflicted(EditKind.CREATE, ConflictKind.BOTH_CREATED),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
 ]
 
 # An outcome arriving after another process's ingest already settled the
 # push: what that ingest saw (None for nothing, "edited" for nothing and
-# then a new local edit), the outcome, then what settle() returns, what the
-# record ends up as and the feed entries settling wrote.
+# then a new local edit, "claimed again" for nothing and then a claim of its
+# own), the outcome, then what settle() returns, what the record ends up as
+# and the feed entries settling wrote.
 _SETTLED_LATE = [
     (None, Applied(), True, _SYNCED, [FeedEntryKind.PUSHED]),
     (None, Rejected(), True, _pending(EditKind.CHANGE), []),
@@ -1223,7 +1230,14 @@ _SETTLED_LATE = [
     ("edited", Applied(), False, _pending(EditKind.CHANGE), []),
     ("fl", Applied(), False, _SYNCED, []),
     ("fx", Rejected(), False, _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED), []),
+    ("claimed again", Rejected(), False, (RecordState.IN_FLIGHT, EditKind.CHANGE, None), []),
 ]
+
+# Records settle() refuses because this session didn't claim them so.
+_UNCLAIMED = ("not claimed", "another record")
+
+# The rows of _SETTLED_LATE where the server reported nothing new.
+_NOTHING_NEW = (None, "edited", "claimed again")
 
 _MERGED = Merge(_content("fm"), fingerprint="fm")
 
@@ -1504,18 +1518,22 @@ class TestPushes:
             ("delete", Applied("x"), "no object id"),
             ("create without an id", Applied(), "needs the object id"),
             ("not claimed", Applied(), "takes a record"),
+            ("another record", Applied(), "takes a record"),
         ],
     )
     def test_an_outcome_no_push_can_have_is_refused(self, replica, store, local, outcome, message):
+        """Including a record this session didn't claim, or not as it claimed it."""
         _seeded(replica)
         if local == "create without an id":
             key = _create(replica, "fl")
         else:
-            key, _ = _edit_locally(replica, "change" if local == "not claimed" else local)
+            key, _ = _edit_locally(replica, "change" if local in _UNCLAIMED else local)
         with _pushing(replica) as session:
             claimed = _claim(session, key)
             if local == "not claimed":
                 claimed = replace(claimed, state=RecordState.PENDING)
+            if local == "another record":
+                claimed = replace(claimed, local_key=_key(replica, "b"))
             _assert_refused(
                 replica,
                 store,
@@ -1536,8 +1554,6 @@ class TestPushes:
                 refused(session.to_push, "after it ingested its last page")
                 refused(lambda: session.claim(key), "after it ingested its last page")
                 session.ingest(page)
-            unclaimed = replace(replica.record(key), state=RecordState.IN_FLIGHT)
-            refused(lambda: session.settle(unclaimed, Applied()), "Only a session that claimed")
             claimed = _claim(session, key)
             refused(lambda: session.ingest(_page("T2", "T3", {})), "already pushed")
         refused(session.to_push, "has ended")
@@ -1576,6 +1592,7 @@ class TestPushes:
     @pytest.mark.parametrize("object_id", ["x", "a", "b"])
     def test_a_create_takes_the_id_it_goes_out_under(self, replica, store, at_claim, object_id):
         _a_removed(replica)
+        removed = replica.find_record(_SCOPE, "a")
         key = _create(replica, "fn")
         with _pushing(replica, "T2", "T3") as session:
             if at_claim:
@@ -1586,10 +1603,13 @@ class TestPushes:
                 _assert_refused(replica, store, give, DuplicateObjectError)
                 return
             give()
-        # A removed record holding the id hands it over.
         assert replica.find_record(_SCOPE, object_id).local_key == key
-        # The server's copy at that id is the create, whether it's in flight or applied.
-        _sync(replica, _page("T3", "T4", {object_id: _changed("fx", "v4")}))
+        # A removed record holding the id gives it up, and stays until it's purged.
+        kept = replace(removed, object_id=None) if object_id == "a" else removed
+        assert replica.record(removed.local_key) == kept
+        assert replica.purge(replica.feed_head()) == 1
+        # What was sent, at that id, is the create, whether it's in flight or applied.
+        _sync(replica, _page("T3", "T4", {object_id: _changed("fn", "v4")}))
         assert _summary(replica.record(key)) == _SYNCED
 
     def test_each_push_is_claimed_and_settled_once(self, make_store, clock):
@@ -1633,10 +1653,12 @@ class TestPushes:
         with _pushing(pusher) as session:
             claimed = _claim(session, key)
             # Another process syncs while the server's answer is on its way.
-            reported = {} if following in (None, "edited") else {"a": _remote(following, "v3")}
+            reported = {} if following in _NOTHING_NEW else {"a": _remote(following, "v3")}
             _sync(syncer, _page("T2", "T3", reported))
             if following == "edited":
                 _change(syncer, key, "fy")
+            if following == "claimed again":
+                _push(syncer, key, None, "T3", "T4")
             head = pusher.feed_head()
             assert session.settle(claimed, outcome) is settled
         assert _summary(pusher.record(key)) == expected
@@ -1684,8 +1706,13 @@ class TestPushes:
             FeedEntryKind.PUSH_FAILED,
         ]
 
-    @pytest.mark.parametrize("unique, creates", [(True, 1), (False, 1), (True, 2)])
-    def test_a_create_without_an_id_is_known_by_a_unique_key(self, replica, unique, creates):
+    @pytest.mark.parametrize(
+        "unique, creates, fingerprint",
+        [(True, 1, "fl"), (True, 1, "fx"), (False, 1, "fl"), (True, 2, "fl")],
+    )
+    def test_a_create_without_an_id_is_known_by_a_unique_key(
+        self, replica, unique, creates, fingerprint
+    ):
         _seeded(replica)
         keys = [_create(replica, "fl", logical_key="u") for _ in range(creates)]
         with _pushing(replica) as session:
@@ -1693,12 +1720,13 @@ class TestPushes:
                 session.claim(key)
         head = replica.feed_head()
         with _open_session(replica, unique_logical_key=unique) as session:
-            session.ingest(_page("T2", "T3", {"new": _changed("fx", "v3", logical_key="u")}))
+            session.ingest(_page("T2", "T3", {"new": _changed(fingerprint, "v3", logical_key="u")}))
         new = replica.find_record(_SCOPE, "new")
         feed = [kind for kind, _ in _feed(replica, head)]
         # Only a key that one create holds, in a scope where keys are unique,
-        # tells which create the new object is.
-        if unique and creates == 1:
+        # tells which create the new object is, and only if it holds what was
+        # sent; otherwise it's someone else's object, and the create goes out again.
+        if unique and creates == 1 and fingerprint == "fl":
             assert (new.local_key, _summary(new)) == (keys[0], _SYNCED)
             assert feed == [FeedEntryKind.PUSHED]
         else:
@@ -1804,7 +1832,7 @@ class TestResolutions:
             ("z", ["b"], "u"),
             (None, [], "u"),
             (None, ["a", "b"], "u"),
-            # Only b has no key, which isn't the key the create had: it had none.
+            # The create had no key, so only an object the server named can hold it.
             (None, [], None),
         ],
     )
@@ -1813,7 +1841,14 @@ class TestResolutions:
     ):
         _seeded(replica)
         key = _refused_create(replica, holder, logical_key=logical_key)
-        changes: dict[str, Change] = {"a": Removed()} if logical_key is None else {}
+        if logical_key is None:
+            # Without a key, nothing but the holder the server named is left to pick.
+            changes: dict[str, Change] = {o: Removed() for o in "ab" if o != holder}
+            unsent = None
+        else:
+            # A create not sent yet holds the key too, but the server doesn't have it.
+            changes = {}
+            unsent = _create(replica, "fo", logical_key=logical_key)
         changes |= {o: _changed(f"f{o}", "v2", logical_key="u") for o in keyed}
         _sync(replica, _page("T2", "T3", changes))
         refused = replica.record(key)
@@ -1824,19 +1859,28 @@ class TestResolutions:
             return
         replica.resolve(refused, UpdateHolder())
         assert replica.record(key) is None
+        if unsent is not None:
+            assert replica.record(unsent).edit.content == _content("fo")
         b = replica.find_record(_SCOPE, "b")
         assert _summary(b) == _pending(EditKind.CHANGE)
         assert (b.edit.content, b.edit.logical_key) == (_content("fl"), logical_key)
 
     @pytest.mark.parametrize(
-        "holding, error", [("conflict", OpenConflictError), ("in flight", PushInFlightError)]
+        "holding, error",
+        [
+            ("conflict", OpenConflictError),
+            ("in flight", PushInFlightError),
+            ("an edit", PendingEditError),
+        ],
     )
     def test_a_holder_that_takes_no_edit(self, replica, store, holding, error):
         key = _refused_create(_seeded(replica), "b")
         if holding == "conflict":
             _in_conflict(replica, "b", "T2", "T3")
-        else:
+        elif holding == "in flight":
             _push(replica, _edit_locally(replica, "change", "b")[0], None, "T2", "T3")
+        else:
+            _edit_locally(replica, "change", "b")
         refused = replica.record(key)
         _assert_refused(replica, store, lambda: replica.resolve(refused, UpdateHolder()), error)
 

@@ -67,6 +67,9 @@ class Record:
             flight or in conflict, and ``None`` otherwise.
         conflict: The server's side of an open :term:`conflict`, held while
             the record is in conflict, and ``None`` otherwise.
+        claims: How many times a :term:`push` of the record was
+            :term:`claimed <claim>`. How a push ended only counts while no
+            later claim has been made.
     """
 
     local_key: int
@@ -82,6 +85,7 @@ class Record:
     last_entry: int
     edit: LocalEdit | None = None
     conflict: Conflict | None = None
+    claims: int = 0
 
     @property
     def is_create(self) -> bool:

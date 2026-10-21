@@ -94,6 +94,13 @@ class UnknownHolderError(CalendaringSyncError):
     """
 
 
+class PendingEditError(CalendaringSyncError):
+    """The :term:`record` holds a :term:`pending edit` of its own, which this would replace.
+
+    Push or discard that edit first, then try again.
+    """
+
+
 class ScopeMismatchError(CalendaringSyncError):
     """A :term:`session` was opened with a media type the :term:`scope` doesn't have.
 
