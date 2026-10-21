@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Benchmarks for the work a sync does most: full listings and local edits.
+Benchmarks for the work a sync does most: full listings, local edits and pushes.
 
 Run ``python -m calendaring_sync.tests.benchmark`` on ``main`` and on your
 branch, on the same machine, and compare the two. Times differ between
@@ -22,10 +22,19 @@ import tempfile
 import time
 from collections import Counter
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
 
-from calendaring_sync import Changed, ChangeSet, RecordState, Replica, SQLiteStore
+from calendaring_sync import (
+    Applied,
+    Changed,
+    ChangeSet,
+    FeedEntryKind,
+    RecordState,
+    Replica,
+    Session,
+    SQLiteStore,
+)
 
 #: The number of objects in the scope: a large calendar.
 DEFAULT_SIZE = 20_000
@@ -66,20 +75,45 @@ def _listing(size: int, since: str | None, token: str, changed: int = 0) -> Chan
     return ChangeSet(_SCOPE, since, token, objects, full_listing=True)
 
 
+def _session(replica: Replica) -> AbstractContextManager[Session]:
+    """A session for the benchmark's scope."""
+    return replica.session(_SCOPE, fingerprint_scheme=_SCHEME, media_type=_MEDIA)
+
+
 def _ingest(replica: Replica, change_set: ChangeSet) -> float:
     """Ingest a change set in one session, and return how long it took."""
     started = time.perf_counter()
-    with replica.session(_SCOPE, fingerprint_scheme=_SCHEME, media_type=_MEDIA) as session:
+    with _session(replica) as session:
         session.ingest(change_set)
     return time.perf_counter() - started
 
 
-def _edit(replica: Replica, size: int) -> float:
-    """Change one in ``EDITED_SHARE`` objects, one edit at a time, and return how long it took."""
+def _list_and_edit(replica: Replica, size: int) -> float:
+    """List the scope, then change one in ``EDITED_SHARE`` objects one edit at a time.
+
+    Returns how long the edits took.
+    """
+    _ingest(replica, _listing(size, None, _FIRST))
     keys = [record.local_key for record in replica.records(_SCOPE)[: size // EDITED_SHARE]]
     started = time.perf_counter()
     for key in keys:
         replica.change(key, _LOCAL_CONTENT, fingerprint=_LOCAL_FINGERPRINT)
+    return time.perf_counter() - started
+
+
+def _push_edits(replica: Replica) -> float:
+    """Ingest an empty change set, then push every edit, and return how long it took.
+
+    Each push is claimed and settled as applied in its own transaction, as an
+    adapter does around each request.
+    """
+    started = time.perf_counter()
+    with _session(replica) as session:
+        session.ingest(ChangeSet(_SCOPE, _FIRST, _SECOND, {}))
+        for record in session.to_push():
+            claimed = session.claim(record.local_key)
+            assert claimed is not None
+            session.settle(claimed, Applied())
     return time.perf_counter() - started
 
 
@@ -89,8 +123,7 @@ def _relist_over_edits(replica: Replica, size: int) -> float:
     Most objects come back with only a new version. The edited ones the
     server also changed become conflicts.
     """
-    _ingest(replica, _listing(size, None, _FIRST))
-    _edit(replica, size)
+    _list_and_edit(replica, size)
     conflicted = size // EDITED_SHARE // CONFLICTED_SHARE
     return _ingest(replica, _listing(size, _FIRST, _SECOND, changed=conflicted))
 
@@ -110,8 +143,14 @@ def listing_over_edits(size: int) -> float:
 def single_edits(size: int) -> float:
     """Local edits to one in ``EDITED_SHARE`` of ``size`` objects, each its own transaction."""
     with _replica() as replica:
-        _ingest(replica, _listing(size, None, _FIRST))
-        return _edit(replica, size)
+        return _list_and_edit(replica, size)
+
+
+def pushes(size: int) -> float:
+    """Pushing local edits to one in ``EDITED_SHARE`` of ``size`` objects, each applied."""
+    with _replica() as replica:
+        _list_and_edit(replica, size)
+        return _push_edits(replica)
 
 
 def states_over_edits(size: int) -> Counter[RecordState]:
@@ -121,11 +160,21 @@ def states_over_edits(size: int) -> Counter[RecordState]:
         return Counter(record.state for record in replica.records(_SCOPE))
 
 
+def entries_after_pushes(size: int) -> Counter[FeedEntryKind]:
+    """The change feed entries ``pushes`` writes, to check what it measures."""
+    with _replica() as replica:
+        _list_and_edit(replica, size)
+        head = replica.feed_head()
+        _push_edits(replica)
+        return Counter(entry.kind for entry in replica.read_feed(head))
+
+
 #: Each scenario by name. Each takes the scope's size and returns the seconds it measured.
 SCENARIOS: dict[str, Callable[[int], float]] = {
     "full listing": full_listing,
     "listing over edits and conflicts": listing_over_edits,
     f"single edits to one in {EDITED_SHARE} objects": single_edits,
+    f"pushes of one in {EDITED_SHARE} objects": pushes,
 }
 
 

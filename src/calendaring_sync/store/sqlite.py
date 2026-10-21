@@ -257,10 +257,13 @@ _SCHEMA = (
     conflict_remote_content BLOB,
     conflict_remote_containers TEXT,
     conflict_remote_logical_key TEXT,
-    conflict_opened_at TEXT
+    conflict_opened_at TEXT,
+    conflict_holder TEXT,
+    claims INTEGER NOT NULL
 )""",
     f"""CREATE UNIQUE INDEX {_RECORDS}_by_object_id ON {_RECORDS} (scope, object_id)""",
     f"""CREATE INDEX {_RECORDS}_by_state ON {_RECORDS} (state, last_entry)""",
+    f"""CREATE INDEX {_RECORDS}_by_scope_state ON {_RECORDS} (scope, state)""",
     f"""CREATE INDEX {_RECORDS}_by_logical_key ON {_RECORDS} (scope, logical_key)""",
     f"""CREATE INDEX {_RECORDS}_by_edit_logical_key ON {_RECORDS} (scope, edit_logical_key)""",
     f"""CREATE TABLE {_FEED} (
@@ -454,8 +457,16 @@ class SQLiteStore(StateStore):
             (scope_id, logical_key, scope_id, logical_key),
         )
 
-    def _scope_records(self, scope_id: str) -> list[Record]:
-        return self._select(Record, _RECORDS, "WHERE scope = ? ORDER BY local_key", (scope_id,))
+    def _scope_records(self, scope_id: str, states: frozenset[RecordState] | None) -> list[Record]:
+        if states is None:
+            return self._select(Record, _RECORDS, "WHERE scope = ? ORDER BY local_key", (scope_id,))
+        marks = ", ".join("?" for _ in states)
+        return self._select(
+            Record,
+            _RECORDS,
+            f"WHERE scope = ? AND state IN ({marks}) ORDER BY local_key",
+            (scope_id, *states),
+        )
 
     def _removed_records(self, through: int) -> list[Record]:
         return self._select(

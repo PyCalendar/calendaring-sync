@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""The server's side of a :term:`conflict`, kept on its :term:`record`."""
+"""The server's side of a :term:`conflict`, kept on its :term:`record` until it's resolved."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Self
 
+from calendaring_sync.objects._data import NO_DATA, data
 from calendaring_sync.objects.change import Changed, Removed
 
 
@@ -59,6 +60,9 @@ class Conflict:
         remote_logical_key: The :term:`logical key` of the server's copy, if
             it has one.
         opened_at: When the conflict was first stored.
+        holder: For a create refused because another object holds its
+            :term:`logical key`, that object's :term:`object id` when the
+            server named it; ``None`` otherwise.
     """
 
     kind: ConflictKind
@@ -68,6 +72,7 @@ class Conflict:
     remote_containers: frozenset[str]
     remote_logical_key: str | None
     opened_at: datetime
+    holder: str | None = None
 
     @classmethod
     def from_change(
@@ -75,13 +80,5 @@ class Conflict:
     ) -> Self:
         """Return a conflict whose server side is what a change reported."""
         if isinstance(change, Removed):
-            return cls(kind, None, None, None, frozenset(), None, opened_at)
-        return cls(
-            kind,
-            change.version,
-            change.fingerprint,
-            change.content,
-            change.containers,
-            change.logical_key,
-            opened_at,
-        )
+            return cls(kind, None, *NO_DATA, opened_at)
+        return cls(kind, change.version, *data(change), opened_at)

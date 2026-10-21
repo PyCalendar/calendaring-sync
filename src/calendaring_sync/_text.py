@@ -44,3 +44,23 @@ def check_content(content: object) -> None:
     """
     if not isinstance(content, bytes):
         raise TypeError(f"content must be bytes, not {type(content).__name__}")
+
+
+def check_data(
+    content: object,
+    fingerprint: str | None,
+    containers: frozenset[str],
+    logical_key: str | None,
+    **values: str | None,
+) -> None:
+    """Check a copy of an object: its content with :func:`check_content`, and its strings.
+
+    Args:
+        content: The copy's content.
+        fingerprint: Its fingerprint.
+        containers: Its containers.
+        logical_key: Its logical key.
+        values: Any other strings that come with it, by name.
+    """
+    check_content(content)
+    check_text(fingerprint=fingerprint, containers=containers, logical_key=logical_key, **values)

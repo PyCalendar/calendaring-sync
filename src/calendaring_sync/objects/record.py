@@ -20,7 +20,7 @@ class RecordState(StrEnum):
     SYNCED = "synced"
     #: Holds a :term:`pending edit`.
     PENDING = "pending"
-    #: Its :term:`push` was sent, and how it ended isn't known yet.
+    #: Its :term:`push` was :term:`claimed <claim>`, and how it ended isn't known yet.
     IN_FLIGHT = "in_flight"
     #: Holds an open :term:`conflict`.
     CONFLICT = "conflict"
@@ -67,6 +67,9 @@ class Record:
             flight or in conflict, and ``None`` otherwise.
         conflict: The server's side of an open :term:`conflict`, held while
             the record is in conflict, and ``None`` otherwise.
+        claims: How many times a :term:`push` of the record was
+            :term:`claimed <claim>`. How a push ended only counts while no
+            later claim has been made.
     """
 
     local_key: int
@@ -82,6 +85,7 @@ class Record:
     last_entry: int
     edit: LocalEdit | None = None
     conflict: Conflict | None = None
+    claims: int = 0
 
     @property
     def is_create(self) -> bool:

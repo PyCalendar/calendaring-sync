@@ -31,6 +31,7 @@ from calendaring_sync.error import (
     UnknownRecordError,
     UnknownScopeError,
 )
+from calendaring_sync.objects._data import NO_DATA, REMOTE, data
 from calendaring_sync.objects.conflict import ConflictKind
 from calendaring_sync.objects.edit import EditKind
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
@@ -40,19 +41,16 @@ from calendaring_sync.objects.scope import Scope
 # The states in which a record holds a pending edit.
 _EDIT_STATES = frozenset({RecordState.PENDING, RecordState.IN_FLIGHT, RecordState.CONFLICT})
 
-# The edit each kind of conflict is about, and whether the server still has
-# the object. What the server's side of a refused create holds is decided
-# with pushes, so that kind allows either.
-_CONFLICT_SIDES: dict[ConflictKind, tuple[EditKind, bool | None]] = {
+# The edit each kind of conflict is about, and whether the conflict holds a
+# copy of the server's object. A refused create holds none: the server sent
+# nothing back but the refusal.
+_CONFLICT_SIDES: dict[ConflictKind, tuple[EditKind, bool]] = {
     ConflictKind.BOTH_CHANGED: (EditKind.CHANGE, True),
     ConflictKind.REMOVED_REMOTELY: (EditKind.CHANGE, False),
     ConflictKind.DELETED_LOCALLY: (EditKind.DELETE, True),
     ConflictKind.BOTH_CREATED: (EditKind.CREATE, True),
-    ConflictKind.LOGICAL_KEY_TAKEN: (EditKind.CREATE, None),
+    ConflictKind.LOGICAL_KEY_TAKEN: (EditKind.CREATE, False),
 }
-
-# Content, fingerprint, containers and logical key of a copy that isn't there.
-_NO_COPY: tuple[None, None, frozenset[str], None] = (None, None, frozenset(), None)
 
 
 def _check_record(record: Record) -> None:
@@ -71,8 +69,7 @@ def _check_record(record: Record) -> None:
         raise RecordValueError("A record has no synced content exactly when its edit is a create")
     # A delete holds no copy of the object; a change or a create holds one.
     if edit is not None:
-        edit_copy = (edit.content, edit.fingerprint, edit.containers, edit.logical_key)
-        if edit.kind is EditKind.DELETE and edit_copy != _NO_COPY:
+        if edit.kind is EditKind.DELETE and data(edit) != NO_DATA:
             raise RecordValueError("A delete edit can't hold a copy of the object")
         if edit.kind is not EditKind.DELETE and edit.content is None:
             raise RecordValueError(f"A {edit.kind} edit needs the object's content")
@@ -83,18 +80,15 @@ def _check_record(record: Record) -> None:
     if edit is None or edit.kind is not edit_kind:
         raise RecordValueError(f"A {conflict.kind} conflict needs a {edit_kind} edit")
     # The server's side holds a copy exactly when the server still has the object.
-    remote_copy = (
-        conflict.remote_content,
-        conflict.remote_fingerprint,
-        conflict.remote_containers,
-        conflict.remote_logical_key,
-    )
-    removed = remote_copy == _NO_COPY and conflict.remote_version is None
+    removed = data(conflict, REMOTE) == NO_DATA and conflict.remote_version is None
     if conflict.remote_content is None and not removed:
         raise RecordValueError("A conflict without the server's content can't hold the rest of it")
-    if server_has_it is not None and server_has_it == removed:
+    if server_has_it == removed:
         need = "needs" if server_has_it else "can't hold"
         raise RecordValueError(f"A {conflict.kind} conflict {need} the server's copy")
+    # Only a refused create names the object holding its logical key.
+    if conflict.holder is not None and conflict.kind is not ConflictKind.LOGICAL_KEY_TAKEN:
+        raise RecordValueError(f"A {conflict.kind} conflict can't name a holder")
 
 
 class StateStore(ABC):
@@ -262,9 +256,10 @@ class StateStore(ABC):
                 in conflict, the server's side of a conflict exactly when
                 it's in conflict, and no synced content exactly when its
                 edit is a create. An edit holds a copy of the object unless
-                it's a delete, and a conflict's edit and server's side match
-                its kind. The record is checked first, so this is raised
-                outside a transaction too.
+                it's a delete, a conflict's edit and server's side match its
+                kind, and only a refused create's conflict names a holder.
+                The record is checked first, so this is raised outside a
+                transaction too.
             TransactionRequiredError: If no transaction is open in this thread.
             TransactionPermissionError: If the transaction only reads.
             UnknownScopeError: If the record's scope doesn't exist.
@@ -364,16 +359,26 @@ class StateStore(ABC):
         with self._operation(write=False):
             return self._find_by_logical_key(scope_id, logical_key)
 
-    def scope_records(self, scope_id: str) -> list[Record]:
-        """Return every record in the scope, ordered by local key.
+    def scope_records(
+        self, scope_id: str, *, states: frozenset[RecordState] | None = None
+    ) -> list[Record]:
+        """Return the scope's records, ordered by local key.
 
         Runs inside any transaction.
+
+        Args:
+            scope_id: The scope to read.
+            states: Only the records in one of these states; ``None`` for
+                every record. An empty set matches none, without asking the
+                store, since not every database takes an empty list.
 
         Raises:
             TransactionRequiredError: If no transaction is open in this thread.
         """
         with self._operation(write=False):
-            return self._scope_records(scope_id)
+            if states is not None and not states:
+                return []
+            return self._scope_records(scope_id, states)
 
     def removed_records(self, through: int) -> list[Record]:
         """Return the removed records no feed entry after ``through`` is about.
@@ -519,7 +524,9 @@ class StateStore(ABC):
     def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]: ...
 
     @abstractmethod
-    def _scope_records(self, scope_id: str) -> list[Record]: ...
+    def _scope_records(
+        self, scope_id: str, states: frozenset[RecordState] | None
+    ) -> list[Record]: ...
 
     @abstractmethod
     def _removed_records(self, through: int) -> list[Record]: ...

@@ -1,0 +1,1 @@
+Added pushes and conflict resolution. A ``Session`` lists the edits ready to push, claims each one so no other process sends it, and records how the push ended; the next complete ingest settles a push whose answer never arrived. ``Replica.resolve`` and ``Replica.resolve_conflicts`` resolve conflicts with your edit, the server's side, merged content, or a delete.

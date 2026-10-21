@@ -25,6 +25,9 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
    checkpoint
       The sync token a :term:`truncated page` ends at. The next request continues from it.
 
+   claim
+      To mark a :term:`pending edit` :term:`in flight` just before pushing it, in one step that fails if another process got there first.
+
    conflict
       An object where your :term:`pending edit` and the server disagree: both sides changed it, one side deleted it while the other edited it, or the server refused your create because another object holds its :term:`UID`. calendaring-sync reports it and leaves the decision to you.
 
@@ -56,7 +59,7 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
       A :term:`change set` that lists every object in a scope, not only the ones that changed.
 
    in flight
-      The state of a :term:`push` the core has marked as sent, before the adapter reports how it ended.
+      The state of a :term:`push` that was :term:`claimed <claim>`, until the adapter reports how it ended or the next complete :term:`ingest` settles it.
 
    incremental change set
       A :term:`change set` that holds only what changed since the scope's :term:`sync token`.

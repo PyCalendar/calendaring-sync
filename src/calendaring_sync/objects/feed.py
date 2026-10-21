@@ -26,6 +26,12 @@ class FeedEntryKind(StrEnum):
     CONFLICT_UPDATED = "conflict_updated"
     #: An open conflict ended, and the record holds what it ended with.
     CONFLICT_RESOLVED = "conflict_resolved"
+    #: A :term:`push` reached the server: the record holds your edit as
+    #: synced, or is removed for a delete.
+    PUSHED = "pushed"
+    #: A :term:`push` didn't go through, and the edit is pending again for
+    #: a later sync.
+    PUSH_FAILED = "push_failed"
 
 
 @dataclass(frozen=True)
@@ -39,7 +45,8 @@ class FeedEntry:
         kind: What happened.
         local_key: The :term:`local key` of the record the entry is about,
             ``None`` for a dropped scope. The record may since have been
-            :term:`purged <purge>`.
+            :term:`purged <purge>`, or deleted if it was a create the server
+            never had.
         object_id: The record's :term:`object id` when the entry was
             written, ``None`` for a dropped scope.
         at: When the entry was written.
