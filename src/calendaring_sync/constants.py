@@ -18,7 +18,7 @@ SCHEMA_VERSION = 1
 FEED_PAGE_SIZE = 1000
 
 #: Seconds :class:`~calendaring_sync.store.sqlite.SQLiteStore` waits for
-#: another process or thread before giving up.
+#: another process before giving up.
 DEFAULT_TIMEOUT = 5.0
 
 #: Where to report a bug, named in the message of

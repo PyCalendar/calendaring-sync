@@ -657,10 +657,16 @@ class TestPackage:
     def test_every_entry_point_checks_its_types(self):
         for cls in (Replica, Session, StateStore, MemoryStore, SQLiteStore):
             for name, func in vars(cls).items():
-                if inspect.isfunction(func) and (not name.startswith("_") or name == "__init__"):
-                    assert getattr(func, "_checks_arguments", False), f"{cls.__name__}.{name}"
-                    # Builds the check; an annotation it can't read raises here.
-                    argument_check(inspect.unwrap(func))
+                if name.startswith("_") and name != "__init__":
+                    continue
+                if isinstance(func, property):
+                    # A property that only reads takes no argument to check.
+                    assert func.fset is None, f"{cls.__name__}.{name} has a setter"
+                    continue
+                assert inspect.isfunction(func), f"{cls.__name__}.{name} isn't checked"
+                assert getattr(func, "_checks_arguments", False), f"{cls.__name__}.{name}"
+                # Builds the check; an annotation it can't read raises here.
+                argument_check(inspect.unwrap(func))
         exported = [getattr(calendaring_sync, name) for name in calendaring_sync.__all__]
         for cls in exported:
             if isinstance(cls, type) and dataclasses.is_dataclass(cls):
@@ -2559,12 +2565,17 @@ class _HoldsEmpty:
 
 
 class TestSQLiteStore:
-    def test_busy_file_raises_store_busy_error_and_stays_usable(self, db_path):
+    # Another process's write makes a write busy as it starts, its read as it commits.
+    @pytest.mark.parametrize("held", ["write", "read"])
+    def test_busy_file_raises_store_busy_error_and_stays_usable(self, db_path, held):
         with _busy_pair(db_path) as (holder, waiter):
-            with holder.transaction(), pytest.raises(StoreBusyError):
-                _enter(waiter.transaction())
-            with waiter.transaction():
-                waiter.put_scope(_new_scope())
+            with (
+                _held_open(holder, write=held == "write", work=holder.scopes),
+                pytest.raises(StoreBusyError),
+            ):
+                _add_scope(waiter)
+            assert _scope_ids(waiter) == []
+            _add_scope(waiter)
             assert _scope_ids(holder) == [_SCOPE]
 
     def test_ingest_while_busy_changes_nothing_and_can_be_retried(self, db_path, clock):
@@ -2689,13 +2700,28 @@ class TestSQLiteStore:
         with pytest.raises(TypeError, match=message):
             _reader(cls)
 
-    def test_a_read_held_open_past_the_timeout_makes_a_write_busy(self, db_path):
+    @pytest.mark.parametrize("mode, locks_reads_out", [("delete", True), ("wal", False)])
+    def test_a_commit_waits_for_reads_here_where_it_locks_them_out(
+        self, db_path, mode, locks_reads_out
+    ):
+        _edit_file(db_path, f"PRAGMA journal_mode = {mode}", ())
         with SQLiteStore(db_path, timeout=_SHORT_TIMEOUT) as store:
-            with _held_open(store, write=False, work=store.scopes):
-                with pytest.raises(StoreBusyError), _write_with_scope(store):
-                    pass
-            assert _scope_ids(store) == []
-            _add_scope(store)
+            # Where a commit locks reads out, a write keeps its changes in memory:
+            # the pragma gives the pages it holds before spilling, 0 for never.
+            spills = store._writer.execute("PRAGMA cache_spill").fetchone()[0]
+            assert bool(spills) is not locks_reads_out
+            with (
+                ThreadPoolExecutor(1) as pool,
+                _held_open(store, write=False, work=store.scopes),
+            ):
+                writing = pool.submit(_add_scope, store)
+                if locks_reads_out:
+                    # Past the timeout it's still waiting, not busy.
+                    with pytest.raises(TimeoutError):
+                        writing.result(_SHORT_TIMEOUT * 3)
+                else:
+                    writing.result(_WAIT)
+            writing.result()
             assert _scope_ids(store) == [_SCOPE]
 
     def test_interrupted_ingest_leaves_the_token_after_reopening(self, db_path, clock):

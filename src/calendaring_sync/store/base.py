@@ -156,8 +156,7 @@ class StateStore(ABC):
 
         Raises:
             TransactionError: If a transaction is already open in this thread.
-            StoreBusyError: If another process or thread kept the store busy
-                for too long.
+            StoreBusyError: If another process kept the store busy for too long.
             StoreError: If the store was closed, or can't start or keep the
                 transaction.
         """

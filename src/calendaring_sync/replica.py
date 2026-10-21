@@ -527,8 +527,8 @@ class Replica:
     Every method raises :class:`TypeError` for an argument of the wrong
     type, before it changes anything. Any method can also raise the
     store's errors:
-    :class:`~calendaring_sync.error.StoreBusyError` when another process or
-    thread kept the store busy, which is safe to retry,
+    :class:`~calendaring_sync.error.StoreBusyError` when another process
+    kept the store busy, which is safe to retry,
     :class:`~calendaring_sync.error.StoreError` when the store can't read or
     write its data, and :class:`~calendaring_sync.error.UnexpectedStoreError`
     for a bug in the store. None of them changes anything.

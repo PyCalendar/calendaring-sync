@@ -139,7 +139,7 @@ class StoreError(CalendaringSyncError):
 
 
 class StoreBusyError(StoreError):
-    """Another process or thread kept the :term:`store` busy for longer than the store waits.
+    """Another process kept the :term:`store` busy for longer than the store waits.
 
     Nothing was changed. Try again later.
     """

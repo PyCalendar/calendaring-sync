@@ -74,8 +74,8 @@ class MemoryStore(StateStore):
     else is reported as a bug.
 
     Examples:
-        A store that keeps its data as pickled bytes, read back by a second
-        store:
+        A store that keeps its data as pickled bytes, read once when it
+        opens, and a second store opened from those bytes:
 
         >>> import pickle
         >>> from calendaring_sync import Changed, ChangeSet, MemoryStore, Replica
@@ -83,10 +83,11 @@ class MemoryStore(StateStore):
         ...     def __init__(self, saved=None):
         ...         super().__init__()
         ...         self.saved = saved
-        ...     def _load(self):
-        ...         return pickle.loads(self.saved) if self.saved else super()._load()
+        ...         if saved:
+        ...             super()._save(pickle.loads(saved))
         ...     def _save(self, data):
         ...         self.saved = pickle.dumps(data)
+        ...         super()._save(data)
         >>> first = PickledStore()
         >>> listing = ChangeSet(
         ...     "work", None, "t1", {"a": Changed("v1", "fp-a", b"Team meeting")}, full_listing=True

@@ -328,24 +328,25 @@ class SQLiteStore(StateStore):
     Writes take one connection, one transaction at a time, and SQLite's write
     lock for their whole transaction, so two processes on one file never
     interleave. Reads take a second connection, one at a time, so a read in
-    one thread doesn't wait for another thread's write. For that, a write
-    keeps what it changes in memory until it commits: a full listing takes
-    about as much memory again as its change set holds. A commit still waits
-    for the reads open at that moment, in this process or another, so the
-    store keeps reads short. A write waits up to ``timeout`` seconds for
-    them, then raises :class:`~calendaring_sync.error.StoreBusyError`, and
-    a read that starts during a commit waits for it the same way. A
-    database at ``":memory:"`` or an empty path belongs to one connection,
-    so it has only that one, and its transactions take turns.
+    one thread doesn't wait for another thread's write. A database at
+    ``":memory:"`` or an empty path belongs to one connection, so it has
+    only that one, and its transactions take turns.
 
-    Setting the file to SQLite's WAL journal mode lets reads and a commit
-    overlap too. The mode is kept in the file, so set it once with
-    ``PRAGMA journal_mode = WAL``; WAL doesn't work on a network filesystem.
+    In SQLite's default journal mode, a commit locks reads out of the file.
+    So it waits for the reads open in this process, and reads in another
+    process make it wait up to ``timeout`` seconds, then raise
+    :class:`~calendaring_sync.error.StoreBusyError`; the store keeps reads
+    short for that. A write also keeps what it changes in memory until it
+    commits, so that reads aren't locked out before then: a full listing
+    takes about as much memory again as its change set holds. In WAL mode
+    reads and a commit don't lock each other out, so a commit waits for no
+    read and a write keeps nothing extra in memory. The mode is kept in the
+    file, so set it once with ``PRAGMA journal_mode = WAL``; WAL doesn't
+    work on a network filesystem.
 
     Args:
         path: The database file. It's created, with the schema, if missing.
-        timeout: Seconds to wait for another process or thread before
-            giving up.
+        timeout: Seconds to wait for another process before giving up.
 
     Raises:
         TypeError: If ``path`` or ``timeout`` has the wrong type.
@@ -359,8 +360,13 @@ class SQLiteStore(StateStore):
     def __init__(self, path: str | os.PathLike[str], *, timeout: float = DEFAULT_TIMEOUT) -> None:
         super().__init__()
         self._reader: sqlite3.Connection | None = None
-        # Read transactions take turns on the reader's connection; each thread
-        # notes whether it has the turn, so only the thread that took it gives it back.
+        # Whether a write locks reads out of the file: in the default journal
+        # mode it does, in WAL mode it doesn't.
+        self._locks_reads_out = False
+        # Read transactions take turns on the reader's connection, and where a
+        # commit locks reads out, it takes a turn too, so no read in this
+        # process is open while it runs. Each thread notes whether it has the
+        # turn, so only the thread that took it gives it back.
         self._read_turn = Lock()
         self._turn_taken = local()
         with self._errors():
@@ -375,10 +381,13 @@ class SQLiteStore(StateStore):
                 else:
                     self._reader = _connect(path, timeout)
                     self._reader.execute("PRAGMA query_only = ON")
-                    # A write that outgrows SQLite's page cache would otherwise
-                    # write into the file before it commits, which locks the
-                    # reads out until the commit.
-                    self._writer.execute("PRAGMA cache_spill = OFF")
+                    mode = self._writer.execute("PRAGMA journal_mode").fetchone()[0]
+                    self._locks_reads_out = mode != "wal"
+                    if self._locks_reads_out:
+                        # A write that outgrows SQLite's page cache would otherwise
+                        # write into the file before it commits, which locks the
+                        # reads out until the commit.
+                        self._writer.execute("PRAGMA cache_spill = OFF")
         except BaseException:
             self._close()
             raise
@@ -440,11 +449,14 @@ class SQLiteStore(StateStore):
 
     def _begin(self, *, write: bool) -> None:
         if self._reads_apart():
-            self._read_turn.acquire()
-            self._turn_taken.taken = True
+            self._take_read_turn()
         self._conn.execute("BEGIN IMMEDIATE" if write else "BEGIN")
 
     def _commit(self) -> None:
+        if self._locks_reads_out and self._writing():
+            # The reads open in this process end first, and new ones wait, so
+            # only another process can keep the commit busy.
+            self._take_read_turn()
         self._conn.execute("COMMIT")
         self._end_read()
 
@@ -459,8 +471,13 @@ class SQLiteStore(StateStore):
         """Whether this thread's transaction reads on the reader's connection."""
         return self._reader is not None and not self._writing()
 
+    def _take_read_turn(self) -> None:
+        """Take the read turn for this thread's transaction, after the reads ahead of it."""
+        self._read_turn.acquire()
+        self._turn_taken.taken = True
+
     def _end_read(self) -> None:
-        """Give the reader's connection to the next read, if this thread's read took it."""
+        """Give the read turn back, if this thread's transaction took it."""
         if getattr(self._turn_taken, "taken", False):
             self._turn_taken.taken = False
             self._read_turn.release()
