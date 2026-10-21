@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from datetime import datetime
+from threading import local
+from typing import cast
 
 from calendaring_sync._checks import check_argument_types
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
@@ -40,19 +42,28 @@ class MemoryStore(StateStore):
 
     Each transaction works on its own view of the data: a read on the data
     the last write committed, a write on a copy of it, which becomes the
-    committed data only when the transaction ends normally. Lookups scan
-    every record, so it suits test data, not large stores. Meant for tests;
-    use :class:`~calendaring_sync.store.sqlite.SQLiteStore` to keep state.
+    committed data only when the transaction ends normally. So a read in
+    one thread runs while another thread writes, and sees the data as it
+    was when the read started. Lookups scan every record, so it suits test
+    data, not large stores. Meant for tests; use
+    :class:`~calendaring_sync.store.sqlite.SQLiteStore` to keep state.
 
     To keep the data somewhere else, such as a file written with
-    :mod:`pickle` or an object database, subclass it and override two
-    methods: ``_load()`` returns the data the last write committed, and
-    ``_save(data)`` keeps the data a write commits. ``_load`` runs at the
-    start of every transaction, reads included, so a store that reads a
-    file there keeps what it last loaded or saved and reads the file again
-    only when it changed. The data is one object of plain containers
-    holding the library's frozen dataclasses, so it pickles. The checks,
-    the transactions and every lookup come from the base classes.
+    :mod:`pickle` or an object database, subclass it and override the two
+    methods that read and keep it: ``_load()`` returns the data the last
+    write committed, and ``_save(data)`` keeps the data a write commits.
+    The data is one object of plain containers holding the library's
+    frozen dataclasses, so it pickles. The checks, the transactions and
+    every lookup come from the base classes.
+
+    ``_load`` runs at the start of every transaction, reads included, and
+    can run in one thread while ``_save`` runs in another. So a store that
+    keeps its data in a file reads the file once, when it opens, and
+    leaves ``_load`` as it is: it passes what it read to
+    ``super()._save()``, and its own ``_save`` writes the file and then
+    calls ``super()._save()``, so reads come from memory. A store whose
+    ``_load`` can't run while ``_save`` does sets ``_reads_beside_writes``
+    to ``False``.
 
     If ``_save`` fails, the transaction fails and the last saved data
     stays, as long as ``_save`` doesn't stop halfway: write to a new file
@@ -88,11 +99,19 @@ class MemoryStore(StateStore):
         b'Team meeting'
     """
 
+    _reads_beside_writes = True
+
     def __init__(self) -> None:
         super().__init__()
         self._committed = _Data()
-        # The open transaction's view of the data.
-        self._data = self._committed
+        # Each thread's open transaction's view of the data.
+        self._views = local()
+
+    @property
+    def _data(self) -> _Data:
+        """This thread's transaction's view of the data."""
+        data: _Data = self._views.data
+        return data
 
     def _load(self) -> _Data:
         """Return the data the last committed write saved."""
@@ -104,15 +123,22 @@ class MemoryStore(StateStore):
 
     def _begin(self, *, write: bool) -> None:
         data = self._load()
-        self._data = data.copy() if write else data
+        self._views.data = data.copy() if write else data
 
     def _commit(self) -> None:
-        if self._writable:
-            self._save(self._data)
+        data = self._end_view()
+        if self._writing():
+            # _begin set this thread's view, and only _commit or _rollback drops it.
+            self._save(cast(_Data, data))
 
     def _rollback(self) -> None:
-        # A write worked on a copy that's never saved, so there's nothing to undo.
-        pass
+        # A write worked on a copy that's never saved, so dropping it undoes everything.
+        self._end_view()
+
+    def _end_view(self) -> _Data | None:
+        """Drop and return this thread's view, so an idle thread keeps no old copy of the data."""
+        data: _Data | None = vars(self._views).pop("data", None)
+        return data
 
     def _get_scope(self, scope_id: str) -> Scope | None:
         return self._data.scopes.get(scope_id)

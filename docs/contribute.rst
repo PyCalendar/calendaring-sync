@@ -39,7 +39,7 @@ If your change touches ingesting, local edits, pushes or a store, run the benchm
 
     python -m calendaring_sync.tests.benchmark
 
-It times a full listing of a large scope, a second listing over local edits and conflicts, a run of single edits, and pushes of those edits, each on a fresh SQLite store. Times differ between machines, so only the comparison means anything. Explain any slowdown beyond run-to-run noise in your pull request. ``--size`` and ``--runs`` change the scope's size and the number of runs.
+It times a full listing of a large scope, a second listing over local edits and conflicts, a run of single edits, pushes of those edits, and the longest read in another thread while a listing runs, each on a fresh SQLite store. Times differ between machines, so only the comparison means anything. Explain any slowdown beyond run-to-run noise in your pull request. ``--size`` and ``--runs`` change the scope's size and the number of runs.
 
 Previewing docs
 ===============

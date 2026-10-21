@@ -14,11 +14,11 @@ SCHEMA_VERSION = 1
 #: Default and largest number of entries one
 #: :meth:`~calendaring_sync.replica.Replica.read_feed` call returns. Reading
 #: the feed in pages keeps each read short, so it never holds up a write
-#: from another process for long.
+#: in another process or thread for long.
 FEED_PAGE_SIZE = 1000
 
 #: Seconds :class:`~calendaring_sync.store.sqlite.SQLiteStore` waits for
-#: another process to finish writing before giving up.
+#: another process or thread before giving up.
 DEFAULT_TIMEOUT = 5.0
 
 #: Where to report a bug, named in the message of

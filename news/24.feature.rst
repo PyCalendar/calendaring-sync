@@ -1,0 +1,1 @@
+A read no longer waits for another thread's write: in ``MemoryStore`` and ``SQLiteStore``, a transaction that only reads runs while a write is open in another thread, and sees the store as the last write left it. On SQLite, a commit still waits for the reads open at that moment, up to the store's ``timeout``, then raises ``StoreBusyError``.
