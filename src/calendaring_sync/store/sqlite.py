@@ -16,6 +16,7 @@ from operator import attrgetter
 from types import UnionType
 from typing import Any, NamedTuple, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
+from calendaring_sync._checks import check_argument_types
 from calendaring_sync.constants import DEFAULT_TIMEOUT, SCHEMA_VERSION
 from calendaring_sync.error import (
     CalendaringSyncError,
@@ -307,6 +308,7 @@ def _load(reader: _Reader, row: sqlite3.Row) -> Any:
     return reader.cls(**values)
 
 
+@check_argument_types
 class SQLiteStore(StateStore):
     """A store in a SQLite database file, shared between threads and processes.
 
@@ -327,6 +329,7 @@ class SQLiteStore(StateStore):
         timeout: Seconds to wait for another process before giving up.
 
     Raises:
+        TypeError: If ``path`` or ``timeout`` has the wrong type.
         StoreVersionError: If a newer calendaring-sync wrote the file.
         StoreBusyError: If another process kept the file busy past ``timeout``.
         StoreError: If the file can't be opened or isn't a store.

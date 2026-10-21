@@ -8,10 +8,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from calendaring_sync._text import check_text
+from calendaring_sync._checks import check_text, checked_when_built
 from calendaring_sync.objects.change import Change
 
 
+@checked_when_built
 @dataclass(frozen=True)
 class ChangeSet:
     """One :term:`change set`, or one :term:`truncated page` of it, for one :term:`scope`.
@@ -33,6 +34,7 @@ class ChangeSet:
         truncated: Whether more pages follow it.
 
     Raises:
+        TypeError: If a field has the wrong type.
         ValueError: If the scope id, a token or an object id holds a
             :ref:`lone surrogate <lone-surrogates>`.
     """

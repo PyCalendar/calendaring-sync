@@ -17,6 +17,7 @@ from enum import StrEnum
 from threading import Lock
 from typing import TypeVar, cast
 
+from calendaring_sync._checks import check_argument_types, check_data, check_text
 from calendaring_sync._classify import (
     ChangeClass,
     classify,
@@ -24,7 +25,6 @@ from calendaring_sync._classify import (
     same_data,
     same_remote,
 )
-from calendaring_sync._text import check_data, check_text
 from calendaring_sync.constants import FEED_PAGE_SIZE
 from calendaring_sync.error import (
     DuplicateObjectError,
@@ -254,6 +254,7 @@ class SessionState(StrEnum):
     PUSHING = "pushing"
 
 
+@check_argument_types
 class Session:
     """One sync of one :term:`scope`, opened with :meth:`Replica.session`.
 
@@ -261,6 +262,9 @@ class Session:
     :term:`adapter` pushes your :term:`pending edits <pending edit>`: for each
     record :meth:`to_push` lists, it :meth:`claims <claim>` it, sends it, and
     :meth:`settles <settle>` it with how the push ended.
+
+    Every method raises :class:`TypeError` for an argument of the wrong
+    type, before it changes anything.
 
     Examples:
         The adapter pushes an edit after ingesting what changed on the server,
@@ -503,6 +507,7 @@ class Session:
         self._restart()
 
 
+@check_argument_types
 class Replica:
     """The sync state of every :term:`scope` in one :term:`store`.
 
@@ -519,7 +524,9 @@ class Replica:
     methods can't run inside a transaction already open in the same
     thread; they raise :class:`~calendaring_sync.error.TransactionError`.
 
-    Any method can also raise the store's errors:
+    Every method raises :class:`TypeError` for an argument of the wrong
+    type, before it changes anything. Any method can also raise the
+    store's errors:
     :class:`~calendaring_sync.error.StoreBusyError` when another process
     kept the store busy, which is safe to retry,
     :class:`~calendaring_sync.error.StoreError` when the store can't read or
@@ -976,7 +983,6 @@ class Replica:
             UnknownScopeError: If there's no scope with this id.
             DuplicateObjectError: If a record that isn't removed holds the
                 object id.
-            TypeError: If the content isn't bytes.
             ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
 
         Examples:
@@ -986,9 +992,7 @@ class Replica:
             >>> replica.record(key).edit.content
             b'Lunch'
         """
-        check_data(
-            content, fingerprint, containers, logical_key, scope_id=scope_id, object_id=object_id
-        )
+        check_data(fingerprint, containers, logical_key, scope_id=scope_id, object_id=object_id)
         with self._store.transaction():
             self._existing_scope(scope_id)
             edit = LocalEdit(
@@ -1034,7 +1038,6 @@ class Replica:
             OpenConflictError: If the record holds an open :term:`conflict`.
             RemovedRecordError: If the record was removed from the server.
             PushInFlightError: If the record's :term:`push` is :term:`in flight`.
-            TypeError: If the content isn't bytes.
             ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
 
         Examples:
@@ -1049,7 +1052,7 @@ class Replica:
             >>> replica.record(key).state
             <RecordState.SYNCED: 'synced'>
         """
-        check_data(content, fingerprint, containers, logical_key)
+        check_data(fingerprint, containers, logical_key)
         with self._editing(local_key) as record:
             edit = LocalEdit(
                 EditKind.CHANGE, content, fingerprint, containers, logical_key, self._clock()

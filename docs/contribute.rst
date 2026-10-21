@@ -125,6 +125,9 @@ No duplication
 No hardcoding
     A literal that means something (a status value, a format string, a default path) belongs in a named constant defined once, not inlined at every call site. A one-off literal with no reused meaning (a test fixture's arbitrary ID) doesn't need this.
 
+Argument types
+    The public methods of ``Replica``, ``Session`` and the stores, and the value classes an adapter builds, check their argument types at runtime, from their annotations, so give every parameter of a new public method an annotation. A built-in type such as ``str`` or ``int`` has to match exactly, so ``True`` isn't taken as ``1``. The unit tests build every check and fail on a parameter without an annotation, or on one the checks can't read.
+
 RFC citations
     The core doesn't cite RFCs; see :ref:`write-about-sync`. In adapter docstrings (not comments, not test files, see below), cite a real, finalized RFC with Sphinx's ``:rfc:`` role, and always merge the section number into the role itself: ``:rfc:`5545#section-3.6.1```, not ``:rfc:`5545` section 3.6.1``. The latter renders as two disconnected pieces, a link to the RFC's front page and plain text next to it, so a reader has to manually find the section after clicking through. Verify the section number against the actual RFC text before citing it; don't guess from a related section or trust an existing comment's number without checking.
 

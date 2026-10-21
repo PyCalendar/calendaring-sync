@@ -18,6 +18,7 @@ from threading import RLock, get_ident
 from types import TracebackType
 from typing import Self
 
+from calendaring_sync._checks import check_argument_types
 from calendaring_sync.constants import ISSUES_URL
 from calendaring_sync.error import (
     CalendaringSyncError,
@@ -91,6 +92,7 @@ def _check_record(record: Record) -> None:
         raise RecordValueError(f"A {conflict.kind} conflict can't name a holder")
 
 
+@check_argument_types
 class StateStore(ABC):
     """Where the core keeps each :term:`scope`, its records, and the :term:`change feed`.
 
@@ -101,6 +103,10 @@ class StateStore(ABC):
 
     Besides the errors each method lists, every operation, :meth:`transaction`
     and :meth:`close` can raise:
+
+    - :class:`TypeError`, for an argument of the wrong type, before anything
+      is read or written; a record or scope to write is checked field by
+      field
 
     - :class:`~calendaring_sync.error.StoreError`, if the store can't read or
       write its data

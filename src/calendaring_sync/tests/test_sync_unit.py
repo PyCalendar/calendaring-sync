@@ -9,8 +9,10 @@ Rule: zero network calls, zero Docker dependency, all tests are fast.
 
 from __future__ import annotations
 
+import dataclasses
 import doctest
 import importlib
+import inspect
 import pkgutil
 import re
 import runpy
@@ -24,7 +26,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
-from typing import cast
+from typing import Any, Literal
 from unittest.mock import patch
 
 import pytest
@@ -83,6 +85,7 @@ from calendaring_sync import (
     UnknownScopeError,
     UpdateHolder,
 )
+from calendaring_sync._checks import _CHECKED_WHEN_BUILT, _fields, argument_check
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
 from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
 from calendaring_sync.tests import benchmark
@@ -608,6 +611,35 @@ class TestPackage:
             RecordState.CONFLICT: conflicted,
         }
         assert benchmark.entries_after_pushes(size) == {FeedEntryKind.PUSHED: edited}
+
+    def test_every_entry_point_checks_its_types(self):
+        for cls in (Replica, Session, StateStore, MemoryStore, SQLiteStore):
+            for name, func in vars(cls).items():
+                if inspect.isfunction(func) and (not name.startswith("_") or name == "__init__"):
+                    assert getattr(func, "_checks_arguments", False), f"{cls.__name__}.{name}"
+                    # Builds the check; an annotation it can't read raises here.
+                    argument_check(inspect.unwrap(func))
+        exported = [getattr(calendaring_sync, name) for name in calendaring_sync.__all__]
+        for cls in exported:
+            if isinstance(cls, type) and dataclasses.is_dataclass(cls):
+                _fields(cls)
+        # The values an adapter or application builds check themselves.
+        assert _CHECKED_WHEN_BUILT == {Changed, ChangeSet, Applied, LogicalKeyTaken, Merge}
+
+    def test_a_check_refuses_what_it_cant_read(self):
+        def takes_many(*values: str) -> None: ...
+
+        def takes_a_literal(kind: Literal["a"]) -> None: ...
+
+        def takes_anything(value) -> None: ...
+
+        for func, match in [
+            (takes_many, r"takes \*values, which isn't checked"),
+            (takes_a_literal, "^Can't check a value against"),
+            (takes_anything, "takes value without a type to check$"),
+        ]:
+            with pytest.raises(TypeError, match=match):
+                argument_check(func)
 
     def test_version_is_set(self):
         assert isinstance(calendaring_sync.__version__, str)
@@ -1307,8 +1339,13 @@ _CONTENTS = [
 # A string no store can keep: a lone surrogate.
 _BAD_TEXT = "a\ud800b"
 
-# Content that isn't bytes, typed as bytes so the calls refusing it type-check.
-_NOT_BYTES = cast(bytes, "text of fa")
+
+def _wrong(value: object) -> Any:
+    """A value of the wrong type, passed where the type checker can't object."""
+    return value
+
+
+_NOT_BYTES = _wrong("text of fa")
 
 
 class TestLocalEdits:
@@ -1962,7 +1999,7 @@ class TestLocalCopy:
         assert (record.edit.containers, record.edit.logical_key) == (frozenset({text}), text)
         assert replica.record(created).edit.content == content
 
-    def test_invalid_text_and_content_are_refused(self, replica, store):
+    def test_wrong_types_and_text_are_refused(self, replica, store, db_path):
         # The values an adapter or the application builds check themselves.
         built: list[tuple[Callable[[], object], type[Exception], str]] = [
             (
@@ -1971,19 +2008,64 @@ class TestLocalCopy:
                 "^fingerprint holds a lone surrogate at 1",
             ),
             (lambda: Changed("v1", "fa", _NOT_BYTES), TypeError, "^content must be bytes, not str"),
+            (
+                lambda: Changed(_wrong(1), "fa", b"c"),
+                TypeError,
+                "^version must be str or None, not int",
+            ),
+            (
+                lambda: Changed("v1", _wrong(None), b"c"),
+                TypeError,
+                "^fingerprint must be str, not NoneType",
+            ),
+            (
+                lambda: Changed("v1", "fa", b"c", _wrong("cal")),
+                TypeError,
+                "^containers must be frozenset of str, not str",
+            ),
+            (
+                lambda: Changed("v1", "fa", b"c", frozenset({_wrong(1)})),
+                TypeError,
+                "^containers must be frozenset of str, but holds int",
+            ),
+            (
+                lambda: ChangeSet(_wrong(1), None, "T1", {}),
+                TypeError,
+                "^scope must be str, not int",
+            ),
+            (
+                lambda: ChangeSet(_SCOPE, None, "T1", _wrong([])),
+                TypeError,
+                "^changes must be mapping of str to Changed, Removed or Unchanged, not list",
+            ),
             (lambda: _page(None, "T1", {_BAD_TEXT: Removed()}), ValueError, "^object_ids "),
+            (
+                lambda: _page(None, "T1", {"a": _wrong("removed")}),
+                TypeError,
+                r"^changes\['a'\] must be Changed, Removed or Unchanged, not str",
+            ),
             (lambda: Applied(_BAD_TEXT), ValueError, "^object_id "),
+            (lambda: Applied(_wrong(1)), TypeError, "^object_id must be str or None, not int"),
             (lambda: LogicalKeyTaken(_BAD_TEXT), ValueError, "^holder "),
             (lambda: Merge(b"c", fingerprint=_BAD_TEXT), ValueError, "^fingerprint "),
             (lambda: Merge(_NOT_BYTES, fingerprint="f"), TypeError, "^content "),
+            (
+                lambda: SQLiteStore(db_path, timeout=_wrong("5")),
+                TypeError,
+                "^timeout must be float",
+            ),
+            (lambda: Replica(store, clock=_wrong(5)), TypeError, "^clock must be callable or None"),
         ]
         for build, error, match in built:
             with pytest.raises(error, match=match):
                 build()
+        # Calls on the replica and the store refuse them on every store, before a transaction.
         _seeded(replica)
         key = _key(replica)
+        synced = replica.record(key)
         refused: list[tuple[Callable[[], object], type[Exception], str]] = [
             (lambda: _enter(_open_session(replica, _BAD_TEXT)), ValueError, "^scope_id "),
+            (lambda: _enter(_open_session(replica, _wrong(1))), TypeError, "^scope_id must be str"),
             (
                 lambda: replica.create(
                     _SCOPE, b"c", fingerprint="f", containers=frozenset({_BAD_TEXT})
@@ -1998,6 +2080,36 @@ class TestLocalCopy:
             ),
             (lambda: replica.create(_SCOPE, _NOT_BYTES, fingerprint="f"), TypeError, "^content "),
             (lambda: replica.change(key, _NOT_BYTES, fingerprint="f"), TypeError, "^content "),
+            (lambda: replica.record(_wrong("1")), TypeError, "^local_key must be int, not str"),
+            (lambda: replica.record(_wrong(True)), TypeError, "^local_key must be int, not bool"),
+            (lambda: replica.read_feed(_wrong("0")), TypeError, "^after must be int, not str"),
+            (
+                lambda: store.delete_record(_wrong("1")),
+                TypeError,
+                "^local_key must be int, not str",
+            ),
+            (
+                lambda: store.insert_record(replace(synced, containers=_wrong("cal"))),
+                TypeError,
+                "^record.containers must be frozenset of str, not str",
+            ),
+            (
+                lambda: store.update_record(
+                    replace(
+                        synced,
+                        state=RecordState.PENDING,
+                        edit=replace(_EDIT, containers=frozenset({_wrong(1)})),
+                    )
+                ),
+                TypeError,
+                "^record.edit.containers must be frozenset of str, but holds int",
+            ),
+            (
+                lambda: store.put_scope(replace(_new_scope(), token=_wrong(5))),
+                TypeError,
+                "^scope.token must be str or None, not int",
+            ),
+            (lambda: _enter(store.transaction(write=_wrong(1))), TypeError, "^write must be bool"),
         ]
         for call, error, match in refused:
             _assert_refused(replica, store, call, error, match, before_a_transaction=True)

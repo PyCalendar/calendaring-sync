@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 
+from calendaring_sync._checks import check_argument_types
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
@@ -31,6 +32,7 @@ class _Data:
         )
 
 
+@check_argument_types
 class MemoryStore(StateStore):
     """A store held in memory and lost when the process ends.
 
