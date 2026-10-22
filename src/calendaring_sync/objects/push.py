@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from calendaring_sync._text import check_text
+from calendaring_sync._checks import check_text, checked_when_built
 
 
+@checked_when_built
 @dataclass(frozen=True)
 class Applied:
     """The server applied the edit.
@@ -20,6 +21,7 @@ class Applied:
             object to another id. ``None`` keeps the record's id.
 
     Raises:
+        TypeError: If the id isn't a string or ``None``.
         ValueError: If the id holds a :ref:`lone surrogate <lone-surrogates>`.
 
     Examples:
@@ -55,6 +57,7 @@ class Gone:
     """
 
 
+@checked_when_built
 @dataclass(frozen=True)
 class LogicalKeyTaken:
     """The server refused a create because another object holds its :term:`logical key`.
@@ -64,6 +67,7 @@ class LogicalKeyTaken:
             the server names it; ``None`` when it doesn't.
 
     Raises:
+        TypeError: If the id isn't a string or ``None``.
         ValueError: If the id holds a :ref:`lone surrogate <lone-surrogates>`.
     """
 

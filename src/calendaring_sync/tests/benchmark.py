@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Benchmarks for the work a sync does most: full listings, local edits and pushes.
+Benchmarks for the work a sync does most: full listings, local edits, pushes, and reads during them.
 
 Run ``python -m calendaring_sync.tests.benchmark`` on ``main`` and on your
 branch, on the same machine, and compare the two. Times differ between
@@ -22,8 +22,10 @@ import tempfile
 import time
 from collections import Counter
 from collections.abc import Callable, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
+from threading import Event
 
 from calendaring_sync import (
     Applied,
@@ -153,6 +155,32 @@ def pushes(size: int) -> float:
         return _push_edits(replica)
 
 
+def read_during_listing(size: int) -> float:
+    """The longest one read in another thread takes while a listing of ``size`` objects ingests."""
+    with _replica() as replica:
+        _ingest(replica, _listing(size, None, _FIRST))
+        key = replica.records(_SCOPE)[0].local_key
+        reading, done = Event(), Event()
+
+        def read() -> float:
+            longest = 0.0
+            reading.set()
+            while not done.is_set():
+                started = time.perf_counter()
+                replica.record(key)
+                longest = max(longest, time.perf_counter() - started)
+            return longest
+
+        with ThreadPoolExecutor(1) as pool:
+            reader = pool.submit(read)
+            reading.wait()
+            try:
+                _ingest(replica, _listing(size, _FIRST, _SECOND, changed=size))
+            finally:
+                done.set()
+            return reader.result()
+
+
 def states_over_edits(size: int) -> Counter[RecordState]:
     """How many records end in each state in ``listing_over_edits``, to check what it measures."""
     with _replica() as replica:
@@ -175,6 +203,7 @@ SCENARIOS: dict[str, Callable[[int], float]] = {
     "listing over edits and conflicts": listing_over_edits,
     f"single edits to one in {EDITED_SHARE} objects": single_edits,
     f"pushes of one in {EDITED_SHARE} objects": pushes,
+    "longest read during a full listing": read_during_listing,
 }
 
 

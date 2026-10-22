@@ -14,10 +14,11 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime
-from threading import RLock, get_ident
+from threading import Condition, Lock, local
 from types import TracebackType
 from typing import Self
 
+from calendaring_sync._checks import check_argument_types
 from calendaring_sync.constants import ISSUES_URL
 from calendaring_sync.error import (
     CalendaringSyncError,
@@ -91,17 +92,23 @@ def _check_record(record: Record) -> None:
         raise RecordValueError(f"A {conflict.kind} conflict can't name a holder")
 
 
+@check_argument_types
 class StateStore(ABC):
     """Where the core keeps each :term:`scope`, its records, and the :term:`change feed`.
 
     Every operation runs inside :meth:`transaction`: one that only reads runs
     inside any transaction, and one that writes needs a transaction opened
-    with ``write=True``. One thread's transaction runs to the end before
-    another's starts, so a store is safe to share between threads.
+    with ``write=True``. A store is safe to share between threads: one write
+    transaction runs at a time, and in a store that sets
+    :attr:`_reads_beside_writes`, transactions that only read run in other
+    threads meanwhile instead of waiting for it.
 
     Besides the errors each method lists, every operation, :meth:`transaction`
     and :meth:`close` can raise:
 
+    - :class:`TypeError`, for an argument of the wrong type, before anything
+      is read or written; a record or scope to write is checked field by
+      field
     - :class:`~calendaring_sync.error.StoreError`, if the store can't read or
       write its data
     - :class:`~calendaring_sync.error.UnexpectedStoreError`, for any other
@@ -114,13 +121,25 @@ class StateStore(ABC):
     store implements those, along with :meth:`_begin`, :meth:`_commit` and
     :meth:`_rollback`, and needs no checks of its own. It turns the errors of
     the storage it uses into store errors by overriding :meth:`_store_error`.
-    Its ``__init__`` calls ``super().__init__()`` first.
+    Its ``__init__`` calls ``super().__init__()`` first. A hook runs in the
+    thread of the transaction it's for, and :meth:`_writing` says whether
+    that transaction writes.
     """
 
+    #: Whether transactions that only read run while another thread's write
+    #: transaction is open. A store whose storage allows that sets it; with
+    #: the default, every transaction waits for the one before it to end.
+    _reads_beside_writes: bool = False
+
     def __init__(self) -> None:
-        self._lock = RLock()
-        self._owner: int | None = None
-        self._writable = False
+        # Guards the count of open transactions and closing; close() waits on it.
+        self._state = Condition()
+        # Held by the write transaction, or by every transaction of a store
+        # that doesn't read beside a write.
+        self._turn = Lock()
+        # This thread's open transaction: whether it writes, or None.
+        self._thread = local()
+        self._open = 0
         self._closed = False
 
     @contextmanager
@@ -132,8 +151,8 @@ class StateStore(ABC):
 
         Args:
             write: ``False`` for a block that only reads. Such a block
-                can't write, and a store may run it without blocking other
-                processes' writes.
+                can't write, and a store may run it beside a write in
+                another thread or process.
 
         Raises:
             TransactionError: If a transaction is already open in this thread.
@@ -141,13 +160,18 @@ class StateStore(ABC):
             StoreError: If the store was closed, or can't start or keep the
                 transaction.
         """
-        with self._lock:
+        with self._state:
             if self._closed:
                 raise StoreError("The store is closed")
             if self._in_transaction():
                 raise TransactionError("A store transaction is already open in this thread")
-            self._owner, self._writable = get_ident(), write
+            self._open += 1
+        waits = write or not self._reads_beside_writes
+        try:
+            if waits:
+                self._turn.acquire()
             try:
+                self._thread.write = write
                 with self._errors():
                     self._begin(write=write)
                 yield
@@ -158,17 +182,27 @@ class StateStore(ABC):
                     self._rollback()
                 raise
             finally:
-                self._owner = None
+                self._thread.write = None
+                if waits:
+                    self._turn.release()
+        finally:
+            with self._state:
+                self._open -= 1
+                self._state.notify_all()
 
     def _in_transaction(self) -> bool:
-        """Whether this thread holds the store's transaction."""
-        return self._owner == get_ident()
+        """Whether this thread has a transaction open."""
+        return getattr(self._thread, "write", None) is not None
+
+    def _writing(self) -> bool:
+        """Whether this thread's open transaction writes."""
+        return getattr(self._thread, "write", None) is True
 
     def _operation(self, *, write: bool) -> AbstractContextManager[None]:
         """Check that this thread's transaction allows the operation, then guard its errors."""
         if not self._in_transaction():
             raise TransactionRequiredError("Store operations run inside store.transaction()")
-        if write and not self._writable:
+        if write and not self._writing():
             raise TransactionPermissionError(
                 "A transaction opened with write=False can't change the store"
             )
@@ -452,20 +486,24 @@ class StateStore(ABC):
     def close(self) -> None:
         """Close the store. Every later transaction raises ``StoreError``.
 
-        Closing a closed store does nothing.
+        Transactions open in other threads end first: closing waits for
+        them. Closing a closed store does nothing.
 
         Raises:
             TransactionError: If this thread has a transaction open.
             StoreError: If the store couldn't release what it holds open. It
                 counts as closed anyway.
         """
-        with self._lock:
+        with self._state:
             if self._in_transaction():
                 raise TransactionError("Close the store after its transaction ends")
-            if not self._closed:
-                self._closed = True
-                with self._errors():
-                    self._close()
+            if self._closed:
+                return
+            # New transactions are refused from here; the open ones end first.
+            self._closed = True
+            self._state.wait_for(lambda: self._open == 0)
+            with self._errors():
+                self._close()
 
     def __enter__(self) -> Self:
         return self

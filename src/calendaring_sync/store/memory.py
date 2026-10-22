@@ -1,13 +1,16 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""A :term:`store` that keeps everything in memory, for tests."""
+"""A :term:`store` that keeps everything in memory, and the base of stores that save it."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from datetime import datetime
+from threading import local
+from typing import cast
 
+from calendaring_sync._checks import check_argument_types
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
@@ -16,6 +19,8 @@ from calendaring_sync.store.base import StateStore
 
 @dataclass
 class _Data:
+    """Everything a memory store holds: plain containers of the library's frozen dataclasses."""
+
     scopes: dict[str, Scope] = field(default_factory=dict)
     records: dict[int, Record] = field(default_factory=dict)
     entries: list[FeedEntry] = field(default_factory=list)
@@ -31,30 +36,110 @@ class _Data:
         )
 
 
+@check_argument_types
 class MemoryStore(StateStore):
     """A store held in memory and lost when the process ends.
 
-    A write transaction works on a copy of the data, which replaces the data
-    only when the transaction ends normally. Lookups scan every record, so
-    it suits test data, not large stores. Meant for tests; use
+    Each transaction works on its own view of the data: a read on the data
+    the last write committed, a write on a copy of it, which becomes the
+    committed data only when the transaction ends normally. So a read in
+    one thread runs while another thread writes, and sees the data as it
+    was when the read started. Lookups scan every record, so it suits test
+    data, not large stores. Meant for tests; use
     :class:`~calendaring_sync.store.sqlite.SQLiteStore` to keep state.
+
+    To keep the data somewhere else, such as a file written with
+    :mod:`pickle` or an object database, subclass it and override the two
+    methods that read and keep it: ``_load()`` returns the data the last
+    write committed, and ``_save(data)`` keeps the data a write commits.
+    The data is one object of plain containers holding the library's
+    frozen dataclasses, so it pickles. The checks, the transactions and
+    every lookup come from the base classes.
+
+    ``_load`` runs at the start of every transaction, reads included, and
+    can run in one thread while ``_save`` runs in another. So a store that
+    keeps its data in a file reads the file once, when it opens, and
+    leaves ``_load`` as it is: it passes what it read to
+    ``super()._save()``, and its own ``_save`` writes the file and then
+    calls ``super()._save()``, so reads come from memory. A store whose
+    ``_load`` can't run while ``_save`` does sets ``_reads_beside_writes``
+    to ``False``.
+
+    If ``_save`` fails, the transaction fails and the last saved data
+    stays, as long as ``_save`` doesn't stop halfway: write to a new file
+    and then replace the old one, for example. Turn the errors of the
+    storage underneath into :class:`~calendaring_sync.error.StoreError` by
+    overriding ``_store_error``, as
+    :class:`~calendaring_sync.store.base.StateStore` describes; anything
+    else is reported as a bug.
+
+    Examples:
+        A store that keeps its data as pickled bytes, read once when it
+        opens, and a second store opened from those bytes:
+
+        >>> import pickle
+        >>> from calendaring_sync import Changed, ChangeSet, MemoryStore, Replica
+        >>> class PickledStore(MemoryStore):
+        ...     def __init__(self, saved=None):
+        ...         super().__init__()
+        ...         self.saved = saved
+        ...         if saved:
+        ...             super()._save(pickle.loads(saved))
+        ...     def _save(self, data):
+        ...         self.saved = pickle.dumps(data)
+        ...         super()._save(data)
+        >>> first = PickledStore()
+        >>> listing = ChangeSet(
+        ...     "work", None, "t1", {"a": Changed("v1", "fp-a", b"Team meeting")}, full_listing=True
+        ... )
+        >>> with Replica(first).session(
+        ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
+        ... ) as session:
+        ...     session.ingest(listing)
+        >>> Replica(PickledStore(first.saved)).find_record("work", "a").content
+        b'Team meeting'
     """
+
+    _reads_beside_writes = True
 
     def __init__(self) -> None:
         super().__init__()
-        self._data = _Data()
-        self._saved = self._data
+        self._committed = _Data()
+        # Each thread's open transaction's view of the data.
+        self._views = local()
+
+    @property
+    def _data(self) -> _Data:
+        """This thread's transaction's view of the data."""
+        data: _Data = self._views.data
+        return data
+
+    def _load(self) -> _Data:
+        """Return the data the last committed write saved."""
+        return self._committed
+
+    def _save(self, data: _Data) -> None:
+        """Keep the data a write transaction commits, for later transactions to load."""
+        self._committed = data
 
     def _begin(self, *, write: bool) -> None:
-        self._saved = self._data
-        if write:
-            self._data = self._data.copy()
+        data = self._load()
+        self._views.data = data.copy() if write else data
 
     def _commit(self) -> None:
-        self._saved = self._data
+        data = self._end_view()
+        if self._writing():
+            # _begin set this thread's view, and only _commit or _rollback drops it.
+            self._save(cast(_Data, data))
 
     def _rollback(self) -> None:
-        self._data = self._saved
+        # A write worked on a copy that's never saved, so dropping it undoes everything.
+        self._end_view()
+
+    def _end_view(self) -> _Data | None:
+        """Drop and return this thread's view, so an idle thread keeps no old copy of the data."""
+        data: _Data | None = vars(self._views).pop("data", None)
+        return data
 
     def _get_scope(self, scope_id: str) -> Scope | None:
         return self._data.scopes.get(scope_id)

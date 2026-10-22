@@ -13,9 +13,11 @@ from dataclasses import fields, is_dataclass
 from datetime import datetime
 from enum import StrEnum
 from operator import attrgetter
+from threading import Lock, local
 from types import UnionType
 from typing import Any, NamedTuple, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
+from calendaring_sync._checks import check_argument_types
 from calendaring_sync.constants import DEFAULT_TIMEOUT, SCHEMA_VERSION
 from calendaring_sync.error import (
     CalendaringSyncError,
@@ -307,45 +309,96 @@ def _load(reader: _Reader, row: sqlite3.Row) -> Any:
     return reader.cls(**values)
 
 
+# The paths at which SQLite opens a database private to one connection: in
+# memory, or in a temporary file.
+_PRIVATE = (":memory:", "")
+
+
+def _connect(path: str | os.PathLike[str], timeout: float) -> sqlite3.Connection:
+    """Open a connection to the store's file the way every one of its connections is opened."""
+    conn = sqlite3.connect(path, timeout=timeout, isolation_level=None, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+@check_argument_types
 class SQLiteStore(StateStore):
     """A store in a SQLite database file, shared between threads and processes.
 
-    One connection serves every thread, one transaction at a time. Writes
-    take SQLite's write lock for their whole transaction, so two processes
-    on one file never interleave. Reads don't take that lock, but an open
-    read still makes another process's commit wait, so the store keeps
-    reads short. A write waits up to ``timeout`` seconds for another
-    process's transaction to end.
+    Writes take one connection, one transaction at a time, and SQLite's write
+    lock for their whole transaction, so two processes on one file never
+    interleave. Reads take a second connection, one at a time, so a read in
+    one thread doesn't wait for another thread's write. A database at
+    ``":memory:"`` or an empty path belongs to one connection, so it has
+    only that one, and its transactions take turns.
 
-    Setting the file to SQLite's WAL journal mode lets one process's reads
-    and another's writes overlap. The mode is kept in the file, so set it
-    once with ``PRAGMA journal_mode = WAL``; WAL doesn't work on a network
-    filesystem.
+    In SQLite's default journal mode, a commit locks reads out of the file.
+    So it waits for the reads open in this process, and reads in another
+    process make it wait up to ``timeout`` seconds, then raise
+    :class:`~calendaring_sync.error.StoreBusyError`; the store keeps reads
+    short for that. A write also keeps what it changes in memory until it
+    commits, so that reads aren't locked out before then: a full listing
+    takes about as much memory again as its change set holds. In WAL mode
+    reads and a commit don't lock each other out, so a commit waits for no
+    read and a write keeps nothing extra in memory. The mode is kept in the
+    file, so set it once with ``PRAGMA journal_mode = WAL``; WAL doesn't
+    work on a network filesystem.
 
     Args:
         path: The database file. It's created, with the schema, if missing.
         timeout: Seconds to wait for another process before giving up.
 
     Raises:
+        TypeError: If ``path`` or ``timeout`` has the wrong type.
         StoreVersionError: If a newer calendaring-sync wrote the file.
         StoreBusyError: If another process kept the file busy past ``timeout``.
         StoreError: If the file can't be opened or isn't a store.
     """
 
+    _reads_beside_writes = True
+
     def __init__(self, path: str | os.PathLike[str], *, timeout: float = DEFAULT_TIMEOUT) -> None:
         super().__init__()
+        self._reader: sqlite3.Connection | None = None
+        # Whether a write locks reads out of the file: in the default journal
+        # mode it does, in WAL mode it doesn't.
+        self._locks_reads_out = False
+        # Read transactions take turns on the reader's connection, and where a
+        # commit locks reads out, it takes a turn too, so no read in this
+        # process is open while it runs. Each thread notes whether it has the
+        # turn, so only the thread that took it gives it back.
+        self._read_turn = Lock()
+        self._turn_taken = local()
         with self._errors():
-            self._conn = sqlite3.connect(
-                path, timeout=timeout, isolation_level=None, check_same_thread=False
-            )
-        self._conn.row_factory = sqlite3.Row
+            self._writer = _connect(path, timeout)
         try:
             with self._errors():
-                self._conn.execute("PRAGMA foreign_keys = ON")
+                self._writer.execute("PRAGMA foreign_keys = ON")
                 self._ensure_schema()
+                if os.fspath(path) in _PRIVATE:
+                    # A second connection would open an empty database of its own.
+                    self._reads_beside_writes = False
+                else:
+                    self._reader = _connect(path, timeout)
+                    self._reader.execute("PRAGMA query_only = ON")
+                    mode = self._writer.execute("PRAGMA journal_mode").fetchone()[0]
+                    self._locks_reads_out = mode != "wal"
+                    if self._locks_reads_out:
+                        # A write that outgrows SQLite's page cache would otherwise
+                        # write into the file before it commits, which locks the
+                        # reads out until the commit.
+                        self._writer.execute("PRAGMA cache_spill = OFF")
         except BaseException:
-            self._conn.close()
+            self._close()
             raise
+
+    @property
+    def _conn(self) -> sqlite3.Connection:
+        """The connection this thread's transaction uses: the reader's for a read."""
+        if self._in_transaction() and self._reads_apart():
+            # _reads_apart() found the reader's connection open.
+            return cast(sqlite3.Connection, self._reader)
+        return self._writer
 
     def _store_error(self, exc: Exception) -> CalendaringSyncError:
         if not isinstance(exc, sqlite3.Error):
@@ -388,17 +441,46 @@ class SQLiteStore(StateStore):
             )
 
     def _close(self) -> None:
-        self._conn.close()
+        try:
+            if self._reader is not None:
+                self._reader.close()
+        finally:
+            self._writer.close()
 
     def _begin(self, *, write: bool) -> None:
+        if self._reads_apart():
+            self._take_read_turn()
         self._conn.execute("BEGIN IMMEDIATE" if write else "BEGIN")
 
     def _commit(self) -> None:
+        if self._locks_reads_out and self._writing():
+            # The reads open in this process end first, and new ones wait, so
+            # only another process can keep the commit busy.
+            self._take_read_turn()
         self._conn.execute("COMMIT")
+        self._end_read()
 
     def _rollback(self) -> None:
-        if self._conn.in_transaction:
-            self._conn.execute("ROLLBACK")
+        try:
+            if self._conn.in_transaction:
+                self._conn.execute("ROLLBACK")
+        finally:
+            self._end_read()
+
+    def _reads_apart(self) -> bool:
+        """Whether this thread's transaction reads on the reader's connection."""
+        return self._reader is not None and not self._writing()
+
+    def _take_read_turn(self) -> None:
+        """Take the read turn for this thread's transaction, after the reads ahead of it."""
+        self._read_turn.acquire()
+        self._turn_taken.taken = True
+
+    def _end_read(self) -> None:
+        """Give the read turn back, if this thread's transaction took it."""
+        if getattr(self._turn_taken, "taken", False):
+            self._turn_taken.taken = False
+            self._read_turn.release()
 
     def _select(
         self, cls: type[_Row], table: str, clause: str, params: tuple[Any, ...] = ()

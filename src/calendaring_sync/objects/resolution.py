@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import KW_ONLY, dataclass
 
-from calendaring_sync._text import check_data
+from calendaring_sync._checks import check_data, checked_when_built
 
 
 @dataclass(frozen=True)
@@ -28,6 +28,7 @@ class KeepEdit:
     """
 
 
+@checked_when_built
 @dataclass(frozen=True)
 class Merge:
     """Push new content you made from both sides, over the server's current copy.
@@ -43,7 +44,7 @@ class Merge:
         logical_key: Its :term:`logical key`, if it has one.
 
     Raises:
-        TypeError: If the content isn't bytes.
+        TypeError: If a field has the wrong type.
         ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
 
     Examples:
@@ -62,7 +63,7 @@ class Merge:
     logical_key: str | None = None
 
     def __post_init__(self) -> None:
-        check_data(self.content, self.fingerprint, self.containers, self.logical_key)
+        check_data(self.fingerprint, self.containers, self.logical_key)
 
 
 @dataclass(frozen=True)

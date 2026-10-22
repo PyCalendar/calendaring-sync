@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from calendaring_sync._text import check_data
+from calendaring_sync._checks import check_data, checked_when_built
 
 
+@checked_when_built
 @dataclass(frozen=True)
 class Changed:
     """The object changed on the server, or is new there.
@@ -25,7 +26,7 @@ class Changed:
         logical_key: The object's :term:`logical key`, if it has one.
 
     Raises:
-        TypeError: If the content isn't bytes.
+        TypeError: If a field has the wrong type.
         ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
 
     Examples:
@@ -46,9 +47,7 @@ class Changed:
     logical_key: str | None = None
 
     def __post_init__(self) -> None:
-        check_data(
-            self.content, self.fingerprint, self.containers, self.logical_key, version=self.version
-        )
+        check_data(self.fingerprint, self.containers, self.logical_key, version=self.version)
 
 
 @dataclass(frozen=True)

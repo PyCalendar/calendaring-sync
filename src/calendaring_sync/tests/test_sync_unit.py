@@ -9,13 +9,18 @@ Rule: zero network calls, zero Docker dependency, all tests are fast.
 
 from __future__ import annotations
 
+import dataclasses
 import doctest
+import gc
 import importlib
+import inspect
+import pickle
 import pkgutil
 import re
 import runpy
 import sqlite3
 import sys
+import weakref
 from collections import Counter
 from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
@@ -24,7 +29,8 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
-from typing import cast
+from threading import Event
+from typing import Any, Literal
 from unittest.mock import patch
 
 import pytest
@@ -83,7 +89,9 @@ from calendaring_sync import (
     UnknownScopeError,
     UpdateHolder,
 )
+from calendaring_sync._checks import _CHECKED_WHEN_BUILT, _fields, argument_check
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
+from calendaring_sync.store.memory import _Data
 from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
 from calendaring_sync.tests import benchmark
 
@@ -96,6 +104,8 @@ _MEDIA = "text/plain"
 _START = datetime(2026, 10, 1, tzinfo=UTC)
 # How long a test store waits for another, where the wait is meant to run out.
 _SHORT_TIMEOUT = 0.1
+# How long a test waits for another thread before it counts as stuck.
+_WAIT = 5.0
 
 
 class _Clock:
@@ -235,6 +245,41 @@ def _write_with_scope(store: StateStore) -> Iterator[None]:
     with store.transaction():
         store.put_scope(_new_scope())
         yield
+
+
+def _add_scope(store: StateStore) -> None:
+    """Write the test scope to a store, in a transaction of its own."""
+    with _write_with_scope(store):
+        pass
+
+
+def _scope_ids(store: StateStore) -> list[str]:
+    """The ids of the scopes a store holds, read in a transaction of their own."""
+    with store.transaction(write=False):
+        return [scope.id for scope in store.scopes()]
+
+
+@contextmanager
+def _held_open(
+    store: StateStore, *, write: bool, work: Callable[[], object] = lambda: None
+) -> Iterator[None]:
+    """A transaction that runs ``work`` in another thread, then stays open for the block."""
+    started, finish = Event(), Event()
+
+    def hold() -> None:
+        with store.transaction(write=write):
+            work()
+            started.set()
+            finish.wait(_WAIT)
+
+    with ThreadPoolExecutor(1) as pool:
+        held = pool.submit(hold)
+        assert started.wait(_WAIT)
+        try:
+            yield
+        finally:
+            finish.set()
+        held.result(_WAIT)
 
 
 @contextmanager
@@ -608,6 +653,41 @@ class TestPackage:
             RecordState.CONFLICT: conflicted,
         }
         assert benchmark.entries_after_pushes(size) == {FeedEntryKind.PUSHED: edited}
+
+    def test_every_entry_point_checks_its_types(self):
+        for cls in (Replica, Session, StateStore, MemoryStore, SQLiteStore):
+            for name, func in vars(cls).items():
+                if name.startswith("_") and name != "__init__":
+                    continue
+                if isinstance(func, property):
+                    # A property that only reads takes no argument to check.
+                    assert func.fset is None, f"{cls.__name__}.{name} has a setter"
+                    continue
+                assert inspect.isfunction(func), f"{cls.__name__}.{name} isn't checked"
+                assert getattr(func, "_checks_arguments", False), f"{cls.__name__}.{name}"
+                # Builds the check; an annotation it can't read raises here.
+                argument_check(inspect.unwrap(func))
+        exported = [getattr(calendaring_sync, name) for name in calendaring_sync.__all__]
+        for cls in exported:
+            if isinstance(cls, type) and dataclasses.is_dataclass(cls):
+                _fields(cls)
+        # The values an adapter or application builds check themselves.
+        assert _CHECKED_WHEN_BUILT == {Changed, ChangeSet, Applied, LogicalKeyTaken, Merge}
+
+    def test_a_check_refuses_what_it_cant_read(self):
+        def takes_many(*values: str) -> None: ...
+
+        def takes_a_literal(kind: Literal["a"]) -> None: ...
+
+        def takes_anything(value) -> None: ...
+
+        for func, match in [
+            (takes_many, r"takes \*values, which isn't checked"),
+            (takes_a_literal, "^Can't check a value against"),
+            (takes_anything, "takes value without a type to check$"),
+        ]:
+            with pytest.raises(TypeError, match=match):
+                argument_check(func)
 
     def test_version_is_set(self):
         assert isinstance(calendaring_sync.__version__, str)
@@ -1307,8 +1387,13 @@ _CONTENTS = [
 # A string no store can keep: a lone surrogate.
 _BAD_TEXT = "a\ud800b"
 
-# Content that isn't bytes, typed as bytes so the calls refusing it type-check.
-_NOT_BYTES = cast(bytes, "text of fa")
+
+def _wrong(value: object) -> Any:
+    """A value of the wrong type, passed where the type checker can't object."""
+    return value
+
+
+_NOT_BYTES = _wrong("text of fa")
 
 
 class TestLocalEdits:
@@ -1962,7 +2047,7 @@ class TestLocalCopy:
         assert (record.edit.containers, record.edit.logical_key) == (frozenset({text}), text)
         assert replica.record(created).edit.content == content
 
-    def test_invalid_text_and_content_are_refused(self, replica, store):
+    def test_wrong_types_and_text_are_refused(self, replica, store, db_path):
         # The values an adapter or the application builds check themselves.
         built: list[tuple[Callable[[], object], type[Exception], str]] = [
             (
@@ -1971,19 +2056,64 @@ class TestLocalCopy:
                 "^fingerprint holds a lone surrogate at 1",
             ),
             (lambda: Changed("v1", "fa", _NOT_BYTES), TypeError, "^content must be bytes, not str"),
+            (
+                lambda: Changed(_wrong(1), "fa", b"c"),
+                TypeError,
+                "^version must be str or None, not int",
+            ),
+            (
+                lambda: Changed("v1", _wrong(None), b"c"),
+                TypeError,
+                "^fingerprint must be str, not NoneType",
+            ),
+            (
+                lambda: Changed("v1", "fa", b"c", _wrong("cal")),
+                TypeError,
+                "^containers must be frozenset of str, not str",
+            ),
+            (
+                lambda: Changed("v1", "fa", b"c", frozenset({_wrong(1)})),
+                TypeError,
+                "^containers must be frozenset of str, but holds int",
+            ),
+            (
+                lambda: ChangeSet(_wrong(1), None, "T1", {}),
+                TypeError,
+                "^scope must be str, not int",
+            ),
+            (
+                lambda: ChangeSet(_SCOPE, None, "T1", _wrong([])),
+                TypeError,
+                "^changes must be mapping of str to Changed, Removed or Unchanged, not list",
+            ),
             (lambda: _page(None, "T1", {_BAD_TEXT: Removed()}), ValueError, "^object_ids "),
+            (
+                lambda: _page(None, "T1", {"a": _wrong("removed")}),
+                TypeError,
+                r"^changes\['a'\] must be Changed, Removed or Unchanged, not str",
+            ),
             (lambda: Applied(_BAD_TEXT), ValueError, "^object_id "),
+            (lambda: Applied(_wrong(1)), TypeError, "^object_id must be str or None, not int"),
             (lambda: LogicalKeyTaken(_BAD_TEXT), ValueError, "^holder "),
             (lambda: Merge(b"c", fingerprint=_BAD_TEXT), ValueError, "^fingerprint "),
             (lambda: Merge(_NOT_BYTES, fingerprint="f"), TypeError, "^content "),
+            (
+                lambda: SQLiteStore(db_path, timeout=_wrong("5")),
+                TypeError,
+                "^timeout must be float",
+            ),
+            (lambda: Replica(store, clock=_wrong(5)), TypeError, "^clock must be callable or None"),
         ]
         for build, error, match in built:
             with pytest.raises(error, match=match):
                 build()
+        # Calls on the replica and the store refuse them on every store, before a transaction.
         _seeded(replica)
         key = _key(replica)
+        synced = replica.record(key)
         refused: list[tuple[Callable[[], object], type[Exception], str]] = [
             (lambda: _enter(_open_session(replica, _BAD_TEXT)), ValueError, "^scope_id "),
+            (lambda: _enter(_open_session(replica, _wrong(1))), TypeError, "^scope_id must be str"),
             (
                 lambda: replica.create(
                     _SCOPE, b"c", fingerprint="f", containers=frozenset({_BAD_TEXT})
@@ -1998,6 +2128,36 @@ class TestLocalCopy:
             ),
             (lambda: replica.create(_SCOPE, _NOT_BYTES, fingerprint="f"), TypeError, "^content "),
             (lambda: replica.change(key, _NOT_BYTES, fingerprint="f"), TypeError, "^content "),
+            (lambda: replica.record(_wrong("1")), TypeError, "^local_key must be int, not str"),
+            (lambda: replica.record(_wrong(True)), TypeError, "^local_key must be int, not bool"),
+            (lambda: replica.read_feed(_wrong("0")), TypeError, "^after must be int, not str"),
+            (
+                lambda: store.delete_record(_wrong("1")),
+                TypeError,
+                "^local_key must be int, not str",
+            ),
+            (
+                lambda: store.insert_record(replace(synced, containers=_wrong("cal"))),
+                TypeError,
+                "^record.containers must be frozenset of str, not str",
+            ),
+            (
+                lambda: store.update_record(
+                    replace(
+                        synced,
+                        state=RecordState.PENDING,
+                        edit=replace(_EDIT, containers=frozenset({_wrong(1)})),
+                    )
+                ),
+                TypeError,
+                "^record.edit.containers must be frozenset of str, but holds int",
+            ),
+            (
+                lambda: store.put_scope(replace(_new_scope(), token=_wrong(5))),
+                TypeError,
+                "^scope.token must be str or None, not int",
+            ),
+            (lambda: _enter(store.transaction(write=_wrong(1))), TypeError, "^write must be bool"),
         ]
         for call, error, match in refused:
             _assert_refused(replica, store, call, error, match, before_a_transaction=True)
@@ -2103,6 +2263,66 @@ class TestStores:
         with store.transaction(write=False), pytest.raises(TransactionError, match="already open"):
             replica.scopes()
 
+    @pytest.mark.parametrize(
+        "open_store, beside",
+        [
+            (lambda path: MemoryStore(), True),
+            (lambda path: SQLiteStore(path), True),
+            (lambda path: _OneAtATime(), False),
+            (lambda path: SQLiteStore(":memory:"), False),
+        ],
+        ids=["memory", "sqlite", "memory one at a time", "sqlite in memory"],
+    )
+    def test_a_read_runs_beside_a_write(self, db_path, open_store, beside):
+        with open_store(db_path) as store:
+            _add_scope(store)
+
+            def write() -> None:
+                store.put_scope(replace(_new_scope(), id=_OTHER))
+                # More than SQLite's page cache holds, as a large listing writes.
+                big = replace(_local_record(RecordState.SYNCED), content=b"c" * 4_000_000)
+                store.insert_record(big)
+
+            with ThreadPoolExecutor(1) as pool, _held_open(store, write=True, work=write):
+                reader = pool.submit(_scope_ids, store)
+                if beside:
+                    # It sees what was committed, not the write still open.
+                    assert reader.result(_WAIT) == [_SCOPE]
+                else:
+                    with pytest.raises(TimeoutError):
+                        reader.result(_SHORT_TIMEOUT)
+            assert reader.result() == ([_SCOPE] if beside else [_SCOPE, _OTHER])
+            # The read left the write's work alone.
+            assert _scope_ids(store) == [_SCOPE, _OTHER]
+
+    def test_a_write_isnt_starved_by_reads(self, replica):
+        _seeded(replica)
+        done = Event()
+
+        def read() -> None:
+            while not done.is_set():
+                replica.records(_SCOPE)
+
+        with ThreadPoolExecutor(3) as pool:
+            readers = [pool.submit(read) for _ in range(3)]
+            try:
+                for i in range(20):
+                    _create(replica, f"n{i}")
+            finally:
+                done.set()
+            for reader in readers:
+                reader.result(_WAIT)
+        assert len(replica.records(_SCOPE)) == 22
+
+    def test_close_waits_for_open_transactions(self, store):
+        with ThreadPoolExecutor(1) as pool, _held_open(store, write=False):
+            closing = pool.submit(store.close)
+            with pytest.raises(TimeoutError):
+                closing.result(_SHORT_TIMEOUT)
+        closing.result()
+        with pytest.raises(StoreError, match="closed"):
+            _enter(store.transaction(write=False))
+
     def test_threads_share_one_store(self, replica):
         _seeded(replica)
 
@@ -2149,8 +2369,7 @@ class TestStores:
         with _write_with_scope(store):
             with pytest.raises(TransactionError, match="after its transaction"):
                 store.close()
-        with store.transaction(write=False):
-            assert [s.id for s in store.scopes()] == [_SCOPE]
+        assert _scope_ids(store) == [_SCOPE]
 
     def test_object_ids_are_unique_per_scope(self, replica, store):
         _seeded(replica)
@@ -2215,9 +2434,10 @@ class TestStores:
         with store.transaction(), pytest.raises(UnknownRecordError):
             store.update_record(_local_record(RecordState.SYNCED, local_key=999))
 
+    @pytest.mark.parametrize("write", [True, False], ids=["write", "read"])
     @pytest.mark.parametrize("hook", ["_begin", "_commit", "_scopes"])
     def test_a_failure_inside_the_store_is_unexpected_and_keeps_nothing(
-        self, store, monkeypatch, hook
+        self, store, monkeypatch, hook, write
     ):
         bug = RuntimeError(f"{hook} has a bug")
 
@@ -2226,13 +2446,15 @@ class TestStores:
 
         monkeypatch.setattr(store, hook, fail)
         with pytest.raises(UnexpectedStoreError, match=re.escape(ISSUES_URL)) as raised:
-            with _write_with_scope(store):
+            with _write_with_scope(store) if write else store.transaction(write=False):
                 store.scopes()
         assert raised.value.__cause__ is bug
         assert not isinstance(raised.value, StoreError)
         monkeypatch.undo()
-        with store.transaction(write=False):
-            assert store.scopes() == []
+        # Neither kind of transaction is left waiting on the one that failed.
+        assert _scope_ids(store) == []
+        with store.transaction():
+            pass
 
     def test_interrupts_pass_through_unchanged(self, store, monkeypatch):
         def interrupt() -> None:
@@ -2246,8 +2468,72 @@ class TestStores:
 
     def test_store_as_context_manager(self, make_store):
         with make_store() as store:
-            with store.transaction(write=False):
-                assert store.scopes() == []
+            assert _scope_ids(store) == []
+
+    def test_a_memory_store_lets_go_of_old_data(self):
+        store = MemoryStore()
+        with ThreadPoolExecutor(1) as pool:
+            # The thread stays alive, idle, after its read.
+            pool.submit(_scope_ids, store).result()
+            old = weakref.ref(store._load())
+            _add_scope(store)
+            gc.collect()
+            assert old() is None
+
+    def test_a_memory_store_can_keep_its_data_elsewhere(self, tmp_path, clock):
+        path = tmp_path / "store.pickle"
+        store = _PickledStore(path)
+        replica = _edited(Replica(store, clock=clock))
+        expected = _snapshot(replica, store)
+        # Reads never save.
+        with patch.object(store, "_save", wraps=store._save) as save:
+            replica.records(_SCOPE)
+            replica.read_feed()
+        assert not save.called
+        # A write that fails saves nothing.
+        with pytest.raises(RuntimeError), store.transaction():
+            store.put_scope(replace(_new_scope(), id=_OTHER))
+            raise RuntimeError
+        reopened = _PickledStore(path)
+        again = Replica(reopened, clock=clock)
+        assert _snapshot(again, reopened) == expected
+        # A save that fails fails the write, keeps the last data and leaves the store usable.
+        with patch.object(reopened, "_save", side_effect=OSError("disk full")):
+            _assert_refused(
+                again,
+                reopened,
+                lambda: _sync(again, _page("T2", "T3", {"a": Removed()})),
+                UnexpectedStoreError,
+                "failed unexpectedly with OSError",
+            )
+        _sync(again, _page("T2", "T3", {"a": Removed()}))
+        expected = _snapshot(again, reopened)
+        third = _PickledStore(path)
+        assert _snapshot(Replica(third, clock=clock), third) == expected
+
+
+class _OneAtATime(MemoryStore):
+    """A memory store that keeps the default: every transaction waits for the one before it."""
+
+    _reads_beside_writes = False
+
+
+class _PickledStore(MemoryStore):
+    """A memory store that keeps its data in a file with :mod:`pickle`, read when it opens."""
+
+    def __init__(self, path: Path) -> None:
+        super().__init__()
+        self._path = path
+        if path.exists():
+            super()._save(pickle.loads(path.read_bytes()))
+
+    def _save(self, data: _Data) -> None:
+        # Written beside the file, then moved over it, so a failure halfway
+        # leaves the last saved data.
+        written = self._path.with_suffix(".new")
+        written.write_bytes(pickle.dumps(data))
+        written.replace(self._path)
+        super()._save(data)
 
 
 # Dataclasses the SQLite store can't map: a column holds one type, and the
@@ -2279,14 +2565,18 @@ class _HoldsEmpty:
 
 
 class TestSQLiteStore:
-    def test_busy_file_raises_store_busy_error_and_stays_usable(self, db_path):
+    # Another process's write makes a write busy as it starts, its read as it commits.
+    @pytest.mark.parametrize("held", ["write", "read"])
+    def test_busy_file_raises_store_busy_error_and_stays_usable(self, db_path, held):
         with _busy_pair(db_path) as (holder, waiter):
-            with holder.transaction(), pytest.raises(StoreBusyError):
-                _enter(waiter.transaction())
-            with waiter.transaction():
-                waiter.put_scope(_new_scope())
-            with holder.transaction(write=False):
-                assert [s.id for s in holder.scopes()] == [_SCOPE]
+            with (
+                _held_open(holder, write=held == "write", work=holder.scopes),
+                pytest.raises(StoreBusyError),
+            ):
+                _add_scope(waiter)
+            assert _scope_ids(waiter) == []
+            _add_scope(waiter)
+            assert _scope_ids(holder) == [_SCOPE]
 
     def test_ingest_while_busy_changes_nothing_and_can_be_retried(self, db_path, clock):
         with _busy_pair(db_path) as (holder, waiter):
@@ -2410,6 +2700,30 @@ class TestSQLiteStore:
         with pytest.raises(TypeError, match=message):
             _reader(cls)
 
+    @pytest.mark.parametrize("mode, locks_reads_out", [("delete", True), ("wal", False)])
+    def test_a_commit_waits_for_reads_here_where_it_locks_them_out(
+        self, db_path, mode, locks_reads_out
+    ):
+        _edit_file(db_path, f"PRAGMA journal_mode = {mode}", ())
+        with SQLiteStore(db_path, timeout=_SHORT_TIMEOUT) as store:
+            # Where a commit locks reads out, a write keeps its changes in memory:
+            # the pragma gives the pages it holds before spilling, 0 for never.
+            spills = store._writer.execute("PRAGMA cache_spill").fetchone()[0]
+            assert bool(spills) is not locks_reads_out
+            with (
+                ThreadPoolExecutor(1) as pool,
+                _held_open(store, write=False, work=store.scopes),
+            ):
+                writing = pool.submit(_add_scope, store)
+                if locks_reads_out:
+                    # Past the timeout it's still waiting, not busy.
+                    with pytest.raises(TimeoutError):
+                        writing.result(_SHORT_TIMEOUT * 3)
+                else:
+                    writing.result(_WAIT)
+            writing.result()
+            assert _scope_ids(store) == [_SCOPE]
+
     def test_interrupted_ingest_leaves_the_token_after_reopening(self, db_path, clock):
         with SQLiteStore(db_path) as store:
             replica = _seeded(Replica(store, clock=clock))
@@ -2433,8 +2747,8 @@ class TestSQLiteStore:
             return 0 if len(looks) == 1 else real(store)
 
         monkeypatch.setattr(SQLiteStore, "_version", version)
-        with SQLiteStore(db_path) as store, store.transaction(write=False):
-            assert store.scopes() == []
+        with SQLiteStore(db_path) as store:
+            assert _scope_ids(store) == []
         assert len(looks) == 3
 
     def test_newer_schema_is_refused(self, db_path):
