@@ -38,6 +38,13 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 calendaring-sync contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
+# Recorded server exchanges the unit tests replay. JSON has no comments.
+[[annotations]]
+path = "src/calendaring_sync/tests/data/caldav/*.json"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 calendaring-sync contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
 # GitHub issue form templates: YAML frontmatter must stay the first thing
 # in the file for GitHub to parse it, so a leading comment isn't an option.
 [[annotations]]

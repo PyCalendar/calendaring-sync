@@ -1,0 +1,128 @@
+{
+ "server": "xandikos",
+ "scenario": "reading",
+ "caldav": "3.6.0",
+ "recorded": "2026-10-23",
+ "exchanges": [
+  {
+   "method": "DELETE",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 404,
+   "headers": {
+    "content-type": "application/octet-stream"
+   },
+   "body": "Path /sometestuser/calendars/calendaring-sync-reading/ not found."
+  },
+  {
+   "method": "MKCALENDAR",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 201,
+   "headers": {
+    "content-type": "application/octet-stream"
+   },
+   "body": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:sync-token>ae4423fea231573dd53ab2567fdc26cd3f98a7ca</ns0:sync-token></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"ae4423fea231573dd53ab2567fdc26cd3f98a7ca\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "PUT",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/a.ics",
+   "status": 201,
+   "headers": {
+    "etag": "\"2181d06ae37d5ced47c4a2848921c124576b8d84\"",
+    "schedule-tag": "\"148d54be3302de9bb4178d131a83eef3430445545a20794feb94ef13359dcba4\"",
+    "content-type": "application/octet-stream"
+   },
+   "body": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/b.ics",
+   "status": 201,
+   "headers": {
+    "etag": "\"c9850a9dbabe94e41334313677412cc0df949127\"",
+    "schedule-tag": "\"cc75f585ce4d54b039b9a47aed25dcf9cf4a4f6b5fec95ee8b40ea043c29c7f2\"",
+    "content-type": "application/octet-stream"
+   },
+   "body": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:supported-report-set><ns0:supported-report><ns0:report><ns1:calendar-multiget /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns1:calendar-query /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:expand-property /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:principal-property-search /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:sync-collection /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns1:free-busy-query /></ns0:report></ns0:supported-report></ns0:supported-report-set></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"2181d06ae37d5ced47c4a2848921c124576b8d84\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/b.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"c9850a9dbabe94e41334313677412cc0df949127\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:sync-token>d8b00387b1c712c5111df0b0f964a2f4d20adc19</ns0:sync-token></ns0:multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns1:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nSUMMARY:first a\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nUID:reading-a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</ns1:calendar-data><ns0:getetag>\"2181d06ae37d5ced47c4a2848921c124576b8d84\"</ns0:getetag><ns1:schedule-tag>\"148d54be3302de9bb4178d131a83eef3430445545a20794feb94ef13359dcba4\"</ns1:schedule-tag></ns0:prop></ns0:propstat></ns0:response><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/b.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns1:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nSUMMARY:first b\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nUID:reading-b\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</ns1:calendar-data><ns0:getetag>\"c9850a9dbabe94e41334313677412cc0df949127\"</ns0:getetag><ns1:schedule-tag>\"cc75f585ce4d54b039b9a47aed25dcf9cf4a4f6b5fec95ee8b40ea043c29c7f2\"</ns1:schedule-tag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "PUT",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/a.ics",
+   "status": 204,
+   "headers": {
+    "etag": "\"557d64a0cad8e872d7d7f7790141e3ff3c80010e\"",
+    "schedule-tag": "\"68fba92ef600376a2db669c987c2724ac831bde563289609d3fe7e0ab17699d6\""
+   },
+   "body": ""
+  },
+  {
+   "method": "DELETE",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/b.ics",
+   "status": 204,
+   "headers": {},
+   "body": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"557d64a0cad8e872d7d7f7790141e3ff3c80010e\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/b.ics</ns0:href><ns0:status>HTTP/1.1 404 Not Found</ns0:status></ns0:response><ns0:sync-token>7919673520cd4f93afab7ab2b7b10dde9a4a9ad2</ns0:sync-token></ns0:multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-reading/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-reading/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns1:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nSUMMARY:second a\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nUID:reading-a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</ns1:calendar-data><ns0:getetag>\"557d64a0cad8e872d7d7f7790141e3ff3c80010e\"</ns0:getetag><ns1:schedule-tag>\"68fba92ef600376a2db669c987c2724ac831bde563289609d3fe7e0ab17699d6\"</ns1:schedule-tag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  }
+ ]
+}

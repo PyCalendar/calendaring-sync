@@ -8,7 +8,7 @@ Server compatibility
 .. meta::
    :description: How each tested server behaves where sync depends on it, and what calendaring-sync's adapters do about each difference.
 
-Each table lists what the tested servers did where sync depends on it, and what the adapter does about it. The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1, and the JMAP adapter against Cyrus 3.13.7 and Stalwart 0.16.21, between 2026-10-10 and 2026-10-12. A later release may behave differently. The probes and logs behind every row are on the `evidence branch <https://github.com/pycalendar/calendaring-sync/tree/evidence/sync-design>`_, with the steps to reproduce them. :doc:`../explanation/adapters` explains each rule, and the :doc:`glossary` defines the sync terms in the Adapter column.
+Each table lists what the tested servers did where sync depends on it, and what the adapter does about it. The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1, and the JMAP adapter against Cyrus 3.13.7 and Stalwart 0.16.21, between 2026-10-10 and 2026-10-12. The CalDAV adapter's integration tests ran against all five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. A later release may behave differently. The probes and logs behind every row are on the `evidence branch <https://github.com/pycalendar/calendaring-sync/tree/evidence/sync-design>`_, with the steps to reproduce them. :doc:`../explanation/adapters` explains each rule, and the :doc:`glossary` defines the sync terms in the Adapter column.
 
 CalDAV
 ======
@@ -39,11 +39,15 @@ CalDAV
      - - Stalwart: twice, removed and then changed
        - Others: once, as changed
      - The later entry counts, and the fetch decides
+   * - ``sync-collection`` sent with ``Depth: 1``, as python-caldav sends it (:rfc:`6578#section-3.2`: defined for ``Depth: 0`` only; 2026-10-23)
+     - All: answered as with ``Depth: 0``
+     - Relies on python-caldav's report
    * - Token the server never issued (:rfc:`6578#section-3.2`: ``valid-sync-token``)
-     - - Radicale, Cyrus, Baïkal: 403 with ``valid-sync-token``
+     - - Radicale, Cyrus: 403 with ``valid-sync-token``
        - Xandikos: 412 with ``valid-sync-token`` for a well-formed token, 500 otherwise (`xandikos#743 <https://github.com/jelmer/xandikos/issues/743>`_)
        - Stalwart: 207 with a full listing and no error
-     - :term:`Resets <reset>` the scope when the error names ``valid-sync-token``; flags Stalwart for regular full listings
+       - Baïkal: 403 with ``valid-sync-token`` for a token that doesn't start with its own prefix; one that does, even past its newest token, gets no changes and comes back as the new token (2026-10-23)
+     - :term:`Resets <reset>` the scope when the error names ``valid-sync-token``; flags Stalwart for regular full listings. Baïkal's answer can't be told from an ordinary one, so after restoring its database from a backup, run a full listing
    * - Token whose history the server has discarded
      - - Radicale, Cyrus: 403 with ``valid-sync-token``
        - Stalwart: 207 with only the changes still in its history; earlier ones aren't reported
@@ -57,9 +61,9 @@ CalDAV
        - Baïkal: 507 with a checkpoint; ignores the limit on an empty token
      - Never sends ``DAV:limit``; follows a 507 the server applies itself
    * - Full listing of a calendar larger than the server's result limit
-     - - Stalwart: ``PROPFIND`` and an empty-token report both stop at its ``maxResults`` setting (2000 by default) with a 507; the report also hands back its newest token
+     - - Stalwart: ``PROPFIND`` and an empty-token report both stop at its ``maxResults`` setting (2000 by default) with a 507; the report also hands back its newest token. A ``calendar-multiget`` gets at most that many members and a 507 for the collection, even when it asked for no more (2026-10-23)
        - Others: not tested
-     - Lists with ``PROPFIND``, and raises an error instead of ingesting a listing cut short
+     - Lists with ``PROPFIND``, and raises an error instead of ingesting a listing cut short; fetches at most 100 members per ``calendar-multiget``, so a setting above 100 never cuts a fetch
    * - PUT the server stores differently (:rfc:`4791#section-5.3.4`: no strong ETag in the answer)
      - - Radicale: adds ``DTSTAMP``, reorders properties, returns an ETag
        - Xandikos: reorders properties, returns an ETag
@@ -76,17 +80,17 @@ CalDAV
    * - Create with a UID already in the calendar (:rfc:`4791#section-5.3.2.1`)
      - - Radicale: 409 with ``no-uid-conflict``
        - Xandikos, Stalwart: 412 with ``no-uid-conflict``
-       - Cyrus: 403 with ``unique-scheduling-object-resource``
+       - Cyrus: 403 with ``unique-scheduling-object-resource``, also for a UID that another of the user's calendars holds (2026-10-23)
        - Baïkal: accepted, so two resources share the UID
-     - Recognizes both elements; finding objects by UID returns every match
+     - Recognizes both elements; finding objects by UID returns every match. Without the server's profile on the client, python-caldav's search for the UID refuses the create first, on Baïkal too
    * - ``DELETE`` with ``If-Match`` on a resource that's gone
      - - Baïkal: 412
        - Others: 404
      - The next :term:`ingest` settles it
    * - ``calendar-multiget`` for a member deleted since the report (:rfc:`4791#section-7.9`: an entry for every href)
      - - Baïkal: leaves the href out
-       - Others: a 404 entry
-     - A missing or 404 member waits for the next report
+       - Others: a 404 entry, which python-caldav returns as an object without data
+     - A missing member, or one without data, waits for the next report
 
 Conditional writes behaved as :rfc:`9110#section-13.1.1` and :rfc:`9110#section-13.1.2` specify on every server in the table: a wrong ``If-Match`` or an ``If-None-Match: *`` on an existing resource gets 412.
 

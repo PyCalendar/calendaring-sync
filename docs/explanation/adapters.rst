@@ -44,7 +44,7 @@ Each collection has its own sync token (:rfc:`6578`), so one collection is one s
    * - Scope
      - A calendar collection
    * - Object id
-     - The member's href, as the server reports it
+     - The path of the member's href, always spelled one way, since python-caldav can spell one member's address two ways (``%40`` from a sync report, ``@`` from a ``calendar-multiget``, for a path holding an ``@``)
    * - Version
      - ``DAV:getetag`` (:rfc:`4918#section-15.6`), a strong entity tag compared character by character (:rfc:`9110#section-8.8.3.2`)
    * - Sync token
@@ -59,7 +59,7 @@ Each collection has its own sync token (:rfc:`6578`), so one collection is one s
 Why the adapter checks supported reports first
 ----------------------------------------------
 
-Before a collection's first sync, the adapter reads ``DAV:supported-report-set`` (:rfc:`3253#section-3.1.5`), the list of reports the collection supports, so it knows whether ``sync-collection`` works before any report fails. A collection without it gets a :term:`full listing` every time, and the adapter fetches only changed members.
+Before a collection's first sync, the adapter reads ``DAV:supported-report-set`` (:rfc:`3253#section-3.1.5`), the list of reports the collection supports, so it knows whether ``sync-collection`` works before any report fails. A collection without it gets a :term:`full listing` every time, and the adapter fetches only changed members. So does a collection that names no ``DAV:sync-token``, which one that supports the report must (:rfc:`6578#section-4`), since a report from an empty token would ask for every member.
 
 Why a full listing reads the token first
 ----------------------------------------
@@ -71,7 +71,7 @@ The adapter never lists with a report sent with an empty token, which asks for e
 Why changes come from python-caldav's sync report
 -------------------------------------------------
 
-Changes since a token come from python-caldav's ``get_objects_by_sync_token()``, which sends ``sync-collection`` with ``Depth: 0``, the depth that report requires (:rfc:`6578#section-3.2`). When a server truncates a report with a 507 status and a :term:`checkpoint` token (:rfc:`6578#section-3.6`), python-caldav follows the checkpoints until the report is complete, and the adapter hands the core the whole result. The adapter turns python-caldav's fallback off: it would answer a failed report with a full listing under a client-side ``fake-`` token.
+Changes since a token come from python-caldav's ``get_objects_by_sync_token()``. It sends ``sync-collection`` with ``Depth: 1``, although the report is only defined for ``Depth: 0`` (:rfc:`6578#section-3.2`); every tested server answers it all the same. When a server truncates a report with a 507 status and a :term:`checkpoint` token (:rfc:`6578#section-3.6`), python-caldav follows the checkpoints, up to 100 reports, and the adapter hands the core the whole result as one change set. If the result is still cut after that, the change set is a :term:`truncated page` that ends at the last checkpoint, nothing is pushed, and the next sync continues from there. The adapter turns python-caldav's fallback off: it would answer a failed report with a full listing under a client-side ``fake-`` token.
 
 A removed member has a 404 status and no ``DAV:propstat``, the element that would carry its properties (:rfc:`6578#section-3.2`), and python-caldav lists it in the result's ``deleted_urls``, which the adapter reads removals from.
 
@@ -91,26 +91,30 @@ Why content comes from a multiget, with its own ETag
 
 Changed members are fetched with ``calendar-multiget`` (:rfc:`4791#section-7.9`), asking for ``DAV:getetag`` and ``calendar-data`` together, with no ``Depth`` header as that section asks. The stored version is the ETag from this response, not from the sync report: an object can change in between (:rfc:`6578#section-3.1`), and an older ETag would cause a needless fetch on the next sync and a wrong base for the next write.
 
-A member that comes back 404, or is missing from the response although :rfc:`4791#section-7.9` requires an entry for every href, was removed after the report. It's left out of the change set, and the next report carries its removal.
+A member that comes back without data, as python-caldav returns a 404 entry, or is missing from the response although :rfc:`4791#section-7.9` requires an entry for every href, was removed after the report. It's left out of the change set, and the next report carries its removal.
 
 Why the fingerprint leaves out three properties
 -----------------------------------------------
 
-Tested servers rewrite what they store: they add ``DTSTAMP``, reorder properties and parameters, fold lines at other points, and reorder the parts of a recurrence rule, which may come in any order (:rfc:`5545#section-3.3.10`). A server sets ``DTSTAMP`` and ``LAST-MODIFIED`` itself (:rfc:`5545#section-3.8.7.2`, :rfc:`5545#section-3.8.7.3`), and ``PRODID`` names the product that created the object (:rfc:`5545#section-3.7.3`). Leaving those three out and sorting the rest makes a server's copy of your own write fingerprint the same as what you sent, on every tested server. ``UID`` is kept, since it's the logical key, and so is everything else, because any other difference can be a real edit. The adapter reads calendar data as UTF-8 when the server names no charset, since that's the default (:rfc:`5545#section-3.1.4`).
+Tested servers rewrite what they store: they add ``DTSTAMP``, reorder properties and parameters, fold lines at other points, and reorder the parts of a recurrence rule, which may come in any order (:rfc:`5545#section-3.3.10`). A server sets ``DTSTAMP`` and ``LAST-MODIFIED`` itself (:rfc:`5545#section-3.8.7.2`, :rfc:`5545#section-3.8.7.3`), and ``PRODID`` names the product that created the object (:rfc:`5545#section-3.7.3`). Leaving those three out and sorting the rest makes a server's copy of your own write fingerprint the same as what you sent, on every tested server. ``UID`` is kept, since it's the logical key, and so is everything else, because any other difference can be a real edit. Calendar data is UTF-8 unless a charset says otherwise (:rfc:`5545#section-3.1.4`): python-caldav hands the adapter what a server sent as UTF-8, and the adapter refuses an edit that isn't.
 
 Why writes are conditional
 --------------------------
 
-Updates and deletes send ``If-Match`` with the base ETag (:rfc:`9110#section-13.1.1`), so the server applies them only if the member still has that ETag, and creates send ``If-None-Match: *`` (:rfc:`9110#section-13.1.2`), so a create never replaces an existing member. A mismatch gets status 412, and the edit stays pending for the next :term:`ingest`. Updates use python-caldav's ``save(increase_seqno=False)``, because ``save()`` increments the event's ``SEQUENCE`` revision number by default and the server wouldn't receive the edit you recorded. Deletes use ``delete(if_match=...)``.
+Updates and deletes send ``If-Match`` with the base ETag (:rfc:`9110#section-13.1.1`), so the server applies them only if the member still has that ETag, and creates send ``If-None-Match: *`` (:rfc:`9110#section-13.1.2`), so a create never replaces an existing member. A mismatch gets status 412, and the edit stays pending for the next :term:`ingest`. ``If-Match`` compares ETags strongly, so a weak one (``W/``) never matches; an edit to a member whose stored ETag is weak waits, without being sent, until a sync stores a strong one.
 
-A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with an error element, ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); python-caldav raises ``UidConflictError`` for either, whatever the status, so the adapter never mistakes it for a plain precondition failure.
+Creates and updates use python-caldav's ``save()`` with ``raw_data``, which sends the bytes you recorded unchanged, and ``precondition="etag"``, which sends the stored ETag. Updates also pass ``increase_seqno=False``, because ``save()`` otherwise increments the event's ``SEQUENCE`` revision number and the server wouldn't receive the edit you recorded. Creates pass ``no_overwrite=True``, which sends ``If-None-Match: *``. Deletes use ``delete(if_match=True, precondition="etag")``. A 404 on an update or a delete means the member is gone; a tested server answers a delete of a gone member with 412 instead, which leaves the delete pending until the next ingest reports the removal.
+
+A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with an error element, ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); python-caldav raises ``UidConflictError`` for either, whatever the status, so the adapter never mistakes it for a plain precondition failure. For a create, that's a :term:`conflict` with the object that holds the UID, named when the error element holds its ``DAV:href``. An update that gives an object a UID another one holds stays pending and is sent again at every sync, until you change it.
+
+Unless the client is configured with the server's profile, python-caldav searches the calendar for the UID of a create before sending it, which costs a request per create and refuses a UID that's taken even on a server that would accept it. Configuring the client's ``features`` with the server's name lets the server check instead.
 
 A server MUST NOT return a strong ETag for data it stored differently (:rfc:`4791#section-5.3.4`), but tested servers do, so an applied push doesn't keep the ETag it got back.
 
-Why the adapter needs python-caldav 3.5.0 or later
+Why the adapter needs python-caldav 3.6.0 or later
 --------------------------------------------------
 
-The adapter needs python-caldav 3.5.0 or later, which has six changes it relies on: following truncated sync reports, listing removed members in ``deleted_urls``, keeping preconditions on every error, ``UidConflictError``, honoring ``increase_seqno`` on every save, and ``delete(if_match=...)``.
+The adapter needs python-caldav 3.6.0 or later. It relies on following truncated sync reports, listing removed members in ``deleted_urls``, keeping preconditions on every error, ``UidConflictError``, honoring ``increase_seqno`` on every save, ``raw_data`` holding calendar data as bytes, ``save(raw_data=...)`` sending bytes unchanged, ``precondition="etag"``, and ``If-None-Match: *`` on ``save(no_overwrite=True)``.
 
 JMAP
 ====

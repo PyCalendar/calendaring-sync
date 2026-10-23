@@ -1,0 +1,117 @@
+{
+ "server": "xandikos",
+ "scenario": "fetch_after_delete",
+ "caldav": "3.6.0",
+ "recorded": "2026-10-23",
+ "exchanges": [
+  {
+   "method": "DELETE",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 404,
+   "headers": {
+    "content-type": "application/octet-stream"
+   },
+   "body": "Path /sometestuser/calendars/calendaring-sync-fetch-after-delete/ not found."
+  },
+  {
+   "method": "MKCALENDAR",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 201,
+   "headers": {
+    "content-type": "application/octet-stream"
+   },
+   "body": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics",
+   "status": 201,
+   "headers": {
+    "etag": "\"2e2a3c502e7d8c95ce68f1004d48f5d4c0c0970a\"",
+    "schedule-tag": "\"e20807bf560a55f4749f181f68e0358a18ef6c13b0987d0e9d94c99c7b7b62ce\"",
+    "content-type": "application/octet-stream"
+   },
+   "body": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:sync-token>a718789c62f661ed261ed0b989bbf248bccf2e9e</ns0:sync-token></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"a718789c62f661ed261ed0b989bbf248bccf2e9e\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"2e2a3c502e7d8c95ce68f1004d48f5d4c0c0970a\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns1:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nSUMMARY:one\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nUID:fetch_after_delete-a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</ns1:calendar-data><ns0:getetag>\"2e2a3c502e7d8c95ce68f1004d48f5d4c0c0970a\"</ns0:getetag><ns1:schedule-tag>\"e20807bf560a55f4749f181f68e0358a18ef6c13b0987d0e9d94c99c7b7b62ce\"</ns1:schedule-tag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "PUT",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics",
+   "status": 204,
+   "headers": {
+    "etag": "\"47b3020a32317518d658c03f4d9abc5808c512f6\"",
+    "schedule-tag": "\"3f58620bfc91eb3b02eef5e26d748bacaa48c7a34d8fc877cc40e700cb2388be\""
+   },
+   "body": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:supported-report-set><ns0:supported-report><ns0:report><ns1:calendar-multiget /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns1:calendar-query /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:expand-property /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:principal-property-search /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:sync-collection /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns1:free-busy-query /></ns0:report></ns0:supported-report></ns0:supported-report-set></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"47b3020a32317518d658c03f4d9abc5808c512f6\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:sync-token>c2192e7fc18d3a60a7a93023c2927d4237672752</ns0:sync-token></ns0:multistatus>"
+  },
+  {
+   "method": "DELETE",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics",
+   "status": 204,
+   "headers": {},
+   "body": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics</ns0:href><ns0:status>HTTP/1.1 404 Not Found</ns0:status></ns0:response></ns0:multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics</ns0:href><ns0:status>HTTP/1.1 404 Not Found</ns0:status></ns0:response><ns0:sync-token>ae4423fea231573dd53ab2567fdc26cd3f98a7ca</ns0:sync-token></ns0:multistatus>"
+  }
+ ]
+}

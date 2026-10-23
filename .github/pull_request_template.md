@@ -55,6 +55,7 @@ To indicate that you completed an item, place an `x` inside the checkbox, such a
 - [ ] I followed calendaring-sync's [Artificial intelligence policy](https://calendaring-sync.readthedocs.io/en/latest/contribute.html#artificial-intelligence-policy) and disclosed my AI use in my commit messages and change log entry, if applicable.
 - [ ] I added or updated tests, if applicable.
 - [ ] I ran and ensured all tests pass locally, following [Running tests](https://calendaring-sync.readthedocs.io/en/latest/contribute.html#running-tests).
+- [ ] If I changed an adapter, I ran its integration tests against every server I could start.
 - [ ] I added or edited documentation as necessary.
 
 ## Additional information

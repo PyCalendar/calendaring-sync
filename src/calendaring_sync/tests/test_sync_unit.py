@@ -90,6 +90,7 @@ from calendaring_sync import (
     UpdateHolder,
 )
 from calendaring_sync._checks import _CHECKED_WHEN_BUILT, _fields, argument_check
+from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
 from calendaring_sync.store.memory import _Data
 from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
@@ -97,7 +98,6 @@ from calendaring_sync.tests import benchmark
 
 _SCOPE = "cal"
 _OTHER = "other"
-_DB_FILE = "s.db"
 _SCHEME = "scheme-1"
 _OTHER_SCHEME = "scheme-2"
 _MEDIA = "text/plain"
@@ -117,34 +117,6 @@ class _Clock:
     def __call__(self) -> datetime:
         self.now += timedelta(seconds=1)
         return self.now
-
-
-@pytest.fixture
-def db_path(tmp_path: Path) -> Path:
-    """Where a test's SQLite store keeps its file."""
-    return tmp_path / _DB_FILE
-
-
-@pytest.fixture(params=[MemoryStore, SQLiteStore], ids=lambda cls: cls.__name__)
-def make_store(request: pytest.FixtureRequest, db_path: Path) -> Iterator[Callable[[], StateStore]]:
-    """Open handles on one store, as separate processes would: one shared
-    ``MemoryStore``, or a new connection to one SQLite file each time."""
-    opened: list[StateStore] = []
-    memory = MemoryStore()
-
-    def make() -> StateStore:
-        store: StateStore = memory if request.param is MemoryStore else SQLiteStore(db_path)
-        opened.append(store)
-        return store
-
-    yield make
-    for store in opened:
-        store.close()
-
-
-@pytest.fixture
-def store(make_store: Callable[[], StateStore]) -> StateStore:
-    return make_store()
 
 
 @pytest.fixture
@@ -655,7 +627,15 @@ class TestPackage:
         assert benchmark.entries_after_pushes(size) == {FeedEntryKind.PUSHED: edited}
 
     def test_every_entry_point_checks_its_types(self):
-        for cls in (Replica, Session, StateStore, MemoryStore, SQLiteStore):
+        for cls in (
+            Replica,
+            Session,
+            StateStore,
+            MemoryStore,
+            SQLiteStore,
+            CalDAVAdapter,
+            AsyncCalDAVAdapter,
+        ):
             for name, func in vars(cls).items():
                 if name.startswith("_") and name != "__init__":
                     continue
@@ -2589,10 +2569,10 @@ class TestSQLiteStore:
                 session.ingest(first)
             assert replica.scope(_SCOPE).token == "T1"
 
-    def test_unreadable_files_raise_store_error(self, tmp_path):
+    def test_unreadable_files_raise_store_error(self, tmp_path, db_path):
         not_a_store = tmp_path / "junk.db"
         not_a_store.write_bytes(b"not a database" * 100)
-        for path in (not_a_store, tmp_path / "missing" / _DB_FILE):
+        for path in (not_a_store, tmp_path / "missing" / db_path.name):
             with pytest.raises(StoreError):
                 SQLiteStore(path)
 
