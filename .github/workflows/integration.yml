@@ -36,13 +36,7 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
+      # Radicale and Xandikos run embedded; the servers with Docker fixtures
+      # are skipped, as nothing starts them here.
       - name: Run integration tests
-        run: |
-          set +e
-          pytest src/calendaring_sync/tests/test_sync_integration.py
-          ec=$?
-          # Exit 5 = no tests collected. Expected until the first adapter lands
-          # its integration tests; anything else is a genuine failure.
-          if [ "$ec" -ne 0 ] && [ "$ec" -ne 5 ]; then
-            exit "$ec"
-          fi
+        run: pytest src/calendaring_sync/tests/test_sync_integration.py

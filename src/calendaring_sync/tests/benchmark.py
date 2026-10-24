@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Benchmarks for the work a sync does most: full listings, local edits, pushes, and reads during them.
+Benchmarks for the work a sync does most: full listings, local edits, pushes, reads during them,
+and an adapter's fingerprints.
 
 Run ``python -m calendaring_sync.tests.benchmark`` on ``main`` and on your
 branch, on the same machine, and compare the two. Times differ between
@@ -37,6 +38,7 @@ from calendaring_sync import (
     Session,
     SQLiteStore,
 )
+from calendaring_sync.adapters.caldav import _server_fields
 
 #: The number of objects in the scope: a large calendar.
 DEFAULT_SIZE = 20_000
@@ -181,6 +183,23 @@ def read_during_listing(size: int) -> float:
             return reader.result()
 
 
+def caldav_fingerprints(size: int) -> float:
+    """The CalDAV adapter's fingerprints of ``size`` events, as a full listing computes them."""
+    events = [
+        (
+            "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//benchmark//EN\r\nBEGIN:VEVENT\r\n"
+            f"UID:event-{i}\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\n"
+            "RRULE:FREQ=WEEKLY;COUNT=10\r\nSUMMARY:Weekly planning\r\n"
+            "ATTENDEE;CN=Ana;ROLE=CHAIR:mailto:ana@example.org\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+        ).encode()
+        for i in range(size)
+    ]
+    started = time.perf_counter()
+    for event in events:
+        _server_fields(event)
+    return time.perf_counter() - started
+
+
 def states_over_edits(size: int) -> Counter[RecordState]:
     """How many records end in each state in ``listing_over_edits``, to check what it measures."""
     with _replica() as replica:
@@ -204,6 +223,7 @@ SCENARIOS: dict[str, Callable[[int], float]] = {
     f"single edits to one in {EDITED_SHARE} objects": single_edits,
     f"pushes of one in {EDITED_SHARE} objects": pushes,
     "longest read during a full listing": read_during_listing,
+    "CalDAV fingerprints of every event": caldav_fingerprints,
 }
 
 

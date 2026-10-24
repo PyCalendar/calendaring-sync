@@ -29,7 +29,7 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
       To mark a :term:`pending edit` :term:`in flight` just before pushing it, in one step that fails if another process got there first.
 
    conflict
-      An object where your :term:`pending edit` and the server disagree: both sides changed it, one side deleted it while the other edited it, or the server refused your create because another object holds its :term:`UID`. calendaring-sync reports it and leaves the decision to you.
+      An object where your :term:`pending edit` and the server disagree: both sides changed it, one side deleted it while the other edited it, or the server refused your create or change because another object holds its :term:`UID`. calendaring-sync reports it and leaves the decision to you.
 
    conflict record
       What the core stores for one :term:`conflict`: the :term:`synced content`, your edit, the server's side, and the kind of conflict. It stays open until you resolve it or it resolves itself.

@@ -17,6 +17,7 @@
    objects
    errors
    constants
+   adapters
    glossary
    server-compatibility
    ../changelog
