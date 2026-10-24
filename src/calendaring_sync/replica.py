@@ -152,11 +152,11 @@ def _check_resolution(record: Record, resolution: Resolution) -> None:
     """Raise ``ValueError`` unless ``record`` is in conflict and ``resolution`` fits its kind."""
     if record.state is not RecordState.CONFLICT or record.conflict is None:
         raise ValueError("resolve() takes a record in conflict")
-    refused_create = record.conflict.kind is ConflictKind.LOGICAL_KEY_TAKEN
-    if isinstance(resolution, KeepEdit) and refused_create:
-        raise ValueError("A create refused for its logical key can't be pushed again unchanged")
-    if isinstance(resolution, UpdateHolder) and not refused_create:
-        raise ValueError("Only a create refused for its logical key goes to the key's holder")
+    refused = record.conflict.kind is ConflictKind.LOGICAL_KEY_TAKEN
+    if isinstance(resolution, KeepEdit) and refused:
+        raise ValueError("An edit refused for its logical key can't be pushed again unchanged")
+    if isinstance(resolution, UpdateHolder) and not refused:
+        raise ValueError("Only an edit refused for its logical key goes to the key's holder")
 
 
 def _same_decision(stored: Record | None, record: Record) -> bool:
@@ -177,11 +177,15 @@ def _resolved(record: Record, resolution: Resolution, now: datetime) -> Record |
     next goes out against the server's current version.
     """
     conflict, edit = cast(Conflict, record.conflict), cast(LocalEdit, record.edit)
-    on_server = conflict.remote_content is not None
+    on_server = conflict.remote_content is not None or record.is_refused_change
     if not on_server and isinstance(resolution, (TakeServer, Delete)):
         # The server doesn't have the object: a create it never had leaves nothing.
         return None if record.is_create else _removed(record, now)
-    base = _synced(record, conflict, conflict.remote_version, now, prefix=REMOTE)
+    if record.is_refused_change:
+        # The server kept the synced copy.
+        base = replace(record, state=RecordState.SYNCED, edit=None, conflict=None)
+    else:
+        base = _synced(record, conflict, conflict.remote_version, now, prefix=REMOTE)
     # Over a copy the server has, an edit is a change; with none, a create.
     kind = EditKind.CHANGE if on_server else EditKind.CREATE
     match resolution:
@@ -233,8 +237,8 @@ def _check_outcome(claimed_keys: set[int], claimed: Record, outcome: PushOutcome
     match outcome:
         case Gone() if kind is EditKind.CREATE:
             raise ValueError("A create can't be gone: the server never had the object")
-        case LogicalKeyTaken() if kind is not EditKind.CREATE:
-            raise ValueError(f"Only a create can be refused for its logical key, not a {kind}")
+        case LogicalKeyTaken() if kind is EditKind.DELETE:
+            raise ValueError("A delete can't be refused for its logical key")
         case Applied(object_id=str()) if kind is EditKind.DELETE:
             raise ValueError("An applied delete has no object id to report")
         case Applied(object_id=None) if kind is EditKind.CREATE and claimed.object_id is None:
@@ -465,7 +469,7 @@ class Session:
             ValueError: If ``claimed`` isn't a record this session's
                 :meth:`claim` returned, or the outcome is one no push of its
                 edit can have: ``Gone`` for a create, ``LogicalKeyTaken`` for
-                anything but a create, ``Applied`` with an id for a delete, or
+                a delete, ``Applied`` with an id for a delete, or
                 ``Applied`` without one for a create that has none.
 
         Examples:
@@ -739,7 +743,14 @@ class Replica:
                 record = claimed.pop(change.logical_key)
         in_flight = record is not None and record.state is RecordState.IN_FLIGHT
         live = None if record is None or record.state is RecordState.REMOVED else record
-        if live is not None and live.conflict is not None and same_remote(live.conflict, change):
+        # A refused change holds no copy of the server's object, so whatever the
+        # server reports about it is news, a removal included.
+        if (
+            live is not None
+            and live.conflict is not None
+            and not live.is_refused_change
+            and same_remote(live.conflict, change)
+        ):
             if isinstance(change, Changed):
                 conflict = Conflict.from_change(live.conflict.kind, change, live.conflict.opened_at)
                 self._store.update_record(replace(live, conflict=conflict))
@@ -1256,10 +1267,16 @@ class Replica:
             raise PushInFlightError(f"Record {local_key} has a push in flight")
         return record
 
-    def records(self, scope_id: str) -> list[Record]:
-        """Return every record in a scope, removed ones included, ordered by local key.
+    def records(
+        self, scope_id: str, *, states: frozenset[RecordState] | None = None
+    ) -> list[Record]:
+        """Return the records in a scope, removed ones included, ordered by local key.
 
         Runs in a read transaction of its own.
+
+        Args:
+            scope_id: The scope to read.
+            states: Only the records in one of these states; ``None`` for every record.
 
         Raises:
             TransactionError: If a store transaction is already open in this thread.
@@ -1268,8 +1285,12 @@ class Replica:
         Examples:
             >>> [record.object_id for record in replica.records("work")]
             ['a']
+            >>> replica.records("work", states=frozenset({RecordState.PENDING}))
+            []
         """
-        return self._read_in_scope(scope_id, lambda: self._store.scope_records(scope_id))
+        return self._read_in_scope(
+            scope_id, lambda: self._store.scope_records(scope_id, states=states)
+        )
 
     def known_versions(self, scope_id: str) -> dict[str, str]:
         """Return the version of the server's copy of every object the store knows one for.
@@ -1369,13 +1390,13 @@ class Replica:
                 move of the server's version alone doesn't count.
             UnknownHolderError: For ``UpdateHolder``, if the server named no
                 record that's still there, and no single record holds the
-                refused create's logical key, or it was sent without one.
+                refused edit's logical key, or it was sent without one.
             OpenConflictError: For ``UpdateHolder``, if the holder is in conflict.
             PushInFlightError: For ``UpdateHolder``, if the holder's push is in flight.
             PendingEditError: For ``UpdateHolder``, if the holder holds a
                 pending edit of its own, which this would replace.
             ValueError: If ``record`` isn't in conflict, or the resolution
-                doesn't fit its kind: ``KeepEdit`` for a create the server
+                doesn't fit its kind: ``KeepEdit`` for an edit the server
                 refused for its logical key, or ``UpdateHolder`` for any other.
 
         Examples:
@@ -1409,7 +1430,8 @@ class Replica:
                     )
                 edit = cast(LocalEdit, stored.edit)
                 self._store.update_record(_changed_to(holder, replace(edit, recorded_at=now)))
-                resolved = None
+                # A refused create leaves nothing; a refused change, the synced copy.
+                resolved = None if stored.is_create else _resolved(stored, TakeServer(), now)
             else:
                 resolved = _resolved(stored, resolution, now)
             if resolved is None:

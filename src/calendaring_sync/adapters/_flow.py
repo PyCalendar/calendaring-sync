@@ -26,11 +26,14 @@ from dataclasses import dataclass, field
 from typing import Any, TypedDict, TypeVar
 
 from calendaring_sync.objects.push import PushOutcome
-from calendaring_sync.objects.record import Record
+from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
 from calendaring_sync.replica import Replica, Session
 
 _T = TypeVar("_T")
+
+# The records whose edit is waiting to be sent.
+_PENDING = frozenset({RecordState.PENDING})
 
 #: The steps of a sync: they yield client answers or :class:`_InStore`
 #: calls, and are sent back what each one returned.
@@ -216,6 +219,13 @@ class _Flow(ABC):
         if record is not None and record.scope != self._scope_id:
             raise ValueError(f"Record {local_key} is in scope {record.scope!r}, not this one")
         yield _InStore(self._replica.change, (local_key, content), fields)
+
+    def _waiting(self) -> Steps[list[Record]]:
+        """The pending edits the adapter won't send yet."""
+        pending: list[Record] = yield _InStore(
+            self._replica.records, (self._scope_id,), {"states": _PENDING}
+        )
+        return [r for r in pending if self._waits(r)]
 
     def _sync(self, *, full_listing: bool) -> Steps[None]:
         """One sync: read and ingest, then push; a refused token resets and lists."""

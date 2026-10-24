@@ -25,8 +25,8 @@ class ConflictKind(StrEnum):
     DELETED_LOCALLY = "deleted_locally"
     #: The server has a new object at the id your unsent create chose.
     BOTH_CREATED = "both_created"
-    #: The server refused your create because another object holds its
-    #: :term:`logical key`.
+    #: The server refused your create, or your change, because another
+    #: object holds its :term:`logical key`.
     LOGICAL_KEY_TAKEN = "logical_key_taken"
 
 

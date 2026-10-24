@@ -263,7 +263,6 @@ class _CalDAVFlow(_Flow):
                 return _Read.INVALID_TOKEN
             raise
         removed = {self._object_id(url) for url in found.deleted_urls}
-        changes: dict[str, Change] = dict.fromkeys(removed, Removed())
         known: dict[str, str] = yield _InStore(self._replica.known_versions, (self.scope_id,))
         # A member reported with the ETag already stored hasn't changed since,
         # such as one this sync already fetched or that came back twice.
@@ -273,7 +272,14 @@ class _CalDAVFlow(_Flow):
             for object_id, version in reported
             if object_id not in removed and (version is None or known.get(object_id) != version)
         ]
-        changes.update((yield from self._fetch(changed)))
+        fetched = yield from self._fetch(changed)
+        # Nextcloud and Synology report a member deleted and re-created at one
+        # href only as removed, so removals are fetched too: one that comes back
+        # with data is still there. They go in multigets of their own, so a
+        # server that refuses a whole multiget for a gone member (Posteo) only
+        # costs a request per removal.
+        fetched |= yield from self._fetch(sorted(removed))
+        changes: dict[str, Change] = {**dict.fromkeys(removed, Removed()), **fetched}
         # A reply without a token keeps the scope's, so nothing in it is lost:
         # the next sync asks again from where this one started.
         token = scope.token if found.sync_token is None else found.sync_token
@@ -305,9 +311,9 @@ class _CalDAVFlow(_Flow):
                 )
             )
         except dav_error.ResponseError as exc:
-            # python-caldav refuses a multistatus that marks the cut with a 507,
-            # and gives the status line, not a status.
-            if f" {_TRUNCATED} " not in f" {exc.url} ":
+            # python-caldav refuses a multistatus that marks the cut with a 507.
+            # Up to 3.6.0 it gives the status line; later releases set the status.
+            if exc.status != _TRUNCATED and f" {_TRUNCATED} " not in f" {exc.url} ":
                 raise
             raise IncompleteListingError(
                 f"The server cut the listing of {self._url} short"
@@ -347,7 +353,7 @@ class _CalDAVFlow(_Flow):
         fetched: dict[str, Changed] = {}
         for chunk in _chunks(wanted, MULTIGET_SIZE):
             urls = [self._url.join(i) for i in chunk]
-            found = yield from self._ask(lambda urls=urls: self._calendar.multiget(urls))
+            found = yield from self._multiget(urls)
             for obj in found:
                 content = obj.raw_data
                 if content is None:
@@ -357,6 +363,26 @@ class _CalDAVFlow(_Flow):
                     obj.etag, fields.fingerprint, content, self._containers, fields.logical_key
                 )
         return fetched
+
+    def _multiget(self, urls: list[URL]) -> Steps[list[Any]]:
+        """Fetch members with one ``calendar-multiget``.
+
+        Posteo answers a whole multiget with 404 when one member is gone, so
+        then, once the calendar is known to be there, each member is fetched
+        on its own, and one that's gone is left out.
+        """
+        try:
+            found: list[Any] = yield self._calendar.multiget(urls)
+        except dav_error.NotFoundError:
+            # Raises ScopeGoneError when the calendar itself is gone.
+            yield from self._ask(lambda: self._calendar.get_properties([dav.SyncToken()]))
+            found = []
+            for url in urls:
+                try:
+                    found += yield self._calendar.multiget([url])
+                except dav_error.NotFoundError:
+                    continue
+        return found
 
     def _waits(self, record: Record) -> bool:
         # If-Match compares strongly, so a weak ETag never matches (RFC 9110
@@ -391,11 +417,9 @@ class _CalDAVFlow(_Flow):
             return Applied()
         try:
             yield resource.save(raw_data=edit.content, precondition="etag", increase_seqno=False)
-        except (
-            dav_error.UidConflictError,
-            dav_error.ETagMismatchError,
-            dav_error.ScheduleTagMismatchError,
-        ):
+        except dav_error.UidConflictError as exc:
+            return LogicalKeyTaken(self._holder(exc))
+        except (dav_error.ETagMismatchError, dav_error.ScheduleTagMismatchError):
             return Rejected()
         except dav_error.PutError as exc:
             if exc.status == _NOT_FOUND:
@@ -450,8 +474,7 @@ class CalDAVAdapter(_CalDAVFlow):
 
     A change or delete of an object whose stored ETag is weak (``W/``)
     waits, unsent, until a sync stores a strong one, since ``If-Match``
-    never matches a weak ETag. Such a record stays pending with a
-    ``version`` that starts with ``W/``.
+    never matches a weak ETag; :meth:`waiting` lists such edits.
 
     Every method also raises the store's errors, as
     :class:`~calendaring_sync.replica.Replica` describes.
@@ -539,6 +562,18 @@ class CalDAVAdapter(_CalDAVFlow):
         """
         _run(self._change(local_key, content))
 
+    def waiting(self) -> list[Record]:
+        """Return the pending edits the next :meth:`sync` won't send, and can't yet.
+
+        That's a change or delete of an object whose stored ETag is weak.
+        Runs in a read transaction.
+
+        Raises:
+            UnknownScopeError: If the calendar was never synced.
+            TransactionError: If a store transaction is open in this thread.
+        """
+        return _run(self._waiting())
+
 
 @check_argument_types
 class AsyncCalDAVAdapter(_CalDAVFlow):
@@ -572,3 +607,7 @@ class AsyncCalDAVAdapter(_CalDAVFlow):
     async def change(self, local_key: int, content: bytes) -> None:
         """See :meth:`CalDAVAdapter.change`."""
         await _arun(self._change(local_key, content))
+
+    async def waiting(self) -> list[Record]:
+        """See :meth:`CalDAVAdapter.waiting`."""
+        return await _arun(self._waiting())

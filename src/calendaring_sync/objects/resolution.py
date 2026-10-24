@@ -16,7 +16,7 @@ class TakeServer:
 
     For a create the server refused because another object holds its
     :term:`logical key`, the server has nothing of yours, so the create is
-    discarded.
+    discarded; for a refused change, the object stays as it was synced.
     """
 
 
@@ -73,10 +73,11 @@ class Delete:
 
 @dataclass(frozen=True)
 class UpdateHolder:
-    """Push a create the server refused as a change to the object that holds its logical key.
+    """Push a refused edit as a change to the object that holds its logical key.
 
-    Only for a create refused because another object holds its
-    :term:`logical key`.
+    Only for a create or a change refused because another object holds its
+    :term:`logical key`. A refused create then leaves nothing, and the object
+    a refused change was for stays as it was synced.
     """
 
 

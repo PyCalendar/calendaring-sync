@@ -42,15 +42,15 @@ from calendaring_sync.objects.scope import Scope
 # The states in which a record holds a pending edit.
 _EDIT_STATES = frozenset({RecordState.PENDING, RecordState.IN_FLIGHT, RecordState.CONFLICT})
 
-# The edit each kind of conflict is about, and whether the conflict holds a
-# copy of the server's object. A refused create holds none: the server sent
+# The edits each kind of conflict is about, and whether the conflict holds a
+# copy of the server's object. A refused edit holds none: the server sent
 # nothing back but the refusal.
-_CONFLICT_SIDES: dict[ConflictKind, tuple[EditKind, bool]] = {
-    ConflictKind.BOTH_CHANGED: (EditKind.CHANGE, True),
-    ConflictKind.REMOVED_REMOTELY: (EditKind.CHANGE, False),
-    ConflictKind.DELETED_LOCALLY: (EditKind.DELETE, True),
-    ConflictKind.BOTH_CREATED: (EditKind.CREATE, True),
-    ConflictKind.LOGICAL_KEY_TAKEN: (EditKind.CREATE, False),
+_CONFLICT_SIDES: dict[ConflictKind, tuple[frozenset[EditKind], bool]] = {
+    ConflictKind.BOTH_CHANGED: (frozenset({EditKind.CHANGE}), True),
+    ConflictKind.REMOVED_REMOTELY: (frozenset({EditKind.CHANGE}), False),
+    ConflictKind.DELETED_LOCALLY: (frozenset({EditKind.DELETE}), True),
+    ConflictKind.BOTH_CREATED: (frozenset({EditKind.CREATE}), True),
+    ConflictKind.LOGICAL_KEY_TAKEN: (frozenset({EditKind.CREATE, EditKind.CHANGE}), False),
 }
 
 
@@ -76,10 +76,11 @@ def _check_record(record: Record) -> None:
             raise RecordValueError(f"A {edit.kind} edit needs the object's content")
     if conflict is None:
         return
-    # Each kind of conflict is about one kind of edit.
-    edit_kind, server_has_it = _CONFLICT_SIDES[conflict.kind]
-    if edit is None or edit.kind is not edit_kind:
-        raise RecordValueError(f"A {conflict.kind} conflict needs a {edit_kind} edit")
+    # Each kind of conflict is about some kinds of edit.
+    edit_kinds, server_has_it = _CONFLICT_SIDES[conflict.kind]
+    if edit is None or edit.kind not in edit_kinds:
+        kinds = " or ".join(sorted(edit_kinds))
+        raise RecordValueError(f"A {conflict.kind} conflict needs a {kinds} edit")
     # The server's side holds a copy exactly when the server still has the object.
     removed = data(conflict, REMOTE) == NO_DATA and conflict.remote_version is None
     if conflict.remote_content is None and not removed:
@@ -87,7 +88,7 @@ def _check_record(record: Record) -> None:
     if server_has_it == removed:
         need = "needs" if server_has_it else "can't hold"
         raise RecordValueError(f"A {conflict.kind} conflict {need} the server's copy")
-    # Only a refused create names the object holding its logical key.
+    # Only a refused edit names the object holding its logical key.
     if conflict.holder is not None and conflict.kind is not ConflictKind.LOGICAL_KEY_TAKEN:
         raise RecordValueError(f"A {conflict.kind} conflict can't name a holder")
 

@@ -508,9 +508,13 @@ def _refused_create(
     token: str = "T2",
     *,
     logical_key: str | None = "u",
+    local: str = "create",
 ) -> int:
-    """Push a create with id n that the server refuses for its logical key; return its local key."""
-    key, _ = _edit_locally(replica, "create", logical_key=logical_key)
+    """Push an edit that the server refuses for its logical key; return its local key.
+
+    A create gets the id n; a change goes to a, as ``_edit_locally`` makes them.
+    """
+    key, _ = _edit_locally(replica, local, logical_key=logical_key)
     _push(replica, key, LogicalKeyTaken(holder), since, token)
     return key
 
@@ -532,14 +536,15 @@ def _in_conflict(
     token: str = "T2",
     *,
     kind: ConflictKind = ConflictKind.BOTH_CHANGED,
+    refused: str = "create",
 ) -> int:
     """Open a conflict of ``kind`` in a seeded scope; return its local key.
 
-    A conflict about a create is at the id n, and a refused create names b
-    as the object holding its logical key u.
+    A conflict about a create is at the id n, and a refused edit, the
+    ``refused`` kind of edit, names b as the object holding its logical key u.
     """
     if kind is ConflictKind.LOGICAL_KEY_TAKEN:
-        return _refused_create(replica, "b", since, token)
+        return _refused_create(replica, "b", since, token, local=refused)
     local, remote = _OPENED_BY[kind]
     key, object_id = _edit_locally(replica, local, object_id)
     _sync(replica, _page(since, token, {object_id: _remote(remote)}))
@@ -1235,6 +1240,12 @@ _OUTCOMES = [
         _conflicted(EditKind.CREATE, ConflictKind.LOGICAL_KEY_TAKEN),
         [FeedEntryKind.CONFLICT_OPENED],
     ),
+    (
+        "change",
+        LogicalKeyTaken("b"),
+        _conflicted(EditKind.CHANGE, ConflictKind.LOGICAL_KEY_TAKEN),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
     ("change", Unknown(), (RecordState.IN_FLIGHT, EditKind.CHANGE, None), []),
 ]
 
@@ -1301,29 +1312,34 @@ _NOTHING_NEW = (None, "edited", "claimed again")
 
 _MERGED = Merge(_content("fm"), fingerprint="fm")
 
-# Each conflict resolved each way: the conflict's kind, the resolution, then
-# what the record ends up as, or None once it's gone.
+# Each conflict resolved each way: the conflict's kind, the kind of edit a
+# refused one was, the resolution, then what the record ends up as, or None
+# once it's gone.
 _RESOLVED = [
-    (ConflictKind.BOTH_CHANGED, TakeServer(), _SYNCED),
-    (ConflictKind.BOTH_CHANGED, KeepEdit(), _pending(EditKind.CHANGE)),
-    (ConflictKind.BOTH_CHANGED, _MERGED, _pending(EditKind.CHANGE)),
-    (ConflictKind.BOTH_CHANGED, Delete(), _pending(EditKind.DELETE)),
-    (ConflictKind.REMOVED_REMOTELY, TakeServer(), _REMOVED),
-    (ConflictKind.REMOVED_REMOTELY, KeepEdit(), _pending(EditKind.CREATE)),
-    (ConflictKind.REMOVED_REMOTELY, _MERGED, _pending(EditKind.CREATE)),
-    (ConflictKind.REMOVED_REMOTELY, Delete(), _REMOVED),
-    (ConflictKind.DELETED_LOCALLY, TakeServer(), _SYNCED),
-    (ConflictKind.DELETED_LOCALLY, KeepEdit(), _pending(EditKind.DELETE)),
-    (ConflictKind.DELETED_LOCALLY, _MERGED, _pending(EditKind.CHANGE)),
-    (ConflictKind.DELETED_LOCALLY, Delete(), _pending(EditKind.DELETE)),
-    (ConflictKind.BOTH_CREATED, TakeServer(), _SYNCED),
-    (ConflictKind.BOTH_CREATED, KeepEdit(), _pending(EditKind.CHANGE)),
-    (ConflictKind.BOTH_CREATED, _MERGED, _pending(EditKind.CHANGE)),
-    (ConflictKind.BOTH_CREATED, Delete(), _pending(EditKind.DELETE)),
-    (ConflictKind.LOGICAL_KEY_TAKEN, TakeServer(), None),
-    (ConflictKind.LOGICAL_KEY_TAKEN, _MERGED, _pending(EditKind.CREATE)),
-    (ConflictKind.LOGICAL_KEY_TAKEN, Delete(), None),
-    (ConflictKind.LOGICAL_KEY_TAKEN, UpdateHolder(), None),
+    (ConflictKind.BOTH_CHANGED, "create", TakeServer(), _SYNCED),
+    (ConflictKind.BOTH_CHANGED, "create", KeepEdit(), _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CHANGED, "create", _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CHANGED, "create", Delete(), _pending(EditKind.DELETE)),
+    (ConflictKind.REMOVED_REMOTELY, "create", TakeServer(), _REMOVED),
+    (ConflictKind.REMOVED_REMOTELY, "create", KeepEdit(), _pending(EditKind.CREATE)),
+    (ConflictKind.REMOVED_REMOTELY, "create", _MERGED, _pending(EditKind.CREATE)),
+    (ConflictKind.REMOVED_REMOTELY, "create", Delete(), _REMOVED),
+    (ConflictKind.DELETED_LOCALLY, "create", TakeServer(), _SYNCED),
+    (ConflictKind.DELETED_LOCALLY, "create", KeepEdit(), _pending(EditKind.DELETE)),
+    (ConflictKind.DELETED_LOCALLY, "create", _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.DELETED_LOCALLY, "create", Delete(), _pending(EditKind.DELETE)),
+    (ConflictKind.BOTH_CREATED, "create", TakeServer(), _SYNCED),
+    (ConflictKind.BOTH_CREATED, "create", KeepEdit(), _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CREATED, "create", _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CREATED, "create", Delete(), _pending(EditKind.DELETE)),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "create", TakeServer(), None),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "create", _MERGED, _pending(EditKind.CREATE)),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "create", Delete(), None),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "create", UpdateHolder(), None),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "change", TakeServer(), _SYNCED),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "change", _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "change", Delete(), _pending(EditKind.DELETE)),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "change", UpdateHolder(), _SYNCED),
 ]
 
 # Local edits in a row: where the record starts (synced as fa, or a
@@ -1473,6 +1489,32 @@ class TestConflicts:
             assert record.conflict.opened_at == opened_at
             assert record.conflict.remote_version == (None if following == "removed" else "v3")
 
+    @pytest.mark.parametrize(
+        "following, expected, feed",
+        [
+            (
+                "fx",
+                _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED),
+                [FeedEntryKind.CONFLICT_UPDATED],
+            ),
+            (
+                "removed",
+                _conflicted(EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY),
+                [FeedEntryKind.CONFLICT_UPDATED],
+            ),
+            ("fl", _SYNCED, [FeedEntryKind.CONFLICT_RESOLVED]),
+        ],
+    )
+    def test_a_refused_change_meets_the_next_report(self, replica, following, expected, feed):
+        # The refusal holds no copy of the server's object, so any report is news.
+        key = _in_conflict(_seeded(replica), kind=ConflictKind.LOGICAL_KEY_TAKEN, refused="change")
+        # The server still holds the synced copy, so a listing needn't fetch it.
+        assert replica.known_versions(_SCOPE)["a"] == replica.record(key).version
+        head = replica.feed_head()
+        _sync(replica, _page("T2", "T3", {"a": _remote(following, "v3")}))
+        assert _summary(replica.record(key)) == expected
+        assert [kind for kind, _ in _feed(replica, head)] == feed
+
     def test_a_version_only_change_moves_the_version_under_an_edit(self, replica):
         key, _ = _seeded_edit(replica, "change")
         _sync(replica, _page("T1", "T2", {"a": _changed("fa", "v2", content=b"rewritten")}))
@@ -1578,8 +1620,7 @@ class TestPushes:
         "local, outcome, message",
         [
             ("create", Gone(), "can't be gone"),
-            ("change", LogicalKeyTaken(), "Only a create"),
-            ("delete", LogicalKeyTaken("b"), "Only a create"),
+            ("delete", LogicalKeyTaken("b"), "^A delete can't be refused for its logical key$"),
             ("delete", Applied("x"), "no object id"),
             ("create without an id", Applied(), "needs the object id"),
             ("not claimed", Applied(), "takes a record"),
@@ -1826,10 +1867,19 @@ class TestPushes:
 
 
 class TestResolutions:
-    @pytest.mark.parametrize("kind, resolution, expected", _RESOLVED)
-    def test_each_resolution_of_each_conflict(self, replica, kind, resolution, expected):
-        key = _in_conflict(_seeded(replica), kind=kind)
-        conflict = replica.record(key).conflict
+    @pytest.mark.parametrize("kind, refused, resolution, expected", _RESOLVED)
+    def test_each_resolution_of_each_conflict(self, replica, kind, refused, resolution, expected):
+        key = _in_conflict(_seeded(replica), kind=kind, refused=refused)
+        before = replica.record(key)
+        conflict = before.conflict
+        # The server's copy: what its side of the conflict holds, or, for a
+        # change it refused, the synced copy it kept.
+        refused_change = kind is ConflictKind.LOGICAL_KEY_TAKEN and refused == "change"
+        server = (
+            (before.version, before.content)
+            if refused_change
+            else (conflict.remote_version, conflict.remote_content)
+        )
         head = replica.feed_head()
         replica.resolve(replica.record(key), resolution)
         record = replica.record(key)
@@ -1837,18 +1887,19 @@ class TestResolutions:
         assert [kind for kind, _ in _feed(replica, head)] == [FeedEntryKind.CONFLICT_RESOLVED]
         if record is not None and record.state is not RecordState.REMOVED:
             # Whatever is pushed next goes out against the server's current copy.
-            assert (record.version, record.content) == (
-                conflict.remote_version,
-                conflict.remote_content,
-            )
+            assert (record.version, record.content) == server
         if isinstance(resolution, Merge):
             assert record is not None
             assert (record.edit and record.edit.content) == resolution.content
+        if isinstance(resolution, UpdateHolder):
+            # The holder, b, takes the refused edit's content as a change.
+            holder = replica.find_record(_SCOPE, "b")
+            assert holder.edit.content == before.edit.content
 
     @pytest.mark.parametrize(
         "kind, resolution, message",
         [
-            *((kind, UpdateHolder(), "^Only a create refused") for kind in _OPENED_BY),
+            *((kind, UpdateHolder(), "^Only an edit refused") for kind in _OPENED_BY),
             (ConflictKind.LOGICAL_KEY_TAKEN, KeepEdit(), "can't be pushed again unchanged$"),
             (None, TakeServer(), "takes a record in conflict$"),
         ],
@@ -2377,6 +2428,7 @@ class TestStores:
         ):
             records = store.scope_records(_SCOPE, states=states)
         assert [r.object_id for r in records] == expected
+        assert replica.records(_SCOPE, states=states) == records
         # An empty set is answered by the base class, so no store sees one.
         assert hook.called == (states != frozenset())
 

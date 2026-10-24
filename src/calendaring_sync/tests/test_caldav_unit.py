@@ -34,6 +34,7 @@ from caldav.lib import error as dav_error
 from calendaring_sync import (
     ConflictKind,
     RecordState,
+    ScopeGoneError,
     StateStore,
     UnknownRecordError,
     UnknownScopeError,
@@ -64,6 +65,7 @@ from calendaring_sync.tests._caldav_scenarios import (
     edit_a,
     edit_a_changed_behind,
     environment,
+    put_a_and_b,
     run,
     sync_a_and_b,
 )
@@ -150,6 +152,12 @@ def _edit(
     tape.exchanges[index] = replace(
         exchange, status=exchange.status if status is None else status, body=text
     )
+
+
+def _first_two_syncs(env: Env) -> None:
+    """The first two syncs of the ``reading`` scenario: an empty listing, then a and b."""
+    env.sync()
+    sync_a_and_b(env)
 
 
 @contextmanager
@@ -534,44 +542,77 @@ class TestAdapter:
         adapter._client.features = None
         assert adapter.needs_full_listings is False
 
-    # Each row is a create (no local key) or a change of a local key: 1 is
-    # the record the test makes in the test scope, 2 doesn't exist.
+    # Each row calls an adapter of ``scope_id``: local key 1 is the record
+    # the test makes in the test scope, 2 doesn't exist.
     @pytest.mark.parametrize(
-        "local_key, scope_id, content, error, match, before",
+        "call, scope_id, error, match, before",
         [
-            pytest.param(None, _SCOPE, _NOT_UTF8, ValueError, "must be UTF-8", True, id="create"),
             pytest.param(
-                None,
+                lambda a: a.create(_NOT_UTF8),
                 _SCOPE,
-                _ical(_with("UID:event-1")),
+                ValueError,
+                "must be UTF-8",
+                True,
+                id="create",
+            ),
+            pytest.param(
+                lambda a: a.create(_ical(_with("UID:event-1"))),
+                _SCOPE,
                 ValueError,
                 "with a UID",
                 True,
                 id="create, no UID",
             ),
-            pytest.param(1, _SCOPE, _NOT_UTF8, ValueError, "must be UTF-8", True, id="change"),
-            pytest.param(None, "nope", _ical(_EVENT), UnknownScopeError, None, False, id="scope"),
-            pytest.param(2, _SCOPE, _ical(_EVENT), UnknownRecordError, None, False, id="record"),
             pytest.param(
-                1, "nope", _ical(_EVENT), ValueError, "in scope 'cal'", False, id="other scope"
+                lambda a: a.change(1, _NOT_UTF8),
+                _SCOPE,
+                ValueError,
+                "must be UTF-8",
+                True,
+                id="change",
+            ),
+            pytest.param(
+                lambda a: a.create(_ical(_EVENT)),
+                "nope",
+                UnknownScopeError,
+                None,
+                False,
+                id="scope",
+            ),
+            pytest.param(
+                lambda a: a.change(2, _ical(_EVENT)),
+                _SCOPE,
+                UnknownRecordError,
+                None,
+                False,
+                id="record",
+            ),
+            pytest.param(
+                lambda a: a.change(1, _ical(_EVENT)),
+                "nope",
+                ValueError,
+                "in scope 'cal'",
+                False,
+                id="other scope",
+            ),
+            pytest.param(
+                lambda a: a.waiting(), "nope", UnknownScopeError, None, False, id="waiting, scope"
             ),
         ],
     )
-    def test_an_edit_is_refused(
-        self, store, asynchronous, local_key, scope_id, content, error, match, before
-    ):
+    def test_a_call_is_refused(self, store, asynchronous, call, scope_id, error, match, before):
         made = _adapter(store, asynchronous)
         assert _done(made.create(_ical(_EVENT))) == 1
         adapter = adapter_class(asynchronous)(
             made._replica, _calendar(asynchronous), scope_id=scope_id
         )
-        call = (
-            (lambda: adapter.create(content))
-            if local_key is None
-            else (lambda: adapter.change(local_key, content))
-        )
         _assert_refused(
-            made._replica, store, lambda: _done(call()), error, match, before_a_transaction=before
+            made._replica,
+            store,
+            lambda: _done(call(adapter)),
+            error,
+            match,
+            before_a_transaction=before,
         )
 
     def test_an_edit_gets_the_fields_a_sync_gives(self, store, asynchronous):
@@ -610,8 +651,8 @@ class TestEditedRecordings:
                 409,
                 '<error xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
                 "<C:no-uid-conflict/></error>",
-                RecordState.PENDING,
-                None,
+                RecordState.CONFLICT,
+                ConflictKind.LOGICAL_KEY_TAKEN,
                 None,
                 id="change, UID taken",
             ),
@@ -748,10 +789,51 @@ class TestEditedRecordings:
             replace(report, body=report.body.replace(_text(report.body, "sync-token"), again))
         )
         with _replaying(tape, store, asynchronous) as env:
-            env.sync()
-            sync_a_and_b(env)
+            _first_two_syncs(env)
             env.sync()
         assert env.replica.scope(env.adapter.scope_id).token == again
+
+    def test_a_member_reported_removed_that_still_has_data_is_kept(self, store, asynchronous):
+        # The second sync's report (7) names b removed, as Nextcloud names a
+        # member deleted and created again; the multiget for the removals,
+        # after the one for a (8), still returns it.
+        tape = _tape("radicale-reading", keep=9)
+        tape.exchanges.append(tape.exchanges[8])
+        b = "<response><href>/user1/calendaring-sync-reading/b.ics</href>"
+        _edit(
+            tape,
+            7,
+            old=b + tape.exchanges[7].body.split(b)[1].split("</response>")[0] + "</response>",
+            new=f"{b}<status>HTTP/1.1 404 Not Found</status></response>",
+        )
+        with _replaying(tape, store, asynchronous) as env:
+            _first_two_syncs(env)
+        assert env.record("b").state is RecordState.SYNCED
+
+    @pytest.mark.parametrize("calendar_there", [True, False], ids=["member gone", "calendar gone"])
+    def test_a_multiget_refused_whole_is_fetched_member_by_member(
+        self, store, asynchronous, calendar_there
+    ):
+        # Posteo answers the second sync's multiget (8) with 404 when one
+        # member is gone. A read of the token then shows whether the calendar
+        # is there, and a multiget for each member follows: a, then b, gone.
+        tape = _tape("radicale-reading", keep=9)
+        multiget = tape.exchanges[8]
+        head, *members = multiget.body.split("<response>")
+        only_a = head + "<response>" + members[1].replace("</multistatus>", "") + "</multistatus>"
+        gone = replace(multiget, status=404, body="")
+        token_read = replace(tape.exchanges[2], status=207 if calendar_there else 404)
+        tape.exchanges[8:] = [gone, token_read]
+        if calendar_there:
+            tape.exchanges += [replace(multiget, body=only_a), gone]
+        with _replaying(tape, store, asynchronous) as env:
+            env.sync()
+            put_a_and_b(env)
+            with nullcontext() if calendar_there else pytest.raises(ScopeGoneError):
+                env.sync()
+        assert [r.object_id for r in env.replica.records(env.adapter.scope_id)] == (
+            ["/user1/calendaring-sync-reading/a.ics"] if calendar_there else []
+        )
 
     def test_a_cancelled_sync_ends_its_session_after_the_store_call(self, store):
         # The second sync's ingest runs in a worker thread until the task is
@@ -775,8 +857,7 @@ class TestEditedRecordings:
 
         with _replaying(tape, store, asynchronous=True) as env:
             env.sync()
-            env.put("a", "first a")
-            env.put("b", "first b")
+            put_a_and_b(env)
             with patch.object(Session, "ingest", held_ingest):
                 env.run(cancel_mid_ingest(env.adapter))
         assert [r.state for r in env.replica.records(env.adapter.scope_id)] == [
@@ -899,8 +980,7 @@ class TestEditedRecordings:
             )
             tape.exchanges[7:8] = listing
         with _replaying(tape, store, asynchronous) as env:
-            env.sync()
-            sync_a_and_b(env)
+            _first_two_syncs(env)
         assert env.replica.scope(env.adapter.scope_id).token == token
 
     def test_a_full_listing_goes_to_the_core_in_pages(self, store, asynchronous):
@@ -924,6 +1004,8 @@ class TestEditedRecordings:
             with patch.object(Session, "claim", return_value=None):
                 env.sync()
         assert env.at(key).state is RecordState.PENDING
+        # It goes out with a later sync, so it isn't waiting.
+        assert _done(env.adapter.waiting()) == []
 
     def test_a_push_interrupted_while_sending_stays_in_flight(self, store, asynchronous):
         # The interruption comes as the create's PUT (9) would go out.
@@ -952,6 +1034,10 @@ class TestEditedRecordings:
         record = env.at(key)
         assert record.state is RecordState.PENDING
         assert record.version is not None and record.version.startswith("W/")
+        assert _done(env.adapter.waiting()) == [record]
+        # Without the edit, nothing waits, though the ETag is still weak.
+        env.replica.discard(key)
+        assert _done(env.adapter.waiting()) == []
 
     @pytest.mark.parametrize(
         "index, edit, error, reset",
@@ -993,6 +1079,21 @@ class TestEditedRecordings:
             with pytest.raises(dav_error.ResponseError, match=" 500 "):
                 env.sync()
         assert env.replica.records(env.adapter.scope_id) == []
+
+    def test_a_cut_the_client_reports_by_status_is_a_cut(self, store):
+        # python-caldav after 3.6.0 gives the 507 as a status, not in the message.
+        tape = _tape("stalwart-listing_cut_short")
+        with _replaying(tape, store, asynchronous=False) as env:
+            get_properties = env.calendar.get_properties
+
+            def by_status(*args: Any, **kwargs: Any) -> Any:
+                try:
+                    return get_properties(*args, **kwargs)
+                except dav_error.ResponseError:
+                    raise dav_error.ResponseError(status=507) from None
+
+            with patch.object(env.calendar, "get_properties", by_status):
+                SCENARIOS["listing_cut_short"](env)
 
 
 class TestRecorder:

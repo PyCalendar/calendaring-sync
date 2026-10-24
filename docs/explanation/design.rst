@@ -264,11 +264,11 @@ Each :term:`conflict record` has one of five kinds:
 - the server removed the object, and you edited it
 - you deleted the object, and the server edited it
 - the server has a new object at the id your create chose, and your create hasn't been sent yet
-- the server refused your create because another object holds its UID
+- the server refused your create or change because another object holds its UID
 
 Later remote changes update the record's remote side. The conflict resolves itself when the server reaches your edit, goes back to the synced content, or removes an object you deleted too.
 
-The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. You resolve a record with your edit (``KeepEdit``), the server's version (``TakeServer``), merged content (``Merge``), or a delete (``Delete``), and the core pushes the result as a change to the server's current version. You can't push a create the server refused for its UID again unchanged, so you can discard it (``TakeServer`` or ``Delete``), push it as an update to the object that holds the UID (``UpdateHolder``), or replace it with merged content, possibly with a new UID (``Merge``).
+The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. You resolve a record with your edit (``KeepEdit``), the server's version (``TakeServer``), merged content (``Merge``), or a delete (``Delete``), and the core pushes the result as a change to the server's current version. You can't push an edit the server refused for its UID again unchanged. You can drop it (``TakeServer``), push it as an update to the object that holds the UID (``UpdateHolder``), or replace it with merged content, possibly with a new UID (``Merge``). ``Delete`` discards a refused create, and deletes the object a refused change was for.
 
 ``resolve(record, resolution)`` resolves one record you read, and refuses if its conflict changed since, so a decision is never applied to news you haven't seen. ``resolve_conflicts(resolver)`` passes each open record to your resolver, never during an ingest, and resolves each answer the same way. Each resolution is its own transaction: ``None`` leaves a record open, a record that changed while your resolver ran waits for the next call, and an exception stops the loop and keeps the resolutions before it.
 

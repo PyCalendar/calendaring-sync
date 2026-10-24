@@ -2,7 +2,7 @@
  "server": "xandikos",
  "scenario": "fetch_after_delete",
  "caldav": "3.6.0",
- "recorded": "2026-10-23",
+ "recorded": "2026-10-24",
  "exchanges": [
   {
    "method": "DELETE",
@@ -112,6 +112,15 @@
     "content-type": "text/xml; charset=\"utf-8\""
    },
    "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics</ns0:href><ns0:status>HTTP/1.1 404 Not Found</ns0:status></ns0:response><ns0:sync-token>ae4423fea231573dd53ab2567fdc26cd3f98a7ca</ns0:sync-token></ns0:multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/sometestuser/calendars/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=\"utf-8\""
+   },
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-fetch-after-delete/a.ics</ns0:href><ns0:status>HTTP/1.1 404 Not Found</ns0:status></ns0:response></ns0:multistatus>"
   }
  ]
 }

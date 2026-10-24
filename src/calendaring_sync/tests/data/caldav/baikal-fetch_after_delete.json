@@ -2,7 +2,7 @@
  "server": "baikal",
  "scenario": "fetch_after_delete",
  "caldav": "3.6.0",
- "recorded": "2026-10-23",
+ "recorded": "2026-10-24",
  "exchanges": [
   {
    "method": "DELETE",
@@ -17,11 +17,11 @@
   {
    "method": "DELETE",
    "path": "/dav.php/calendars/test/calendaring-sync-fetch-after-delete/",
-   "status": 204,
+   "status": 404,
    "headers": {
-    "content-type": "text/html; charset=UTF-8"
+    "content-type": "application/xml; charset=utf-8"
    },
-   "body": ""
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<d:error xmlns:d=\"DAV:\" xmlns:s=\"http://sabredav.org/ns\">\n  <s:sabredav-version>4.7.0</s:sabredav-version>\n  <s:exception>Sabre\\DAV\\Exception\\NotFound</s:exception>\n  <s:message>Node with name 'calendaring-sync-fetch-after-delete' could not be found</s:message>\n</d:error>\n"
   },
   {
    "method": "MKCALENDAR",
@@ -137,6 +137,15 @@
     "content-type": "application/xml; charset=utf-8"
    },
    "body": "<?xml version=\"1.0\"?>\n<d:multistatus xmlns:d=\"DAV:\" xmlns:s=\"http://sabredav.org/ns\" xmlns:cal=\"urn:ietf:params:xml:ns:caldav\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\">\n <d:response>\n  <d:href>/dav.php/calendars/test/calendaring-sync-fetch-after-delete/a.ics</d:href>\n  <d:status>HTTP/1.1 404 Not Found</d:status>\n </d:response>\n <d:sync-token>http://sabre.io/ns/sync/4</d:sync-token>\n</d:multistatus>\n"
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav.php/calendars/test/calendaring-sync-fetch-after-delete/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\"?>\n<d:multistatus xmlns:d=\"DAV:\" xmlns:s=\"http://sabredav.org/ns\" xmlns:cal=\"urn:ietf:params:xml:ns:caldav\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\"/>\n"
   }
  ]
 }

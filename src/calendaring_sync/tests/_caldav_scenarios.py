@@ -223,10 +223,15 @@ def reading(env: Env) -> None:
     assert env.record("b").state is RecordState.REMOVED
 
 
-def sync_a_and_b(env: Env) -> None:
-    """Put ``a`` and ``b`` on the server from the second client, sync, and check both came in."""
+def put_a_and_b(env: Env) -> None:
+    """Put ``a`` and ``b`` on the server from the second client."""
     env.put("a", "first a")
     env.put("b", "first b")
+
+
+def sync_a_and_b(env: Env) -> None:
+    """Put ``a`` and ``b`` on the server from the second client, sync, and check both came in."""
+    put_a_and_b(env)
     env.sync()
     for uid in ("a", "b"):
         record = env.record(uid)

@@ -2,7 +2,7 @@
  "server": "radicale",
  "scenario": "delete_gone",
  "caldav": "3.6.0",
- "recorded": "2026-10-23",
+ "recorded": "2026-10-24",
  "exchanges": [
   {
    "method": "DELETE",
@@ -37,7 +37,7 @@
     "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-delete-gone/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/b80580afb99d608c5841c4f90a613dfaa7cdd9b61c139dd1b6b55ba7562545c0</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-delete-gone/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/1fc1885bc650488f2120c90f10951d9cba4f0a70931db3f1651980a0cd6b498d</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
   },
   {
    "method": "PROPFIND",
@@ -75,7 +75,7 @@
    "headers": {
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>http://radicale.org/ns/sync/b80580afb99d608c5841c4f90a613dfaa7cdd9b61c139dd1b6b55ba7562545c0</sync-token></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>http://radicale.org/ns/sync/1fc1885bc650488f2120c90f10951d9cba4f0a70931db3f1651980a0cd6b498d</sync-token></multistatus>"
   },
   {
    "method": "DELETE",
@@ -102,7 +102,16 @@
    "headers": {
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>http://radicale.org/ns/sync/38edfaaa39b06b06ce7d179156017b4d432c468bc183d1c72faaa64bde80a26c</sync-token><response><href>/user1/calendaring-sync-delete-gone/a.ics</href><status>HTTP/1.1 404 Not Found</status></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><sync-token>http://radicale.org/ns/sync/a20f598aba69316e9c6e54df86abc6e7f644e70883eb17551e801567433e0928</sync-token><response><href>/user1/calendaring-sync-delete-gone/a.ics</href><status>HTTP/1.1 404 Not Found</status></response></multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/user1/calendaring-sync-delete-gone/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=utf-8"
+   },
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-delete-gone/a.ics</href><status>HTTP/1.1 404 Not Found</status></response></multistatus>"
   }
  ]
 }
