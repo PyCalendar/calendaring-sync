@@ -243,12 +243,18 @@ class TestReplay:
         assert loaded.exchanges == [replace(answer, headers={"content-type": "text/xml"})]
 
 
-def _close_mid_step(steps: Steps[None]) -> None:
-    """Start the asynchronous driver on ``steps`` and close it at its first step."""
+def _close_mid_step(steps: Steps[None], held: threading.Event | None = None) -> None:
+    """Start the asynchronous driver on ``steps`` and close it at its first step.
+
+    A store call that waits for ``held`` is still running when the driver
+    suspends on it, so the driver can't finish on its own before the close.
+    """
 
     async def close() -> None:
         driver = _arun(steps)
         driver.send(None)
+        if held is not None:
+            held.set()
         driver.close()
 
     asyncio.run(close())
@@ -273,12 +279,18 @@ class TestDriver:
     def test_closing_while_a_store_call_runs_hands_its_outcome_over(self):
         seen: list[object] = []
         later = asyncio.sleep(_WAIT)
+        held = threading.Event()
+
+        def returns(value: str) -> str:
+            held.wait(_WAIT)
+            return value
 
         def fails() -> None:
+            held.wait(_WAIT)
             raise RuntimeError("the store call failed")
 
         def ends() -> Steps[None]:
-            seen.append((yield _InStore(lambda: "done")))
+            seen.append((yield _InStore(returns, ("done",))))
 
         def is_told() -> Steps[None]:
             try:
@@ -287,11 +299,12 @@ class TestDriver:
                 seen.append(str(exc))
 
         def goes_on() -> Steps[None]:
-            seen.append((yield _InStore(lambda: "on")))
+            seen.append((yield _InStore(returns, ("on",))))
             yield later
 
         for steps in (ends(), is_told(), goes_on()):
-            _close_mid_step(steps)
+            held.clear()
+            _close_mid_step(steps, held)
         assert seen == ["done", "the store call failed", "on"]
         # The request it yielded after the store call is closed, never left unawaited.
         assert inspect.getcoroutinestate(later) == inspect.CORO_CLOSED
@@ -798,6 +811,9 @@ class TestEditedRecordings:
                 self.manager = manager
 
             def __enter__(self) -> Session:
+                if not last_call:
+                    # Still entering when the driver suspends, so it can't run on.
+                    release.wait(_WAIT)
                 return self.manager.__enter__()  # type: ignore[no-any-return]
 
             def __exit__(self, *exc: object) -> Any:
@@ -815,6 +831,8 @@ class TestEditedRecordings:
                     if not held.done():
                         waiting = sync.send(None)
                 threading.Timer(0.05, release.set).start()
+            else:
+                release.set()
             sync.close()
 
         with (
