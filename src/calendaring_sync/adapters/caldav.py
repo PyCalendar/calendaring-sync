@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import hashlib
 import uuid
-import xml.etree.ElementTree as ElementTree
 from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from typing import Any, cast
 from urllib.parse import urlsplit, urlunsplit
 
 try:
+    import lxml.etree as etree
     from caldav.calendarobjectresource import CalendarObjectResource
     from caldav.collection import Calendar
     from caldav.davclient import DAVClient
@@ -76,6 +76,9 @@ _HOLDS_OBJECTS = frozenset({_ROOT, "VCALENDAR"})
 _SYNC_COLLECTION = "{DAV:}sync-collection"
 _VALID_SYNC_TOKEN = "{DAV:}valid-sync-token"
 _HREF = "{DAV:}href"
+# How python-caldav's parse_preconditions reads an error body: no entities
+# expanded, nothing fetched.
+_ERROR_PARSER = {"resolve_entities": False, "no_network": True}
 # The prefix of a weak entity tag (RFC 9110 section 8.8.3).
 _WEAK = "W/"
 # python-caldav's feature saying how a server refuses a sync token it won't take.
@@ -261,10 +264,21 @@ class _CalDAVFlow(_Flow):
             raise
         removed = {self._object_id(url) for url in found.deleted_urls}
         changes: dict[str, Change] = dict.fromkeys(removed, Removed())
-        changed = [self._object_id(obj.url) for obj in found.objects]
-        changes.update((yield from self._fetch(i for i in changed if i not in removed)))
+        known: dict[str, str] = yield _InStore(self._replica.known_versions, (self.scope_id,))
+        # A member reported with the ETag already stored hasn't changed since,
+        # such as one this sync already fetched or that came back twice.
+        reported = ((self._object_id(obj.url), obj.etag) for obj in found.objects)
+        changed = [
+            object_id
+            for object_id, version in reported
+            if object_id not in removed and (version is None or known.get(object_id) != version)
+        ]
+        changes.update((yield from self._fetch(changed)))
+        # A reply without a token keeps the scope's, so nothing in it is lost:
+        # the next sync asks again from where this one started.
+        token = scope.token if found.sync_token is None else found.sync_token
         change_set = ChangeSet(
-            self.scope_id, scope.token, found.sync_token, changes, truncated=found.truncated
+            self.scope_id, scope.token, token, changes, truncated=found.truncated
         )
         yield _InStore(session.ingest, (change_set,))
         return _Read.TRUNCATED if found.truncated else _Read.COMPLETE
@@ -326,6 +340,8 @@ class _CalDAVFlow(_Flow):
 
         An object missing from the answer, or answered without data, was
         removed after it was reported; the next report carries its removal.
+        One answered without an ETag is kept with no version, so the next
+        listing fetches it again.
         """
         wanted = [i for i in object_ids if i != self._collection]
         fetched: dict[str, Changed] = {}
@@ -333,12 +349,12 @@ class _CalDAVFlow(_Flow):
             urls = [self._url.join(i) for i in chunk]
             found = yield from self._ask(lambda urls=urls: self._calendar.multiget(urls))
             for obj in found:
-                content, version = obj.raw_data, obj.etag
-                if content is None or version is None:
+                content = obj.raw_data
+                if content is None:
                     continue
                 fields = _server_fields(content)
                 fetched[self._object_id(obj.url)] = Changed(
-                    version, fields.fingerprint, content, self._containers, fields.logical_key
+                    obj.etag, fields.fingerprint, content, self._containers, fields.logical_key
                 )
         return fetched
 
@@ -390,20 +406,26 @@ class _CalDAVFlow(_Flow):
     def _holder(self, refusal: Any) -> str | None:
         """The object id of the object holding a refused create's UID, if the server named it.
 
-        The precondition element may hold its ``DAV:href`` (:rfc:`4791#section-5.3.2.1`).
-        A refusal python-caldav found the precondition in has an XML body;
-        one from its own search for the UID has none. A holder in another
-        calendar, which a tested server refuses a UID for too, is no object
-        of this scope, so it isn't named.
+        The precondition element may hold its ``DAV:href`` (:rfc:`4791#section-5.3.2.1`),
+        read with the parser settings python-caldav found the precondition
+        with, so it parses. Naming the holder is a help, never a reason to
+        fail the push:
+        a body or href this calendar can't place, such as one in another
+        calendar or on another host, names no holder, and the core finds it
+        by the UID instead.
         """
-        if not refusal.body:
+        body = refusal.body.encode() if isinstance(refusal.body, str) else refusal.body
+        if not body:
             return None
-        root = ElementTree.fromstring(refusal.body)
+        root = etree.fromstring(body, parser=etree.XMLParser(**_ERROR_PARSER))
         for tag in dav_error.UID_CONFLICT_PRECONDITIONS:
             for element in root.iter(tag):
                 href = element.find(_HREF)
                 if href is not None and href.text:
-                    holder = self._object_id(href.text.strip())
+                    try:
+                        holder = self._object_id(href.text.strip())
+                    except ValueError:  # on another host than the calendar
+                        return None
                     in_calendar = holder.rpartition("/")[0] == self._collection.rstrip("/")
                     return holder if in_calendar else None
         return None
@@ -425,6 +447,11 @@ class CalDAVAdapter(_CalDAVFlow):
     calendar for a create's ``UID`` before sending it. Configuring the
     client's ``features`` (``features="radicale"``, for example) lets the
     server check instead, in the same request.
+
+    A change or delete of an object whose stored ETag is weak (``W/``)
+    waits, unsent, until a sync stores a strong one, since ``If-Match``
+    never matches a weak ETag. Such a record stays pending with a
+    ``version`` that starts with ``W/``.
 
     Every method also raises the store's errors, as
     :class:`~calendaring_sync.replica.Replica` describes.

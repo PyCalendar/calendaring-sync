@@ -16,7 +16,10 @@ too; the order of a sync, the session and the pushes live here.
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
+import contextvars
 import enum
+import inspect
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Mapping
 from dataclasses import dataclass, field
@@ -63,7 +66,12 @@ def _run(steps: Steps[_T]) -> _T:
 
 
 async def _arun(steps: Steps[_T]) -> _T:
-    """Drive the steps of a sync for an asynchronous client."""
+    """Drive the steps of a sync for an asynchronous client.
+
+    A store call runs to its end in its worker thread before the steps hear
+    of a cancellation or of the driver being closed, so a session never ends
+    while one of its calls is still running.
+    """
     sent: Any = None
     failure: BaseException | None = None
     while True:
@@ -72,10 +80,73 @@ async def _arun(steps: Steps[_T]) -> _T:
         except StopIteration as done:
             return done.value  # type: ignore[no-any-return]
         sent, failure = None, None
+        call: concurrent.futures.Future[Any] | None = None
         try:
-            sent = await (asyncio.to_thread(step.run) if isinstance(step, _InStore) else step)
+            if isinstance(step, _InStore):
+                call = _in_thread(step)
+                running = asyncio.wrap_future(call)
+                try:
+                    sent = await asyncio.shield(running)
+                except asyncio.CancelledError:
+                    await asyncio.wait([running])
+                    raise
+            else:
+                sent = await step
+        except GeneratorExit:
+            # Nothing can be awaited while closing, so the call is waited for here.
+            if call is not None:
+                _hand_over(steps, call)
+            steps.close()
+            raise
         except BaseException as exc:  # noqa: BLE001, thrown back into the steps
             failure = exc
+
+
+def _in_thread(step: _InStore) -> concurrent.futures.Future[Any]:
+    """Start a store call in a worker thread of the running loop."""
+    result: concurrent.futures.Future[Any] = concurrent.futures.Future()
+    context = contextvars.copy_context()
+
+    def run() -> None:
+        try:
+            result.set_result(context.run(step.run))
+        except BaseException as exc:  # noqa: BLE001, kept for the driver
+            result.set_exception(exc)
+
+    asyncio.get_running_loop().run_in_executor(None, run)
+    return result
+
+
+def _hand_over(steps: Steps[Any], call: concurrent.futures.Future[Any]) -> None:
+    """Give the steps what a store call they were waiting for ended with, when closing.
+
+    The steps then know whether, for example, a session was entered and has
+    to end. Whatever they do next goes nowhere, since the driver is closing.
+    """
+    try:
+        try:
+            outcome = call.result()
+        except BaseException as exc:  # noqa: BLE001, thrown into the steps
+            following = steps.throw(exc)
+        else:
+            following = steps.send(outcome)
+    except BaseException:  # noqa: BLE001, nobody is left to receive it
+        return
+    if inspect.iscoroutine(following):
+        following.close()
+
+
+def _end(session_manager: Any, exc_info: tuple[Any, Any, Any]) -> Steps[None]:
+    """End a session as a store step, or right away when the driver closes first.
+
+    A closing driver drops the step that follows the call it waited for, and
+    that step can be this one.
+    """
+    try:
+        yield _InStore(session_manager.__exit__, exc_info)
+    except GeneratorExit:
+        session_manager.__exit__(*exc_info)
+        raise
 
 
 class _EditFields(TypedDict):
@@ -174,10 +245,14 @@ class _Flow(ABC):
         session: Session = yield _InStore(session_manager.__enter__)
         try:
             result = yield from steps(session)
-        except BaseException as exc:
-            yield _InStore(session_manager.__exit__, (type(exc), exc, exc.__traceback__))
+        except GeneratorExit:
+            # A closing driver runs no more steps, so the session ends here.
+            session_manager.__exit__(None, None, None)
             raise
-        yield _InStore(session_manager.__exit__, (None, None, None))
+        except BaseException as exc:
+            yield from _end(session_manager, (type(exc), exc, exc.__traceback__))
+            raise
+        yield from _end(session_manager, (None, None, None))
         return result
 
     def _push(self, session: Session) -> Steps[None]:

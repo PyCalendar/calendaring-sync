@@ -16,9 +16,11 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import importlib
+import inspect
 import re
 import runpy
 import sys
+import threading
 from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import replace
@@ -37,6 +39,7 @@ from calendaring_sync import (
     UnknownScopeError,
 )
 from calendaring_sync.adapters import caldav as caldav_adapter
+from calendaring_sync.adapters._flow import Steps, _arun, _InStore
 from calendaring_sync.adapters.caldav import (
     FINGERPRINT_SCHEME,
     MEDIA_TYPE,
@@ -65,7 +68,7 @@ from calendaring_sync.tests._caldav_scenarios import (
     sync_a_and_b,
 )
 from calendaring_sync.tests._caldav_tape import Exchange, Tape, _Reply
-from calendaring_sync.tests.test_sync_unit import _SCOPE, _assert_refused
+from calendaring_sync.tests.test_sync_unit import _SCOPE, _WAIT, _assert_refused
 
 # An event with a time zone, a recurrence rule and parameters, for the
 # fingerprint rules to work on.
@@ -116,9 +119,9 @@ def _with(old: str, *new: str) -> list[str]:
     return lines[:i] + list(new) + lines[i + 1 :]
 
 
-def _token(body: str) -> str:
-    """The sync token a recorded answer holds."""
-    return body.split("<sync-token>")[1].split("</sync-token>")[0]
+def _text(body: str, element: str) -> str:
+    """What the first ``element`` of a recorded answer holds, such as its sync token."""
+    return body.split(f"<{element}>")[1].split(f"</{element}>")[0]
 
 
 def _tape(name: str, keep: int | None = None) -> Tape:
@@ -238,6 +241,60 @@ class TestReplay:
         assert server.closed == (["close", "aclose"] if asynchronous else ["close"])
         # Only the headers a replay reads are kept.
         assert loaded.exchanges == [replace(answer, headers={"content-type": "text/xml"})]
+
+
+def _close_mid_step(steps: Steps[None]) -> None:
+    """Start the asynchronous driver on ``steps`` and close it at its first step."""
+
+    async def close() -> None:
+        driver = _arun(steps)
+        driver.send(None)
+        driver.close()
+
+    asyncio.run(close())
+
+
+class TestDriver:
+    """The asynchronous driver, closed in the middle of a step."""
+
+    def test_closing_while_a_request_runs_closes_the_steps(self):
+        seen: list[str] = []
+
+        def steps() -> Steps[None]:
+            try:
+                yield asyncio.sleep(_WAIT)
+            except GeneratorExit:
+                seen.append("closed")
+                raise
+
+        _close_mid_step(steps())
+        assert seen == ["closed"]
+
+    def test_closing_while_a_store_call_runs_hands_its_outcome_over(self):
+        seen: list[object] = []
+        later = asyncio.sleep(_WAIT)
+
+        def fails() -> None:
+            raise RuntimeError("the store call failed")
+
+        def ends() -> Steps[None]:
+            seen.append((yield _InStore(lambda: "done")))
+
+        def is_told() -> Steps[None]:
+            try:
+                yield _InStore(fails)
+            except RuntimeError as exc:
+                seen.append(str(exc))
+
+        def goes_on() -> Steps[None]:
+            seen.append((yield _InStore(lambda: "on")))
+            yield later
+
+        for steps in (ends(), is_told(), goes_on()):
+            _close_mid_step(steps)
+        assert seen == ["done", "the store call failed", "on"]
+        # The request it yielded after the store call is closed, never left unawaited.
+        assert inspect.getcoroutinestate(later) == inspect.CORO_CLOSED
 
 
 class TestFingerprint:
@@ -611,6 +668,13 @@ class TestEditedRecordings:
                 id="in another calendar",
             ),
             pytest.param(
+                '<error xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><C:no-uid-conflict>'
+                "<href>https://proxy.invalid/user1/calendaring-sync-uid-taken/dup.ics</href>"
+                "</C:no-uid-conflict></error>",
+                None,
+                id="on another host",
+            ),
+            pytest.param(
                 '<error xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">'
                 "<C:no-uid-conflict/></error>",
                 None,
@@ -639,6 +703,128 @@ class TestEditedRecordings:
         conflict = env.record("dup").conflict
         assert conflict is not None and conflict.holder == holder
 
+    def test_a_member_answered_without_an_etag_is_kept(self, store, asynchronous):
+        # Exchange 10 is the second listing's multiget, for b; it loses b's ETag.
+        tape = _tape("radicale-listing")
+        etag = _text(tape.exchanges[10].body, "getetag")
+        _edit(tape, 10, old=f"<getetag>{etag}</getetag>")
+        with _replaying(tape, store, asynchronous) as env:
+            SCENARIOS["listing"](env)
+        b = env.record("b")
+        assert (b.state, b.version) == (RecordState.SYNCED, None)
+
+    def test_a_report_without_a_token_keeps_the_scope_token(self, store, asynchronous):
+        # Exchange 7 is the second sync's report; it loses its token.
+        tape = _tape("radicale-reading", keep=9)
+        _edit(
+            tape, 7, old=f"<sync-token>{_text(tape.exchanges[7].body, 'sync-token')}</sync-token>"
+        )
+        with _replaying(tape, store, asynchronous) as env:
+            env.sync()
+            token = env.replica.scope(env.adapter.scope_id).token
+            sync_a_and_b(env)
+        assert env.replica.scope(env.adapter.scope_id).token == token
+
+    def test_a_member_reported_with_its_stored_etag_isnt_fetched(self, store, asynchronous):
+        # A third report, added after the second (7), names a and b again with
+        # the ETags the second sync stored, so no multiget follows it.
+        tape = _tape("radicale-reading", keep=9)
+        again = "http://radicale.org/ns/sync/again"
+        report = tape.exchanges[7]
+        tape.exchanges.append(
+            replace(report, body=report.body.replace(_text(report.body, "sync-token"), again))
+        )
+        with _replaying(tape, store, asynchronous) as env:
+            env.sync()
+            sync_a_and_b(env)
+            env.sync()
+        assert env.replica.scope(env.adapter.scope_id).token == again
+
+    def test_a_cancelled_sync_ends_its_session_after_the_store_call(self, store):
+        # The second sync's ingest runs in a worker thread until the task is
+        # cancelled; the session ends only after the ingest has finished.
+        tape = _tape("radicale-reading", keep=9)
+        ingesting, release = threading.Event(), threading.Event()
+        ingest = Session.ingest
+
+        def held_ingest(session: Session, change_set: Any) -> None:
+            ingesting.set()
+            release.wait(_WAIT)
+            ingest(session, change_set)
+
+        async def cancel_mid_ingest(adapter: Any) -> None:
+            task = asyncio.ensure_future(adapter.sync())
+            await asyncio.to_thread(ingesting.wait, _WAIT)
+            task.cancel()
+            release.set()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+
+        with _replaying(tape, store, asynchronous=True) as env:
+            env.sync()
+            env.put("a", "first a")
+            env.put("b", "first b")
+            with patch.object(Session, "ingest", held_ingest):
+                env.run(cancel_mid_ingest(env.adapter))
+        assert [r.state for r in env.replica.records(env.adapter.scope_id)] == [
+            RecordState.SYNCED,
+            RecordState.SYNCED,
+        ]
+        with _session(env.replica, env.adapter.scope_id):
+            pass
+
+    @pytest.mark.parametrize("last_call", [False, True], ids=["entering", "last call"])
+    def test_a_closed_sync_ends_its_session(self, store, last_call):
+        # Closing the coroutine while a store call runs waits for that call,
+        # then ends the session itself, rather than leaving it to whenever the
+        # garbage collector gets to it: while the first call enters the
+        # session, or while the first sync's last call, listing the pushes
+        # (after exchanges 2 and 3, its listing), runs, when ending the session
+        # is the very step the closing driver drops.
+        tape = _tape("radicale-reading", keep=4 if last_call else 2)
+        listing, release = threading.Event(), threading.Event()
+        to_push = Session.to_push
+
+        def held_to_push(session: Session) -> Any:
+            listing.set()
+            release.wait(_WAIT)
+            return to_push(session)
+
+        ended: list[object] = []
+        session = Replica.session
+
+        class Watched:
+            def __init__(self, manager: Any) -> None:
+                self.manager = manager
+
+            def __enter__(self) -> Session:
+                return self.manager.__enter__()  # type: ignore[no-any-return]
+
+            def __exit__(self, *exc: object) -> Any:
+                ended.append(exc[0])
+                return self.manager.__exit__(*exc)
+
+        async def close_mid_call(adapter: Any) -> None:
+            sync = adapter.sync()
+            waiting = sync.send(None)
+            if last_call:
+                held = asyncio.get_running_loop().run_in_executor(None, listing.wait, _WAIT)
+                # Drive the sync step by step until its last call is held.
+                while not held.done():
+                    await asyncio.wait([waiting, held], return_when=asyncio.FIRST_COMPLETED)
+                    if not held.done():
+                        waiting = sync.send(None)
+                threading.Timer(0.05, release.set).start()
+            sync.close()
+
+        with (
+            _replaying(tape, store, asynchronous=True) as env,
+            patch.object(Replica, "session", lambda *a, **k: Watched(session(*a, **k))),
+            patch.object(Session, "to_push", held_to_push),
+        ):
+            env.run(close_mid_call(env.adapter))
+        assert ended == [None]
+
     def test_a_truncated_report_ingests_its_page_and_pushes_nothing(self, store, asynchronous):
         # Exchange 7 is the second sync's report; 8 fetches what it named.
         tape = _tape("radicale-reading", keep=9)
@@ -650,7 +836,7 @@ class TestEditedRecordings:
             new="<response><href>/user1/calendaring-sync-reading/</href>"
             f"<status>HTTP/1.1 507 Insufficient Storage</status></response>{end}",
         )
-        checkpoint = _token(tape.exchanges[7].body)
+        checkpoint = _text(tape.exchanges[7].body, "sync-token")
         with _replaying(tape, store, asynchronous) as env:
             # A push would be a request the tape doesn't have.
             key = create_c(env)
@@ -672,9 +858,12 @@ class TestEditedRecordings:
         # the report out; without a token, they aren't read.
         tape = _tape("radicale-reading", keep=9)
         report, token_read = tape.exchanges[7], tape.exchanges[2]
-        token = _token(report.body)
+        token = _text(report.body, "sync-token")
         listing = [
-            replace(token_read, body=token_read.body.replace(_token(token_read.body), token)),
+            replace(
+                token_read,
+                body=token_read.body.replace(_text(token_read.body, "sync-token"), token),
+            ),
             replace(
                 report,
                 method="PROPFIND",
@@ -682,7 +871,7 @@ class TestEditedRecordings:
             ),
         ]
         if missing == "token":
-            _edit(tape, 2, old=f"<sync-token>{_token(token_read.body)}</sync-token>")
+            _edit(tape, 2, old=f"<sync-token>{_text(token_read.body, 'sync-token')}</sync-token>")
             tape.exchanges[6:8] = listing
         else:
             _edit(
@@ -794,8 +983,17 @@ class TestRecorder:
         [
             (["cyrus", "reading"], ("http://localhost:8802", "user1", "x")),
             (
-                ["cyrus", "reading", "--url", "http://h", "--username", "u", "--password", "p"],
-                ("http://h", "u", "p"),
+                [
+                    "cyrus",
+                    "reading",
+                    "--url",
+                    "http://h.invalid",
+                    "--username",
+                    "u",
+                    "--password",
+                    "p",
+                ],
+                ("http://h.invalid", "u", "p"),
             ),
             (["radicale", "reading"], ("http://127.0.0.1:1", "user", "secret")),
         ],
