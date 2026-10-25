@@ -358,6 +358,10 @@ class TestAdapter:
         assert adapter.scope_id == f"{spelled}#a/CalendarEvent"
         assert _adapter(store, asynchronous).scope_id == _SCOPE
 
+    def test_no_tested_server_needs_full_listings(self, store, asynchronous):
+        # Each refuses a state it can't calculate changes from, so a sync resets itself.
+        assert _adapter(store, asynchronous).needs_full_listings is False
+
     def test_a_client_of_the_other_kind_is_refused(self, store):
         replica = Replica(store)
         with pytest.raises(TypeError, match="client"):

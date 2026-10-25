@@ -295,6 +295,18 @@ class _JMAPFlow(_Flow):
         # The account's state as this sync last saw it, which each write must match.
         self._state = ""
 
+    @property
+    def needs_full_listings(self) -> bool:
+        """Whether the server may leave changes out without refusing the scope's state; never.
+
+        Every tested server refuses a state it can't calculate changes from,
+        and the scope is listed again. The one answer that looks like a real
+        one: Cyrus answers a state newer than any it issued as if nothing
+        changed. So after restoring a server from a backup, list each scope
+        once with ``sync(full_listing=True)``.
+        """
+        return False
+
     def _new_object_id(self) -> None:
         # The server picks a created event's id.
         return None
