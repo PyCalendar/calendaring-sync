@@ -46,11 +46,16 @@ dev = [
   "lxml==6.1.3",
   "radicale==3.8.3",
   "xandikos==0.4.10",
+  "calendaring-jmap @ git+https://github.com/pycalendar/calendaring-jmap@21a3f25d55b393b821a4b74c6e93a4c6c1d701c2",
+  "niquests==3.21.2",
 ]
 caldav = [
   "caldav>=3.6.0",
   "icalendar>=7.3.0",
   "lxml>=6.1.3",
+]
+jmap = [
+  "calendaring-jmap>=2.0.0",
 ]
 docs = [
   "sphinx==9.1.0",
@@ -65,6 +70,7 @@ docs = [
   "sphinxcontrib-mermaid==2.1.1",
   "sphinxext-opengraph==0.13.0",
   "caldav==3.6.0",
+  "calendaring-jmap @ git+https://github.com/pycalendar/calendaring-jmap@21a3f25d55b393b821a4b74c6e93a4c6c1d701c2",
 ]
 
 [project.urls]
@@ -75,6 +81,9 @@ Changelog = "https://calendaring-sync.readthedocs.io/en/latest/changelog.html"
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/calendaring_sync/_version.py"

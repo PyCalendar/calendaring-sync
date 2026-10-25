@@ -103,7 +103,7 @@ Why writes are conditional
 
 Updates and deletes send ``If-Match`` with the base ETag (:rfc:`9110#section-13.1.1`), so the server applies them only if the member still has that ETag, and creates send ``If-None-Match: *`` (:rfc:`9110#section-13.1.2`), so a create never replaces an existing member. A mismatch gets status 412, and the edit stays pending for the next :term:`ingest`. ``If-Match`` compares ETags strongly, so a weak one (``W/``) never matches; an edit to a member whose stored ETag is weak waits, without being sent, until a sync stores a strong one, and the adapter's ``waiting()`` lists such edits. The ETag comes from the ``DAV:getetag`` property of the server's answer, not from an HTTP header a proxy can weaken, so edits wait only on a server that reports a weak ETag itself.
 
-Creates and updates use python-caldav's ``save()`` with ``raw_data``, which sends the bytes you recorded unchanged, and ``precondition="etag"``, which sends the stored ETag. Updates also pass ``increase_seqno=False``, because ``save()`` otherwise increments the event's ``SEQUENCE`` revision number and the server wouldn't receive the edit you recorded. Creates pass ``no_overwrite=True``, which sends ``If-None-Match: *``. Deletes use ``delete(if_match=True, precondition="etag")``. A 404 on an update or a delete means the member is gone; a tested server answers a delete of a gone member with 412 instead, which leaves the delete pending until the next ingest reports the removal.
+Creates and updates use python-caldav's ``save()`` with ``raw_data``, which sends the bytes you recorded unchanged, and ``precondition="etag"``, which sends the stored ETag. Updates also pass ``increase_seqno=False``: ``save()`` increments an event's ``SEQUENCE`` revision number by default, and though it leaves the bytes passed as ``raw_data`` alone, the flag says outright that the server receives the edit you recorded. Creates pass ``no_overwrite=True``, which sends ``If-None-Match: *``. Deletes use ``delete(if_match=True, precondition="etag")``. A 404 on an update or a delete means the member is gone; a tested server answers a delete of a gone member with 412 instead, which leaves the delete pending until the next ingest reports the removal.
 
 A create uses an href of unreserved characters only (:rfc:`3986#section-2.3`), a UUID and ``.ics``, so it can't come back spelled differently. A server that already holds the UID answers with an error element, ``CALDAV:no-uid-conflict`` (:rfc:`4791#section-5.3.2.1`) or ``CALDAV:unique-scheduling-object-resource`` (:rfc:`6638#section-3.2.4.1`); python-caldav raises ``UidConflictError`` for either, whatever the status, so the adapter never mistakes it for a plain precondition failure. For a create or an update, that's a :term:`conflict` with the object that holds the UID, named when the error element holds its ``DAV:href`` and that href is in the calendar; otherwise the core finds the holder by its UID.
 
@@ -114,7 +114,7 @@ A server MUST NOT return a strong ETag for data it stored differently (:rfc:`479
 Why the adapter needs python-caldav 3.6.0 or later
 --------------------------------------------------
 
-The adapter needs python-caldav 3.6.0 or later. It relies on following truncated sync reports, listing removed members in ``deleted_urls``, keeping preconditions on every error, ``UidConflictError``, honoring ``increase_seqno`` on every save, ``raw_data`` holding calendar data as bytes, ``save(raw_data=...)`` sending bytes unchanged, ``precondition="etag"``, and ``If-None-Match: *`` on ``save(no_overwrite=True)``.
+The adapter needs python-caldav 3.6.0 or later. It relies on following truncated sync reports, listing removed members in ``deleted_urls``, keeping preconditions on every error, ``UidConflictError``, ``raw_data`` holding calendar data as bytes, ``save(raw_data=...)`` sending bytes unchanged, ``precondition="etag"``, and ``If-None-Match: *`` on ``save(no_overwrite=True)``.
 
 JMAP
 ====
@@ -131,7 +131,7 @@ Events are JSCalendar objects, a JSON format for calendar data. The adapter make
 Why a JMAP scope is one account and one record type
 ---------------------------------------------------
 
-A record type is the kind of data a JMAP record holds, such as ``CalendarEvent`` for events or ``Task`` for tasks. A ``state`` string covers all records of one type in one account (:rfc:`8620#section-5.1`), so ``CalendarEvent`` and ``Task`` in one account are two scopes.
+A record type is the kind of data a JMAP record holds, such as ``CalendarEvent`` for events or ``Task`` for tasks. A ``state`` string covers all records of one type in one account (:rfc:`8620#section-5.1`), so ``CalendarEvent`` and ``Task`` in one account are two scopes. You name the account when you make the adapter, since a JMAP session can reach several, such as ones shared with you.
 
 .. list-table::
    :header-rows: 1
@@ -148,51 +148,71 @@ A record type is the kind of data a JMAP record holds, such as ``CalendarEvent``
    * - Sync token
      - The type's ``state`` string
    * - Content and fingerprint
-     - The JSCalendar JSON, encoded as UTF-8, and SHA-256 of it serialized with sorted keys, without the properties the server sets, and with ``isDraft``, ``useDefaultAlerts`` and ``version`` filled in with their defaults
+     - The event as the server returned it, as compact UTF-8 JSON, and SHA-256 of a canonical form of it, as the next section describes
    * - Containers
-     - The event's ``calendarIds``
+     - The calendars set to true in the event's ``calendarIds``
    * - Logical key
-     - ``uid`` plus ``recurrenceId``: one account may hold several events with one ``uid`` only when their ``recurrenceId`` values differ (draft-ietf-jmap-calendars-32 section 1.4.1)
+     - The ``uid``, followed by a space and the ``recurrenceId`` for an event that's one instance: one account may hold several events with one ``uid`` only when their ``recurrenceId`` values differ (draft-ietf-jmap-calendars-33 section 1.4.1)
 
 Content stays JSCalendar, since converting to iCalendar would lose data on each round trip; converting is left to your application.
 
 With no per-record version, every object ``/changes`` reports is fetched and compared by :term:`fingerprint`, and a :term:`full listing` fetches everything.
 
-Why the fingerprint leaves out what the server sets
----------------------------------------------------
+Why the fingerprint leaves out what the server sets or fills in
+---------------------------------------------------------------
 
-The server sets ``id``, ``baseEventId`` and ``isOrigin``, and works out ``utcStart`` and ``utcEnd`` when asked (draft-ietf-jmap-calendars-32 section 5). It also sets ``created``, ``updated`` and ``sequence`` itself (draft-ietf-jmap-calendars-32 section 5.9), and ``prodId`` names the product that last changed the event (:rfc:`8984#section-4.1.4`). The fingerprint leaves all of those out and fills in ``isDraft``, ``useDefaultAlerts`` and ``version`` with their defaults, because a server MUST return ``isDraft`` and ``useDefaultAlerts`` even when you never sent them (draft-ietf-jmap-calendars-32 section 5.7), and a tested server leaves out ``version``. A server's copy of your own write then fingerprints the same as what you sent, on both tested servers. The fingerprint is always taken from a full ``/get``, since a ``/set`` answer only carries some properties.
+The server sets ``id``, ``baseEventId`` and ``isOrigin``, and works out ``utcStart`` and ``utcEnd`` when asked (draft-ietf-jmap-calendars-33 section 5). It also sets ``created``, ``updated`` and ``sequence`` itself (draft-ietf-jmap-calendars-33 section 5.9), and ``prodId`` names the product that last changed the event (:rfc:`8984#section-4.1.4`). Tested servers rewrite more than that when they store an event, without changing what it means: one leaves out every member that holds its default value, such as an alert's ``action`` of ``display``, and the other leaves out a ``@type`` its place already implies, adds ``updated`` inside each recurrence override, adds conversion metadata (``iCalendar``) to a location, and leaves out ``version``.
+
+So the fingerprint is SHA-256 of the event serialized with sorted keys, leaving out:
+
+- the members the server sets, and Cyrus' ``x-href``
+- the ``iCalendar`` member of any object
+- every member holding its default, from the defaults draft-ietf-calext-jscalendarbis-22 and draft-ietf-jmap-calendars-33 section 5 give each kind of object, a ``@type`` its place implies included (draft-ietf-calext-jscalendarbis-22 section 1.4.4)
+- ``version`` ``2.0``, which a server MUST give an event created without one (draft-ietf-jmap-calendars-33 section 5.9)
+- a participant's ``attendee`` role, which JSCalendar 2.0 no longer lists and both tested servers drop, and an empty ``roles``
+- inside each recurrence override, only ``created``, ``updated``, ``sequence`` and ``iCalendar``: a member an override leaves out is inherited from the event, so a default there is a real change
+
+A server's copy of your own write then fingerprints the same as what you sent, on both tested servers. The price is that an edit setting a member to its default, or changing only an ``iCalendar`` member, isn't pushed. A server's copy is always fingerprinted from a full ``/get``, since a ``/set`` answer only carries some properties; your edit is fingerprinted from the content you recorded.
+
+A server does add real data sometimes: an event created with participants and no ``organizerCalendarAddress`` gets one, since the server MUST set it (draft-ietf-jmap-calendars-33 section 5.9), and tested servers add the organizer as a participant too. The next sync then reports that event changed, once, so your application sees its organizer.
 
 Why some errors reset the scope
 -------------------------------
 
-On ``cannotCalculateChanges``, the error a server returns when it can't work out the changes since the state given, the client MUST invalidate its cache for the type (:rfc:`8620#section-5.2`), so the adapter :term:`resets <reset>` the scope. It also resets on two answers seen on a tested server: an ``oldState`` that doesn't repeat the ``sinceState`` the adapter sent, and ``invalidArguments`` from ``/changes``. The adapter only sends states the server issued and a valid ``maxChanges``, so the state is the only argument that can be wrong.
+On ``cannotCalculateChanges``, the error a server returns when it can't work out the changes since the state given, the client MUST invalidate its cache for the type (:rfc:`8620#section-5.2`), so the adapter :term:`resets <reset>` the scope. It also resets on two answers seen on a tested server: an ``oldState`` that doesn't repeat the ``sinceState`` the adapter sent, and ``invalidArguments`` from ``/changes``. The adapter only sends states the server issued and a valid ``maxChanges``, so the state is the only argument that can be wrong. One answer looks like a real one: Cyrus answers a state newer than any it issued as if nothing changed, which happens after the server is restored from a backup. Nothing tells the adapter to reset then, so list each scope in full after a restore. An account the server doesn't have (``accountNotFound``, :rfc:`8620#section-3.6.2`) raises an error, and the store stays as it was.
 
 Why pages follow the new state
 ------------------------------
 
-When a ``/changes`` answer leaves out some changes, it sets ``hasMoreChanges`` to true, and the client may call ``/changes`` again with the ``newState`` it received (:rfc:`8620#section-5.2`). Each answer is a :term:`truncated page` that advances the scope to its ``newState``.
+When a ``/changes`` answer leaves out some changes, it sets ``hasMoreChanges`` to true, and the client may call ``/changes`` again with the ``newState`` it received (:rfc:`8620#section-5.2`). The adapter asks for at most 100 changes a page, and each answer is a :term:`truncated page` that advances the scope to its ``newState``.
 
-Objects are fetched with ``/get`` after ``/changes``, so one can be newer than the ``newState`` it came with. The next ``/changes`` reports it again, and the matching fingerprint makes that a no-op.
+Objects are fetched with ``/get`` after ``/changes``, so one can be newer than the ``newState`` it came with. The next ``/changes`` reports it again, and the matching fingerprint makes that a no-op. One that's gone by the ``/get`` is left out, and the next ``/changes`` reports its removal.
 
-A full listing reads the type's ``state`` first, then pages through ``/query`` and ``/get``. That state becomes the token, so anything changed during the listing appears in the next ``/changes``.
+Why a full listing checks the state before its last page
+--------------------------------------------------------
+
+A full listing reads the type's ``state`` first, then pages through ``/query`` and ``/get`` (:rfc:`8620#section-5.5`), 100 events a page, counting the position itself, since a tested server answers every page with position 0. That first state becomes the token, so anything changed during the listing appears in the next ``/changes``.
+
+Pages are counted by position, so an event destroyed while the listing runs shifts every later page by one, and an unchanged event can fall between two pages. The last page removes every object the listing never mentioned, so before it, the adapter reads the state again. If it moved, the adapter reads ``/changes`` from the first state: events created or changed meanwhile join the last page, but if one was destroyed, the listing ends there, removes nothing and pushes nothing. The scope's token hasn't moved, so the next sync reads the changes since it, or lists again if the scope has no token yet.
 
 Why every create carries its own UID
 ------------------------------------
 
-A server generates a ``uid`` only when a create omits it (draft-ietf-jmap-calendars-32 section 5.9). The adapter always sends one, so a create whose result was lost is recognized when it comes back under a server-assigned id.
+A server generates a ``uid`` only when a create omits it (draft-ietf-jmap-calendars-33 section 5.9). The adapter refuses a create without one, and a change that would leave a create it hasn't sent yet without one, so a create whose result was lost is recognized when it comes back under a server-assigned id. A create the server refuses because another event holds its ``uid`` (``invalidProperties`` naming ``uid``) becomes a :term:`conflict`; the server doesn't name that event, so the core finds it by the logical key. Both tested servers keep an event's ``uid`` when an update sends another one, so a change can't take a ``uid`` either.
 
 Why writes use ifInState
 ------------------------
 
-A ``/set`` with ``ifInState``, the state the client expects, fails with ``stateMismatch`` if the type's state has moved (:rfc:`8620#section-5.3`). That state covers the whole account, so a rejection means something changed, not necessarily this object. The edits stay pending for the next ingest.
+A ``/set`` with ``ifInState``, the state the client expects, fails with ``stateMismatch`` if the type's state has moved (:rfc:`8620#section-5.3`). Each write carries the state after the previous one: the state the sync ingested to, then each applied write's ``newState``, which every ``/set`` answer holds. A write the server refuses changes nothing, so the state stays.
+
+That state covers the whole account, so a rejection means something changed, not necessarily this object. The rest of the sync's pushes would be rejected too, so they aren't sent: every edit stays pending for the next sync, which ingests the change first. Another client's delete moves the state as well, so a delete of an event someone else deleted is rejected before the server would say it's gone; the next ingest reports the removal. When a server does answer ``notFound``, the push ended gone: a change becomes a :term:`conflict` and a delete is done.
 
 Why events come before tasks
 ----------------------------
 
 Tasks fit the model as their own scope, but no tested JMAP server advertises JMAP Tasks (``urn:ietf:params:jmap:tasks``). The JMAP adapter starts with ``CalendarEvent`` and adds tasks once a server supports them.
 
-Why the adapter needs JSCalendar writes
----------------------------------------
+Why the adapter needs calendaring-jmap 2.0.0 or later
+-----------------------------------------------------
 
-The adapter pushes the JSCalendar you recorded unchanged, so it needs a client call that writes JSCalendar without converting it. Guarded writes need ``ifInState`` on those calls, and paging needs each ``/changes`` page's ``newState``. Without ``ifInState``, a push can overwrite a change made since the last sync. Without paging, a truncated ``/changes`` answer resets the scope instead, which is correct but downloads everything again.
+The adapter pushes the JSCalendar you recorded unchanged, so it needs calls that write JSCalendar without converting it, and that keep an event's own ``calendarIds``. Guarded writes need ``ifInState`` on every write and the state each write ends at, deletes included; paging needs each ``/changes`` page's ``newState``; and telling a taken ``uid`` from other refusals needs the ``properties`` a refusal names. calendaring-jmap 2.0.0 has all of them.

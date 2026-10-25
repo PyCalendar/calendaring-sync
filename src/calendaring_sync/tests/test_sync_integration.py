@@ -18,7 +18,7 @@ import socket
 import sys
 import time
 from collections.abc import Iterator
-from contextlib import contextmanager
+from functools import partial
 from typing import Any
 from unittest.mock import patch
 from urllib.parse import urlsplit
@@ -30,6 +30,7 @@ from caldav.elements import dav
 from caldav.lib import error as dav_error
 
 from calendaring_sync import RecordState
+from calendaring_sync.tests import _caldav_scenarios as scenarios
 from calendaring_sync.tests._caldav_scenarios import (
     SCENARIOS,
     SERVERS,
@@ -38,11 +39,29 @@ from calendaring_sync.tests._caldav_scenarios import (
     Server,
     adapter_class,
     caldav_client,
-    edit_a,
-    environment,
     started,
 )
-from calendaring_sync.tests._caldav_tape import Tape
+from calendaring_sync.tests._live import (
+    CHECKS,
+    live_environment,
+    refused_login,
+    removed_and_created,
+)
+from calendaring_sync.tests._scenarios import (
+    edit_a,
+    put_a_and_b,
+)
+
+
+def answers(url: str) -> bool:
+    """Whether a server listens at the host and port of ``url``."""
+    parts = urlsplit(url)
+    try:
+        socket.create_connection((parts.hostname, parts.port), timeout=1).close()
+    except OSError:
+        return False
+    return True
+
 
 # Set to run the scenario that needs Stalwart's result limit lowered to 2,
 # as record_caldav's docstring says; the other Stalwart tests need the default.
@@ -53,36 +72,17 @@ _TOKEN_AGE = 1
 _EXPIRY_PORT = 5233
 
 
-def _answers(url: str) -> bool:
-    parts = urlsplit(url)
-    try:
-        socket.create_connection((parts.hostname, parts.port), timeout=1).close()
-    except OSError:
-        return False
-    return True
-
-
 @pytest.fixture(scope="session", params=sorted(SERVERS))
 def live(request: pytest.FixtureRequest) -> Iterator[tuple[Server, Login]]:
     """A running server and its login."""
     server = SERVERS[request.param]
-    if server.login is not None and not _answers(server.login[0]):
+    if server.login is not None and not answers(server.login[0]):
         pytest.skip(f"{server.name} isn't running")
     with started(server) as login:
         yield server, login
 
 
-@contextmanager
-def _env(live: tuple[Server, Login], name: str, asynchronous: bool) -> Iterator[Env]:
-    """A new calendar named after ``name`` on the server, and the adapter syncing it.
-
-    The sync and async runs get calendars and UIDs of their own, so neither
-    has to delete what the other made.
-    """
-    server, login = live
-    name = f"{name}_{'async' if asynchronous else 'sync'}"
-    with environment(server, name, Tape(), login=login, asynchronous=asynchronous) as env:
-        yield env
+_env = partial(live_environment, scenarios)
 
 
 @pytest.mark.parametrize("scenario", [s for s in SCENARIOS if s != "listing_cut_short"])
@@ -109,8 +109,7 @@ def test_a_listing_cut_short_raises(live, asynchronous):
 
 def test_a_listing_leaves_out_removed_members(live, asynchronous):
     with _env(live, "listing_after_removal", asynchronous) as env:
-        env.put("a", "one")
-        env.put("b", "one")
+        put_a_and_b(env, a="one", b="one")
         env.remove("b")
         env.sync()
         assert [r.logical_key for r in env.replica.records(env.adapter.scope_id)] == [
@@ -118,59 +117,27 @@ def test_a_listing_leaves_out_removed_members(live, asynchronous):
         ]
 
 
-def test_a_member_created_and_removed_between_syncs_leaves_nothing(live, asynchronous):
-    with _env(live, "created_and_removed", asynchronous) as env:
-        env.sync()
-        env.put("a", "one")
-        env.remove("a")
-        env.sync()
-        assert env.replica.records(env.adapter.scope_id) == []
-
-
 def test_a_member_removed_and_created_again_keeps_its_record(live, asynchronous):
     with _env(live, "removed_and_created", asynchronous) as env:
-        key = env.synced("a")
-        env.remove("a")
-        env.put("a", "two")
-        env.sync()
+        key = removed_and_created(env)
         record = env.record("a")
         assert (record.local_key, record.state) == (key, RecordState.SYNCED)
         assert b"two" in (record.content or b"")
 
 
-def test_an_identical_write_changes_nothing(live, asynchronous):
-    with _env(live, "identical_write", asynchronous) as env:
-        env.synced("a")
-        head = env.replica.feed_head()
-        env.put("a", "one")
-        env.sync()
-        assert env.replica.read_feed(head) == []
-
-
-def test_calendar_data_keeps_its_characters(live, asynchronous):
-    with _env(live, "characters", asynchronous) as env:
-        env.synced("a", "Café ☕ 会議")
-        assert "Café ☕ 会議".encode() in (env.record("a").content or b"")
+@pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.__name__)
+def test_what_every_protocol_shows(live, asynchronous, check):
+    with _env(live, check.__name__, asynchronous) as env:
+        check(env)
 
 
 def test_a_refused_login_is_raised_and_keeps_the_token(live, asynchronous):
-    server, (base_url, username, _) = live
-    if not server.checks_passwords:
-        pytest.skip(f"{server.name} lets anyone in")
-    with _env(live, "refused_login", asynchronous) as env:
-        env.sync()
-        client = caldav_client(
-            asynchronous, url=base_url, username=username, password="not the password"
-        )
+    def wrong_login(env: Env, url: str, username: str | None) -> tuple[Any, Any]:
+        client = caldav_client(asynchronous, url=url, username=username, password="not it")
         calendar = Calendar(client=client, url=str(env.calendar.url))
-        adapter = adapter_class(asynchronous)(env.replica, calendar)
-        token = env.replica.scope(adapter.scope_id).token
-        try:
-            with pytest.raises(dav_error.AuthorizationError):
-                env.run(adapter.sync())
-        finally:
-            env.run(client.close())
-        assert env.replica.scope(adapter.scope_id).token == token
+        return adapter_class(asynchronous)(env.replica, calendar), client.close
+
+    refused_login(scenarios, live, asynchronous, wrong_login, dav_error.AuthorizationError)
 
 
 def test_an_expired_token_lists_the_calendar_again(asynchronous):

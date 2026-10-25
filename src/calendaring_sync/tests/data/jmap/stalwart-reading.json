@@ -1,0 +1,378 @@
+{
+ "server": "stalwart",
+ "scenario": "reading",
+ "calendaring-jmap": "1.1.1.dev59+g44133759a",
+ "recorded": "2026-10-25",
+ "exchanges": [
+  {
+   "method": "GET",
+   "path": "/.well-known/jmap",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"capabilities\":{\"urn:ietf:params:jmap:core\":{\"maxSizeUpload\":50000000,\"maxConcurrentUpload\":4,\"maxSizeRequest\":10000000,\"maxConcurrentRequests\":4,\"maxCallsInRequest\":16,\"maxObjectsInGet\":500,\"maxObjectsInSet\":500,\"collationAlgorithms\":[\"i;ascii-numeric\",\"i;ascii-casemap\",\"i;unicode-casemap\"]},\"urn:ietf:params:jmap:mail\":{},\"urn:ietf:params:jmap:calendars\":{},\"urn:ietf:params:jmap:calendars:parse\":{},\"urn:ietf:params:jmap:contacts\":{},\"urn:ietf:params:jmap:contacts:parse\":{},\"urn:ietf:params:jmap:filenode\":{},\"urn:ietf:params:jmap:principals\":{},\"urn:ietf:params:jmap:principals:availability\":{},\"urn:ietf:params:jmap:submission\":{},\"urn:ietf:params:jmap:vacationresponse\":{},\"urn:ietf:params:jmap:sieve\":{\"implementation\":\"Stalwart v1.0.0\"},\"urn:ietf:params:jmap:blob\":{},\"urn:ietf:params:jmap:quota\":{},\"urn:ietf:params:jmap:emailpush\":{},\"urn:ietf:params:jmap:webpush-vapid\":{\"applicationServerKey\":\"BI30psvEMoe1P_6I6Ne9fedUjg7T1zaboOjAmPrdroWsWpWNzTs9hfpKezrJzYUSvGRqJLKKxWQ7YLqwGUoEUUA\"},\"urn:ietf:params:jmap:websocket\":{\"url\":\"wss://localhost/jmap/ws\",\"supportsPush\":true}},\"accounts\":{\"b\":{\"name\":\"testuser@example.org\",\"isPersonal\":true,\"isReadOnly\":false,\"accountCapabilities\":{\"urn:ietf:params:jmap:mail\":{\"maxMailboxesPerEmail\":null,\"maxMailboxDepth\":10,\"maxSizeMailboxName\":255,\"maxSizeAttachmentsPerEmail\":50000000,\"emailQuerySortOptions\":[\"receivedAt\",\"size\",\"from\",\"to\",\"subject\",\"sentAt\",\"hasKeyword\",\"allInThreadHaveKeyword\",\"someInThreadHaveKeyword\"],\"mayCreateTopLevelMailbox\":true},\"urn:ietf:params:jmap:submission\":{\"maxDelayedSend\":2592000,\"submissionExtensions\":{\"FUTURERELEASE\":[],\"SIZE\":[],\"DSN\":[],\"DELIVERYBY\":[],\"MT-PRIORITY\":[\"MIXER\"],\"REQUIRETLS\":[]}},\"urn:ietf:params:jmap:vacationresponse\":{},\"urn:ietf:params:jmap:contacts\":{\"maxAddressBooksPerCard\":null,\"mayCreateAddressBook\":true},\"urn:ietf:params:jmap:contacts:parse\":{},\"urn:ietf:params:jmap:calendars\":{\"maxCalendarsPerEvent\":null,\"minDateTime\":\"0001-01-01T00:00:00Z\",\"maxDateTime\":\"9999-12-31T23:59:59Z\",\"maxExpandedQueryDuration\":\"P52W1D\",\"maxParticipantsPerEvent\":20,\"mayCreateCalendar\":true},\"urn:ietf:params:jmap:calendars:parse\":{},\"urn:ietf:params:jmap:websocket\":{},\"urn:ietf:params:jmap:sieve\":{\"maxSizeScriptName\":512,\"maxSizeScript\":102400,\"maxNumberScripts\":100,\"maxNumberRedirects\":1,\"sieveExtensions\":[\"body\",\"comparator-elbonia\",\"comparator-i;ascii-casemap\",\"comparator-i;ascii-numeric\",\"comparator-i;octet\",\"convert\",\"copy\",\"date\",\"duplicate\",\"editheader\",\"enclose\",\"encoded-character\",\"enotify\",\"envelope\",\"envelope-deliverby\",\"envelope-dsn\",\"environment\",\"ereject\",\"extlists\",\"extracttext\",\"fcc\",\"fileinto\",\"foreverypart\",\"ihave\",\"imap4flags\",\"imapsieve\",\"include\",\"index\",\"mailbox\",\"mailboxid\",\"mboxmetadata\",\"mime\",\"redirect-deliverby\",\"redirect-dsn\",\"regex\",\"reject\",\"relational\",\"replace\",\"servermetadata\",\"spamtest\",\"spamtestplus\",\"special-use\",\"subaddress\",\"vacation\",\"vacation-seconds\",\"variables\",\"virustest\"],\"notificationMethods\":[\"mailto\"],\"externalLists\":null},\"urn:ietf:params:jmap:blob\":{\"maxSizeBlobSet\":7499488,\"maxDataSources\":16,\"supportedTypeNames\":[\"Email\",\"Thread\",\"SieveScript\"],\"supportedDigestAlgorithms\":[\"sha\",\"sha-256\",\"sha-512\"]},\"urn:ietf:params:jmap:quota\":{},\"urn:ietf:params:jmap:principals\":{\"currentUserPrincipalId\":\"b\"},\"urn:ietf:params:jmap:principals:availability\":{\"maxAvailabilityDuration\":\"P52W1D\"},\"urn:ietf:params:jmap:filenode\":{\"maxFileNodeDepth\":null,\"maxSizeFileNodeName\":255,\"forbiddenNameChars\":\"/<>:\\\"\\\\|?*\",\"forbiddenNodeNames\":[\".\",\"..\",\"CON\",\"PRN\",\"AUX\",\"NUL\",\"COM0\",\"COM1\",\"COM2\",\"COM3\",\"COM4\",\"COM5\",\"COM6\",\"COM7\",\"COM8\",\"COM9\",\"LPT0\",\"LPT1\",\"LPT2\",\"LPT3\",\"LPT4\",\"LPT5\",\"LPT6\",\"LPT7\",\"LPT8\",\"LPT9\"],\"fileNodeQuerySortOptions\":[\"name\",\"size\",\"nodeType\"],\"mayCreateTopLevelFileNode\":true,\"caseInsensitiveNames\":false,\"webTrashUrl\":null,\"webUrlTemplate\":null,\"webWriteUrlTemplate\":null},\"urn:ietf:params:jmap:mail:share\":{},\"urn:stalwart:jmap\":{},\"urn:ietf:params:jmap:emailpush\":{}}}},\"primaryAccounts\":{\"urn:ietf:params:jmap:mail\":\"b\",\"urn:ietf:params:jmap:submission\":\"b\",\"urn:ietf:params:jmap:vacationresponse\":\"b\",\"urn:ietf:params:jmap:contacts\":\"b\",\"urn:ietf:params:jmap:contacts:parse\":\"b\",\"urn:ietf:params:jmap:calendars\":\"b\",\"urn:ietf:params:jmap:calendars:parse\":\"b\",\"urn:ietf:params:jmap:websocket\":\"b\",\"urn:ietf:params:jmap:sieve\":\"b\",\"urn:ietf:params:jmap:blob\":\"b\",\"urn:ietf:params:jmap:quota\":\"b\",\"urn:ietf:params:jmap:principals\":\"b\",\"urn:ietf:params:jmap:principals:availability\":\"b\",\"urn:ietf:params:jmap:filenode\":\"b\",\"urn:ietf:params:jmap:mail:share\":\"b\",\"urn:stalwart:jmap\":\"b\",\"urn:ietf:params:jmap:emailpush\":\"b\"},\"username\":\"testuser@example.org\",\"apiUrl\":\"https://localhost/jmap/\",\"downloadUrl\":\"https://localhost/jmap/download/{accountId}/{blobId}/{name}?accept={type}\",\"uploadUrl\":\"https://localhost/jmap/upload/{accountId}/\",\"eventSourceUrl\":\"https://localhost/jmap/eventsource/?types={types}&closeafter={closeafter}&ping={ping}\",\"state\":\"b19eae90\"}",
+   "request": ""
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"Calendar/get\",{\"accountId\":\"b\",\"state\":\"ssabq\",\"list\":[{\"id\":\"b\",\"name\":\"Stalwart Calendar (testuser@example.org)\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":true,\"isVisible\":true,\"isDefault\":true,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"d\",\"name\":\"calendaring-sync-reading\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"e\",\"name\":\"calendaring-sync-reading-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"f\",\"name\":\"calendaring-sync-pushing-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"g\",\"name\":\"calendaring-sync-rejected-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"h\",\"name\":\"calendaring-sync-delete-gone-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"i\",\"name\":\"calendaring-sync-uid-taken-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"j\",\"name\":\"calendaring-sync-invalid-token-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"l\",\"name\":\"calendaring-sync-listing-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"m\",\"name\":\"calendaring-sync-fetch-after-delete-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"n\",\"name\":\"calendaring-sync-reading-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"o\",\"name\":\"calendaring-sync-pushing-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"p\",\"name\":\"calendaring-sync-rejected-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"q\",\"name\":\"calendaring-sync-delete-gone-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"r\",\"name\":\"calendaring-sync-uid-taken-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"s\",\"name\":\"calendaring-sync-invalid-token-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"u\",\"name\":\"calendaring-sync-listing-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"v\",\"name\":\"calendaring-sync-fetch-after-delete-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"w\",\"name\":\"calendaring-sync-listing-after-removal-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"x\",\"name\":\"calendaring-sync-listing-after-removal-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"y\",\"name\":\"calendaring-sync-created-and-removed-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"z\",\"name\":\"calendaring-sync-created-and-removed-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"7\",\"name\":\"calendaring-sync-removed-and-created-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"9\",\"name\":\"calendaring-sync-removed-and-created-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"2\",\"name\":\"calendaring-sync-identical-write-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"0\",\"name\":\"calendaring-sync-identical-write-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"1\",\"name\":\"calendaring-sync-characters-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"3\",\"name\":\"calendaring-sync-characters-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"ba\",\"name\":\"calendaring-sync-refused-login-sync\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}},{\"id\":\"bb\",\"name\":\"calendaring-sync-refused-login-async\",\"description\":null,\"color\":null,\"sortOrder\":0,\"isSubscribed\":false,\"isVisible\":true,\"isDefault\":false,\"includeInAvailability\":\"all\",\"defaultAlertsWithTime\":{},\"defaultAlertsWithoutTime\":{},\"timeZone\":null,\"shareWith\":{},\"myRights\":{\"mayReadFreeBusy\":true,\"mayReadItems\":true,\"mayWriteAll\":true,\"mayWriteOwn\":true,\"mayUpdatePrivate\":true,\"mayRSVP\":true,\"mayShare\":true,\"mayDelete\":true}}],\"notFound\":[]},\"cal-get-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"Calendar/get\", {\"accountId\": \"b\", \"ids\": null}, \"cal-get-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/query\",{\"accountId\":\"b\",\"queryState\":\"srybq\",\"canCalculateChanges\":true,\"position\":0,\"ids\":[\"ed\",\"eg\",\"eh\",\"ei\",\"ek\",\"el\",\"en\",\"eq\",\"es\",\"et\",\"ev\",\"ew\",\"ey\",\"e7\",\"e3\",\"fb\",\"fc\",\"fd\",\"fe\",\"ff\"]},\"ev-query-0\"],[\"CalendarEvent/get\",{\"accountId\":\"b\",\"state\":\"srybq\",\"list\":[{\"updated\":\"2026-10-01T00:00:00Z\",\"timeZone\":\"Etc/UTC\",\"title\":\"second a\",\"@type\":\"Event\",\"start\":\"2026-11-01T10:00:00\",\"uid\":\"reading_sync-a\",\"id\":\"ed\",\"calendarIds\":{\"e\":true},\"isDraft\":false,\"isOrigin\":true},{\"@type\":\"Event\",\"updated\":\"2026-10-01T00:00:00Z\",\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"uid\":\"rejected_sync-a\",\"title\":\"theirs\",\"id\":\"eg\",\"calendarIds\":{\"g\":true},\"isDraft\":false,\"isOrigin\":true},{\"timeZone\":\"Etc/UTC\",\"title\":\"one\",\"uid\":\"delete_gone_sync-a\",\"@type\":\"Event\",\"start\":\"2026-11-01T10:00:00\",\"updated\":\"2026-10-01T00:00:00Z\",\"id\":\"eh\",\"calendarIds\":{\"h\":true},\"isDraft\":false,\"isOrigin\":true},{\"uid\":\"invalid_token_sync-a\",\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"updated\":\"2026-10-01T00:00:00Z\",\"title\":\"mine\",\"@type\":\"Event\",\"id\":\"ei\",\"calendarIds\":{\"j\":true},\"isDraft\":false,\"isOrigin\":true},{\"updated\":\"2026-10-01T00:00:00Z\",\"title\":\"one\",\"@type\":\"Event\",\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"uid\":\"listing_sync-a\",\"id\":\"ek\",\"calendarIds\":{\"l\":true},\"isDraft\":false,\"isOrigin\":true},{\"title\":\"two\",\"updated\":\"2026-10-01T00:00:00Z\",\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"uid\":\"listing_sync-b\",\"@type\":\"Event\",\"id\":\"el\",\"calendarIds\":{\"l\":true},\"isDraft\":false,\"isOrigin\":true},{\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"@type\":\"Event\",\"updated\":\"2026-10-01T00:00:00Z\",\"uid\":\"reading_async-a\",\"title\":\"second a\",\"id\":\"en\",\"calendarIds\":{\"n\":true},\"isDraft\":false,\"isOrigin\":true},{\"@type\":\"Event\",\"uid\":\"rejected_async-a\",\"start\":\"2026-11-01T10:00:00\",\"updated\":\"2026-10-01T00:00:00Z\",\"timeZone\":\"Etc/UTC\",\"title\":\"theirs\",\"id\":\"eq\",\"calendarIds\":{\"p\":true},\"isDraft\":false,\"isOrigin\":true},{\"start\":\"2026-11-01T10:00:00\",\"updated\":\"2026-10-01T00:00:00Z\",\"@type\":\"Event\",\"title\":\"theirs\",\"uid\":\"uid_taken_async-dup\",\"timeZone\":\"Etc/UTC\",\"id\":\"es\",\"calendarIds\":{\"r\":true},\"isDraft\":false,\"isOrigin\":true},{\"updated\":\"2026-10-01T00:00:00Z\",\"uid\":\"invalid_token_async-a\",\"start\":\"2026-11-01T10:00:00\",\"@type\":\"Event\",\"title\":\"mine\",\"timeZone\":\"Etc/UTC\",\"id\":\"et\",\"calendarIds\":{\"s\":true},\"isDraft\":false,\"isOrigin\":true},{\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"@type\":\"Event\",\"uid\":\"listing_async-a\",\"updated\":\"2026-10-01T00:00:00Z\",\"title\":\"one\",\"id\":\"ev\",\"calendarIds\":{\"u\":true},\"isDraft\":false,\"isOrigin\":true},{\"uid\":\"listing_async-b\",\"@type\":\"Event\",\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"updated\":\"2026-10-01T00:00:00Z\",\"title\":\"two\",\"id\":\"ew\",\"calendarIds\":{\"u\":true},\"isDraft\":false,\"isOrigin\":true},{\"title\":\"one\",\"@type\":\"Event\",\"timeZone\":\"Etc/UTC\",\"start\":\"2026-11-01T10:00:00\",\"updated\":\"2026-10-01T00:00:00Z\",\"uid\":\"listing_after_removal_sync-a\",\"id\":\"ey\",\"calendarIds\":{\"w\":true},\"isDraft\":false,\"isOrigin\":true},{\"title\":\"one\",\"updated\":\"2026-10-01T00:00:00Z\",\"start\":\"2026-11-01T10:00:00\",\"@type\":\"Event\",\"timeZone\":\"Etc/UTC\",\"uid\":\"listing_after_removal_async-a\",\"id\":\"e7\",\"calendarIds\":{\"x\":true},\"isDraft\":false,\"isOrigin\":true},{\"@type\":\"Event\",\"timeZone\":\"Etc/UTC\",\"start\":\"2026-11-01T10:00:00\",\"title\":\"two\",\"uid\":\"removed_and_created_sync-a\",\"updated\":\"2026-10-01T00:00:00Z\",\"id\":\"e3\",\"calendarIds\":{\"7\":true},\"isDraft\":false,\"isOrigin\":true},{\"start\":\"2026-11-01T10:00:00\",\"uid\":\"removed_and_created_async-a\",\"title\":\"two\",\"updated\":\"2026-10-01T00:00:00Z\",\"timeZone\":\"Etc/UTC\",\"@type\":\"Event\",\"id\":\"fb\",\"calendarIds\":{\"9\":true},\"isDraft\":false,\"isOrigin\":true},{\"title\":\"one\",\"uid\":\"identical_write_sync-a\",\"@type\":\"Event\",\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"updated\":\"2026-10-01T00:00:00Z\",\"id\":\"fc\",\"calendarIds\":{\"2\":true},\"isDraft\":false,\"isOrigin\":true},{\"start\":\"2026-11-01T10:00:00\",\"updated\":\"2026-10-01T00:00:00Z\",\"@type\":\"Event\",\"uid\":\"identical_write_async-a\",\"title\":\"one\",\"timeZone\":\"Etc/UTC\",\"id\":\"fd\",\"calendarIds\":{\"0\":true},\"isDraft\":false,\"isOrigin\":true},{\"start\":\"2026-11-01T10:00:00\",\"timeZone\":\"Etc/UTC\",\"title\":\"Café ☕ 会議\",\"updated\":\"2026-10-01T00:00:00Z\",\"uid\":\"characters_sync-a\",\"@type\":\"Event\",\"id\":\"fe\",\"calendarIds\":{\"1\":true},\"isDraft\":false,\"isOrigin\":true},{\"timeZone\":\"Etc/UTC\",\"uid\":\"characters_async-a\",\"@type\":\"Event\",\"updated\":\"2026-10-01T00:00:00Z\",\"start\":\"2026-11-01T10:00:00\",\"title\":\"Café ☕ 会議\",\"id\":\"ff\",\"calendarIds\":{\"3\":true},\"isDraft\":false,\"isOrigin\":true}],\"notFound\":[]},\"ev-get-1\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/query\", {\"accountId\": \"b\", \"limit\": 100, \"position\": 0}, \"ev-query-0\"], [\"CalendarEvent/get\", {\"#ids\": {\"name\": \"CalendarEvent/query\", \"path\": \"/ids\", \"resultOf\": \"ev-query-0\"}, \"accountId\": \"b\"}, \"ev-get-1\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"srybq\",\"newState\":\"ssebq\",\"destroyed\":[\"e3\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"e3\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"ssebq\",\"newState\":\"ssibq\",\"destroyed\":[\"e7\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"e7\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"ssibq\",\"newState\":\"ssmbq\",\"destroyed\":[\"ed\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"ed\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"ssmbq\",\"newState\":\"ssqbq\",\"destroyed\":[\"eg\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"eg\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"ssqbq\",\"newState\":\"ssubq\",\"destroyed\":[\"eh\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"eh\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"ssubq\",\"newState\":\"ssybq\",\"destroyed\":[\"ei\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"ei\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"ssybq\",\"newState\":\"ss2bq\",\"destroyed\":[\"ek\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"ek\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"ss2bq\",\"newState\":\"stabq\",\"destroyed\":[\"el\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"el\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"stabq\",\"newState\":\"stebq\",\"destroyed\":[\"en\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"en\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"stebq\",\"newState\":\"stibq\",\"destroyed\":[\"eq\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"eq\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"stibq\",\"newState\":\"stmbq\",\"destroyed\":[\"es\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"es\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"stmbq\",\"newState\":\"stqbq\",\"destroyed\":[\"et\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"et\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"stqbq\",\"newState\":\"stubq\",\"destroyed\":[\"ev\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"ev\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"stubq\",\"newState\":\"stybq\",\"destroyed\":[\"ew\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"ew\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"stybq\",\"newState\":\"st2bq\",\"destroyed\":[\"ey\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"ey\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"st2bq\",\"newState\":\"suabq\",\"destroyed\":[\"fb\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"fb\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"suabq\",\"newState\":\"suebq\",\"destroyed\":[\"fc\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"fc\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"suebq\",\"newState\":\"suibq\",\"destroyed\":[\"fd\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"fd\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"suibq\",\"newState\":\"sumbq\",\"destroyed\":[\"fe\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"fe\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"sumbq\",\"newState\":\"suqbq\",\"destroyed\":[\"ff\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"ff\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/query\",{\"accountId\":\"b\",\"queryState\":\"suqbq\",\"canCalculateChanges\":true,\"position\":0,\"ids\":[]},\"ev-query-0\"],[\"CalendarEvent/get\",{\"accountId\":\"b\",\"state\":\"suqbq\",\"list\":[],\"notFound\":[]},\"ev-get-1\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/query\", {\"accountId\": \"b\", \"limit\": 100, \"position\": 0}, \"ev-query-0\"], [\"CalendarEvent/get\", {\"#ids\": {\"name\": \"CalendarEvent/query\", \"path\": \"/ids\", \"resultOf\": \"ev-query-0\"}, \"accountId\": \"b\"}, \"ev-get-1\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "GET",
+   "path": "/.well-known/jmap",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"capabilities\":{\"urn:ietf:params:jmap:core\":{\"maxSizeUpload\":50000000,\"maxConcurrentUpload\":4,\"maxSizeRequest\":10000000,\"maxConcurrentRequests\":4,\"maxCallsInRequest\":16,\"maxObjectsInGet\":500,\"maxObjectsInSet\":500,\"collationAlgorithms\":[\"i;ascii-numeric\",\"i;ascii-casemap\",\"i;unicode-casemap\"]},\"urn:ietf:params:jmap:mail\":{},\"urn:ietf:params:jmap:calendars\":{},\"urn:ietf:params:jmap:calendars:parse\":{},\"urn:ietf:params:jmap:contacts\":{},\"urn:ietf:params:jmap:contacts:parse\":{},\"urn:ietf:params:jmap:filenode\":{},\"urn:ietf:params:jmap:principals\":{},\"urn:ietf:params:jmap:principals:availability\":{},\"urn:ietf:params:jmap:submission\":{},\"urn:ietf:params:jmap:vacationresponse\":{},\"urn:ietf:params:jmap:sieve\":{\"implementation\":\"Stalwart v1.0.0\"},\"urn:ietf:params:jmap:blob\":{},\"urn:ietf:params:jmap:quota\":{},\"urn:ietf:params:jmap:emailpush\":{},\"urn:ietf:params:jmap:webpush-vapid\":{\"applicationServerKey\":\"BI30psvEMoe1P_6I6Ne9fedUjg7T1zaboOjAmPrdroWsWpWNzTs9hfpKezrJzYUSvGRqJLKKxWQ7YLqwGUoEUUA\"},\"urn:ietf:params:jmap:websocket\":{\"url\":\"wss://localhost/jmap/ws\",\"supportsPush\":true}},\"accounts\":{\"b\":{\"name\":\"testuser@example.org\",\"isPersonal\":true,\"isReadOnly\":false,\"accountCapabilities\":{\"urn:ietf:params:jmap:mail\":{\"maxMailboxesPerEmail\":null,\"maxMailboxDepth\":10,\"maxSizeMailboxName\":255,\"maxSizeAttachmentsPerEmail\":50000000,\"emailQuerySortOptions\":[\"receivedAt\",\"size\",\"from\",\"to\",\"subject\",\"sentAt\",\"hasKeyword\",\"allInThreadHaveKeyword\",\"someInThreadHaveKeyword\"],\"mayCreateTopLevelMailbox\":true},\"urn:ietf:params:jmap:submission\":{\"maxDelayedSend\":2592000,\"submissionExtensions\":{\"FUTURERELEASE\":[],\"SIZE\":[],\"DSN\":[],\"DELIVERYBY\":[],\"MT-PRIORITY\":[\"MIXER\"],\"REQUIRETLS\":[]}},\"urn:ietf:params:jmap:vacationresponse\":{},\"urn:ietf:params:jmap:contacts\":{\"maxAddressBooksPerCard\":null,\"mayCreateAddressBook\":true},\"urn:ietf:params:jmap:contacts:parse\":{},\"urn:ietf:params:jmap:calendars\":{\"maxCalendarsPerEvent\":null,\"minDateTime\":\"0001-01-01T00:00:00Z\",\"maxDateTime\":\"9999-12-31T23:59:59Z\",\"maxExpandedQueryDuration\":\"P52W1D\",\"maxParticipantsPerEvent\":20,\"mayCreateCalendar\":true},\"urn:ietf:params:jmap:calendars:parse\":{},\"urn:ietf:params:jmap:websocket\":{},\"urn:ietf:params:jmap:sieve\":{\"maxSizeScriptName\":512,\"maxSizeScript\":102400,\"maxNumberScripts\":100,\"maxNumberRedirects\":1,\"sieveExtensions\":[\"body\",\"comparator-elbonia\",\"comparator-i;ascii-casemap\",\"comparator-i;ascii-numeric\",\"comparator-i;octet\",\"convert\",\"copy\",\"date\",\"duplicate\",\"editheader\",\"enclose\",\"encoded-character\",\"enotify\",\"envelope\",\"envelope-deliverby\",\"envelope-dsn\",\"environment\",\"ereject\",\"extlists\",\"extracttext\",\"fcc\",\"fileinto\",\"foreverypart\",\"ihave\",\"imap4flags\",\"imapsieve\",\"include\",\"index\",\"mailbox\",\"mailboxid\",\"mboxmetadata\",\"mime\",\"redirect-deliverby\",\"redirect-dsn\",\"regex\",\"reject\",\"relational\",\"replace\",\"servermetadata\",\"spamtest\",\"spamtestplus\",\"special-use\",\"subaddress\",\"vacation\",\"vacation-seconds\",\"variables\",\"virustest\"],\"notificationMethods\":[\"mailto\"],\"externalLists\":null},\"urn:ietf:params:jmap:blob\":{\"maxSizeBlobSet\":7499488,\"maxDataSources\":16,\"supportedTypeNames\":[\"Email\",\"Thread\",\"SieveScript\"],\"supportedDigestAlgorithms\":[\"sha\",\"sha-256\",\"sha-512\"]},\"urn:ietf:params:jmap:quota\":{},\"urn:ietf:params:jmap:principals\":{\"currentUserPrincipalId\":\"b\"},\"urn:ietf:params:jmap:principals:availability\":{\"maxAvailabilityDuration\":\"P52W1D\"},\"urn:ietf:params:jmap:filenode\":{\"maxFileNodeDepth\":null,\"maxSizeFileNodeName\":255,\"forbiddenNameChars\":\"/<>:\\\"\\\\|?*\",\"forbiddenNodeNames\":[\".\",\"..\",\"CON\",\"PRN\",\"AUX\",\"NUL\",\"COM0\",\"COM1\",\"COM2\",\"COM3\",\"COM4\",\"COM5\",\"COM6\",\"COM7\",\"COM8\",\"COM9\",\"LPT0\",\"LPT1\",\"LPT2\",\"LPT3\",\"LPT4\",\"LPT5\",\"LPT6\",\"LPT7\",\"LPT8\",\"LPT9\"],\"fileNodeQuerySortOptions\":[\"name\",\"size\",\"nodeType\"],\"mayCreateTopLevelFileNode\":true,\"caseInsensitiveNames\":false,\"webTrashUrl\":null,\"webUrlTemplate\":null,\"webWriteUrlTemplate\":null},\"urn:ietf:params:jmap:mail:share\":{},\"urn:stalwart:jmap\":{},\"urn:ietf:params:jmap:emailpush\":{}}}},\"primaryAccounts\":{\"urn:ietf:params:jmap:mail\":\"b\",\"urn:ietf:params:jmap:submission\":\"b\",\"urn:ietf:params:jmap:vacationresponse\":\"b\",\"urn:ietf:params:jmap:contacts\":\"b\",\"urn:ietf:params:jmap:contacts:parse\":\"b\",\"urn:ietf:params:jmap:calendars\":\"b\",\"urn:ietf:params:jmap:calendars:parse\":\"b\",\"urn:ietf:params:jmap:websocket\":\"b\",\"urn:ietf:params:jmap:sieve\":\"b\",\"urn:ietf:params:jmap:blob\":\"b\",\"urn:ietf:params:jmap:quota\":\"b\",\"urn:ietf:params:jmap:principals\":\"b\",\"urn:ietf:params:jmap:principals:availability\":\"b\",\"urn:ietf:params:jmap:filenode\":\"b\",\"urn:ietf:params:jmap:mail:share\":\"b\",\"urn:stalwart:jmap\":\"b\",\"urn:ietf:params:jmap:emailpush\":\"b\"},\"username\":\"testuser@example.org\",\"apiUrl\":\"https://localhost/jmap/\",\"downloadUrl\":\"https://localhost/jmap/download/{accountId}/{blobId}/{name}?accept={type}\",\"uploadUrl\":\"https://localhost/jmap/upload/{accountId}/\",\"eventSourceUrl\":\"https://localhost/jmap/eventsource/?types={types}&closeafter={closeafter}&ping={ping}\",\"state\":\"b19eae90\"}",
+   "request": ""
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/get\",{\"accountId\":\"b\",\"state\":\"suqbq\",\"list\":[],\"notFound\":[]},\"ev-get-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/get\", {\"accountId\": \"b\", \"ids\": []}, \"ev-get-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/query\",{\"accountId\":\"b\",\"queryState\":\"suqbq\",\"canCalculateChanges\":true,\"position\":0,\"ids\":[],\"total\":0},\"ev-query-0\"],[\"CalendarEvent/get\",{\"accountId\":\"b\",\"state\":\"suqbq\",\"list\":[],\"notFound\":[]},\"ev-get-1\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/query\", {\"accountId\": \"b\", \"calculateTotal\": true, \"limit\": 100, \"position\": 0}, \"ev-query-0\"], [\"CalendarEvent/get\", {\"#ids\": {\"name\": \"CalendarEvent/query\", \"path\": \"/ids\", \"resultOf\": \"ev-query-0\"}, \"accountId\": \"b\"}, \"ev-get-1\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/get\",{\"accountId\":\"b\",\"state\":\"suqbq\",\"list\":[],\"notFound\":[]},\"ev-get-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/get\", {\"accountId\": \"b\", \"ids\": []}, \"ev-get-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"suqbq\",\"newState\":\"suubq\",\"created\":{\"new-0\":{\"id\":\"fg\"}}},\"ev-set-create-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"create\": {\"new-0\": {\"@type\": \"Event\", \"calendarIds\": {\"b\": true}, \"duration\": \"PT1H\", \"start\": \"2026-11-02T10:00:00\", \"timeZone\": \"Etc/UTC\", \"title\": \"first a\", \"uid\": \"jmap-reading-a\", \"version\": \"2.0\"}}, \"sendSchedulingMessages\": false}, \"ev-set-create-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"suubq\",\"newState\":\"suybq\",\"created\":{\"new-0\":{\"id\":\"fh\"}}},\"ev-set-create-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"create\": {\"new-0\": {\"@type\": \"Event\", \"calendarIds\": {\"b\": true}, \"duration\": \"PT1H\", \"start\": \"2026-11-02T10:00:00\", \"timeZone\": \"Etc/UTC\", \"title\": \"first b\", \"uid\": \"jmap-reading-b\", \"version\": \"2.0\"}}, \"sendSchedulingMessages\": false}, \"ev-set-create-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/changes\",{\"accountId\":\"b\",\"oldState\":\"suqbq\",\"newState\":\"suybq\",\"hasMoreChanges\":false,\"created\":[\"fg\",\"fh\"],\"updated\":[],\"destroyed\":[]},\"ev-changes-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/changes\", {\"accountId\": \"b\", \"maxChanges\": 100, \"sinceState\": \"suqbq\"}, \"ev-changes-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/get\",{\"accountId\":\"b\",\"state\":\"suybq\",\"list\":[{\"updated\":\"2026-10-24T18:59:29Z\",\"uid\":\"jmap-reading-a\",\"duration\":\"PT1H\",\"start\":\"2026-11-02T10:00:00\",\"timeZone\":\"Etc/UTC\",\"@type\":\"Event\",\"title\":\"first a\",\"id\":\"fg\",\"calendarIds\":{\"b\":true},\"isDraft\":false,\"isOrigin\":true},{\"uid\":\"jmap-reading-b\",\"@type\":\"Event\",\"updated\":\"2026-10-24T18:59:29Z\",\"start\":\"2026-11-02T10:00:00\",\"title\":\"first b\",\"duration\":\"PT1H\",\"timeZone\":\"Etc/UTC\",\"id\":\"fh\",\"calendarIds\":{\"b\":true},\"isDraft\":false,\"isOrigin\":true}],\"notFound\":[]},\"ev-get-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/get\", {\"accountId\": \"b\", \"ids\": [\"fg\", \"fh\"]}, \"ev-get-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"suybq\",\"newState\":\"suybq\",\"notUpdated\":{\"fg\":{\"type\":\"invalidProperties\",\"description\":\"Invalid property.\",\"properties\":[\"excludedRecurrenceRule\"]}}},\"ev-set-update-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"sendSchedulingMessages\": false, \"update\": {\"fg\": {\"@type\": \"Event\", \"alerts\": null, \"calendarIds\": {\"b\": true}, \"color\": null, \"description\": null, \"duration\": \"PT1H\", \"excludedRecurrenceRule\": null, \"freeBusyStatus\": null, \"keywords\": null, \"links\": null, \"locations\": null, \"participants\": null, \"priority\": null, \"privacy\": null, \"recurrenceOverrides\": null, \"recurrenceRule\": null, \"sequence\": null, \"showWithoutTime\": null, \"start\": \"2026-11-02T10:00:00\", \"status\": null, \"timeZone\": \"Etc/UTC\", \"title\": \"second a\", \"version\": \"2.0\"}}}, \"ev-set-update-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"suybq\",\"newState\":\"su2bq\",\"updated\":{\"fg\":null}},\"ev-set-update-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"sendSchedulingMessages\": false, \"update\": {\"fg\": {\"@type\": \"Event\", \"alerts\": null, \"calendarIds\": {\"b\": true}, \"color\": null, \"description\": null, \"duration\": \"PT1H\", \"freeBusyStatus\": null, \"keywords\": null, \"links\": null, \"locations\": null, \"participants\": null, \"priority\": null, \"privacy\": null, \"recurrenceOverrides\": null, \"recurrenceRule\": null, \"sequence\": null, \"showWithoutTime\": null, \"start\": \"2026-11-02T10:00:00\", \"status\": null, \"timeZone\": \"Etc/UTC\", \"title\": \"second a\", \"version\": \"2.0\"}}}, \"ev-set-update-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/set\",{\"accountId\":\"b\",\"oldState\":\"su2bq\",\"newState\":\"svabq\",\"destroyed\":[\"fh\"]},\"ev-set-destroy-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"b\", \"destroy\": [\"fh\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/changes\",{\"accountId\":\"b\",\"oldState\":\"suybq\",\"newState\":\"svabq\",\"hasMoreChanges\":false,\"created\":[],\"updated\":[\"fg\"],\"destroyed\":[\"fh\"]},\"ev-changes-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/changes\", {\"accountId\": \"b\", \"maxChanges\": 100, \"sinceState\": \"suybq\"}, \"ev-changes-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  },
+  {
+   "method": "POST",
+   "path": "/jmap/",
+   "status": 200,
+   "headers": {
+    "content-type": "application/json; charset=utf-8"
+   },
+   "body": "{\"methodResponses\":[[\"CalendarEvent/get\",{\"accountId\":\"b\",\"state\":\"svabq\",\"list\":[{\"duration\":\"PT1H\",\"@type\":\"Event\",\"start\":\"2026-11-02T10:00:00\",\"title\":\"second a\",\"timeZone\":\"Etc/UTC\",\"uid\":\"jmap-reading-a\",\"updated\":\"2026-10-24T18:59:29Z\",\"id\":\"fg\",\"calendarIds\":{\"b\":true},\"isDraft\":false,\"isOrigin\":true}],\"notFound\":[]},\"ev-get-0\"]],\"sessionState\":\"b19eae90\"}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/get\", {\"accountId\": \"b\", \"ids\": [\"fg\"]}, \"ev-get-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+  }
+ ]
+}

@@ -15,16 +15,14 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import importlib
 import inspect
 import re
-import runpy
 import sys
 import threading
-from collections.abc import Iterator
-from contextlib import AbstractContextManager, contextmanager, nullcontext
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import replace
-from typing import Any, cast
+from functools import partial
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -53,24 +51,30 @@ from calendaring_sync.replica import Replica, Session
 from calendaring_sync.tests import _caldav_scenarios as scenarios
 from calendaring_sync.tests import record_caldav
 from calendaring_sync.tests._caldav_scenarios import (
-    RECORDINGS,
-    REPLAY_URL,
+    PROTOCOL,
     SCENARIOS,
     SERVERS,
     Env,
     adapter_class,
     caldav_client,
     calendar_path,
-    create_c,
-    edit_a,
     edit_a_changed_behind,
-    environment,
+)
+from calendaring_sync.tests._scenarios import (
+    REPLAY_URL,
+    create_c,
+    done,
+    edit_a,
+    edit_answer,
+    forgotten_edit,
     put_a_and_b,
+    recorded,
+    replaying,
     run,
     sync_a_and_b,
 )
-from calendaring_sync.tests._caldav_tape import Exchange, Tape, _Reply
-from calendaring_sync.tests.test_sync_unit import _SCOPE, _WAIT, _assert_refused
+from calendaring_sync.tests._tape import Exchange, Tape, _Reply
+from calendaring_sync.tests.test_sync_unit import _SCOPE, _WAIT, _assert_adapter_refuses
 
 # An event with a time zone, a recurrence rule and parameters, for the
 # fingerprint rules to work on.
@@ -126,32 +130,8 @@ def _text(body: str, element: str) -> str:
     return body.split(f"<{element}>")[1].split(f"</{element}>")[0]
 
 
-def _tape(name: str, keep: int | None = None) -> Tape:
-    """A recording to replay, cut after its first ``keep`` exchanges."""
-    tape = Tape.load(name)
-    if keep is not None:
-        del tape.exchanges[keep:]
-    return tape
-
-
-def _edit(
-    tape: Tape,
-    index: int,
-    *,
-    status: int | None = None,
-    old: str | None = None,
-    new: str = "",
-    body: str | None = None,
-) -> None:
-    """Change one recorded answer: its status, its whole body, or ``old`` in it to ``new``."""
-    exchange = tape.exchanges[index]
-    text = exchange.body if body is None else body
-    if old is not None:
-        assert old in text, f"{old!r} isn't in exchange {index}"
-        text = text.replace(old, new)
-    tape.exchanges[index] = replace(
-        exchange, status=exchange.status if status is None else status, body=text
-    )
+_tape = partial(recorded, PROTOCOL)
+_edit = edit_answer
 
 
 def _first_two_syncs(env: Env) -> None:
@@ -160,29 +140,11 @@ def _first_two_syncs(env: Env) -> None:
     sync_a_and_b(env)
 
 
-@contextmanager
-def _replaying(tape: Tape, store: StateStore, asynchronous: bool) -> Iterator[Env]:
-    """The environment of the recording ``tape`` replays, which must be played to the end."""
-    server, scenario = cast(str, tape.name).split("-", 1)
-    with environment(
-        SERVERS[server], scenario, tape, store=store, asynchronous=asynchronous
-    ) as env:
-        yield env
-    assert tape.finished
+_replaying = partial(replaying, scenarios)
+_run = partial(run, scenarios)
 
 
 class TestReplay:
-    @pytest.mark.parametrize(
-        "server, scenario", RECORDINGS, ids=[f"{s}-{n}" for s, n in RECORDINGS]
-    )
-    def test_every_recording_replays(self, server, scenario, store, asynchronous):
-        tape = Tape.load(f"{server}-{scenario}")
-        run(SERVERS[server], scenario, tape, store=store, asynchronous=asynchronous)
-        assert tape.finished
-
-    def test_every_scenario_is_recorded(self):
-        assert {scenario for _, scenario in RECORDINGS} == set(SCENARIOS)
-
     @pytest.mark.parametrize(
         "keep, method, error",
         [
@@ -195,7 +157,7 @@ class TestReplay:
         if method is not None:
             tape.exchanges[1] = replace(tape.exchanges[1], method=method)
         with pytest.raises(AssertionError, match=error):
-            run(SERVERS["radicale"], "reading", tape)
+            _run(SERVERS["radicale"], "reading", tape)
 
     def test_a_request_that_must_never_go_out_fails(self, store):
         tape = _tape("radicale-reading", keep=3)
@@ -236,16 +198,16 @@ class TestReplay:
 
         client = caldav_client(asynchronous, url=REPLAY_URL)
         client.session = server = AsyncServer() if asynchronous else Server()
-        tape = Tape()
-        tape.attach(client, asynchronous=asynchronous)
+        tape = Tape(PROTOCOL)
+        client.session = tape.session(client.session, asynchronous=asynchronous)
         through_tape: Any = client.session
-        with patch("calendaring_sync.tests._caldav_tape.RECORDINGS", tmp_path):
-            _done(client.propfind(f"{REPLAY_URL}/cal/"))
-            _done(client.close())
+        with patch("calendaring_sync.tests._tape.DATA", tmp_path):
+            done(client.propfind(f"{REPLAY_URL}/cal/"))
+            done(client.close())
             if asynchronous:
                 asyncio.run(through_tape.aclose())
             tape.save("made", {"server": "test"})
-            loaded = Tape.load("made")
+            loaded = Tape.load(PROTOCOL, "made")
         assert server.closed == (["close", "aclose"] if asynchronous else ["close"])
         # Only the headers a replay reads are kept.
         assert loaded.exchanges == [replace(answer, headers={"content-type": "text/xml"})]
@@ -474,11 +436,6 @@ def _adapter(store: StateStore, asynchronous: bool) -> CalDAVAdapter | AsyncCalD
     return adapter
 
 
-def _done(step: Any) -> Any:
-    """The result of an adapter call, awaited if it's a coroutine."""
-    return asyncio.run(step) if asyncio.iscoroutine(step) else step
-
-
 class TestAdapter:
     @pytest.mark.parametrize(
         "url",
@@ -497,15 +454,6 @@ class TestAdapter:
             == "http://recorded.invalid:80/a%40b/"
         )
         assert _adapter(store, asynchronous).scope_id == _SCOPE
-
-    def test_without_the_extra_the_import_names_it(self):
-        # A module set to None in sys.modules can't be imported, as if it
-        # weren't installed; the adapter is imported again under that.
-        hidden = {"caldav.calendarobjectresource": None, caldav_adapter.__name__: None}
-        with patch.dict(sys.modules, hidden):
-            del sys.modules[caldav_adapter.__name__]
-            with pytest.raises(ImportError, match=r"pip install 'calendaring-sync\[caldav\]'"):
-                importlib.import_module(caldav_adapter.__name__)
 
     def test_a_calendar_on_the_other_kind_of_client_is_refused(self, store):
         replica = Replica(store)
@@ -572,6 +520,14 @@ class TestAdapter:
                 id="change",
             ),
             pytest.param(
+                lambda a: a.change(1, _ical(_with("UID:event-1"))),
+                _SCOPE,
+                ValueError,
+                "with a UID",
+                False,
+                id="change of an unsent create, no UID",
+            ),
+            pytest.param(
                 lambda a: a.create(_ical(_EVENT)),
                 "nope",
                 UnknownScopeError,
@@ -591,7 +547,7 @@ class TestAdapter:
                 lambda a: a.change(1, _ical(_EVENT)),
                 "nope",
                 ValueError,
-                "in scope 'cal'",
+                "^Record 1 is in scope 'cal', not this one$",
                 False,
                 id="other scope",
             ),
@@ -602,22 +558,15 @@ class TestAdapter:
     )
     def test_a_call_is_refused(self, store, asynchronous, call, scope_id, error, match, before):
         made = _adapter(store, asynchronous)
-        assert _done(made.create(_ical(_EVENT))) == 1
+        assert done(made.create(_ical(_EVENT))) == 1
         adapter = adapter_class(asynchronous)(
             made._replica, _calendar(asynchronous), scope_id=scope_id
         )
-        _assert_refused(
-            made._replica,
-            store,
-            lambda: _done(call(adapter)),
-            error,
-            match,
-            before_a_transaction=before,
-        )
+        _assert_adapter_refuses(adapter, store, call, error, match, before)
 
     def test_an_edit_gets_the_fields_a_sync_gives(self, store, asynchronous):
         adapter = _adapter(store, asynchronous)
-        key = _done(adapter.create(_ical(_EVENT)))
+        key = done(adapter.create(_ical(_EVENT)))
         record = adapter._replica.record(key)
         assert record is not None and record.edit is not None
         edit, fields = record.edit, _fields(_ical(_EVENT))
@@ -733,6 +682,13 @@ class TestEditedRecordings:
                 "<C:no-uid-conflict/></error>",
                 None,
                 id="not named",
+            ),
+            pytest.param(
+                '<!DOCTYPE error [<!ENTITY dup "/user1/calendaring-sync-uid-taken/dup.ics">]>'
+                '<error xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><C:no-uid-conflict>'
+                "<href>&dup;</href></C:no-uid-conflict></error>",
+                None,
+                id="through an entity, which isn't expanded",
             ),
         ],
     )
@@ -1005,7 +961,7 @@ class TestEditedRecordings:
                 env.sync()
         assert env.at(key).state is RecordState.PENDING
         # It goes out with a later sync, so it isn't waiting.
-        assert _done(env.adapter.waiting()) == []
+        assert done(env.adapter.waiting()) == []
 
     def test_a_push_interrupted_while_sending_stays_in_flight(self, store, asynchronous):
         # The interruption comes as the create's PUT (9) would go out.
@@ -1024,6 +980,22 @@ class TestEditedRecordings:
         with _session(env.replica, env.adapter.scope_id):
             pass
 
+    def test_a_change_goes_out_with_its_sequence_unchanged(self, store, asynchronous):
+        # Exchange 13 is the change's PUT, which must carry the bytes recorded:
+        # a save bumps SEQUENCE unless told not to, or unless given raw bytes.
+        tape = _tape("radicale-pushing", keep=14)
+        with _replaying(tape, store, asynchronous) as env:
+            key = create_c(env)
+            env.sync()
+            env.sync()
+            content = env.content("c", "changed here")
+            nl = b"\r\n" if b"\r\n" in content else b"\n"
+            end = nl + b"END:VEVENT"
+            env.change(key, content.replace(end, nl + b"SEQUENCE:1" + end, 1))
+            env.never("PUT", "SEQUENCE:2", "The change went out with its SEQUENCE bumped")
+            env.sync()
+        assert env.at(key).state is RecordState.SYNCED
+
     def test_a_weak_etag_waits(self, store, asynchronous):
         # Exchange 5 fetches a; nothing after the second sync's report is sent.
         tape = _tape("radicale-rejected", keep=8)
@@ -1034,10 +1006,10 @@ class TestEditedRecordings:
         record = env.at(key)
         assert record.state is RecordState.PENDING
         assert record.version is not None and record.version.startswith("W/")
-        assert _done(env.adapter.waiting()) == [record]
+        assert done(env.adapter.waiting()) == [record]
         # Without the edit, nothing waits, though the ETag is still weak.
         env.replica.discard(key)
-        assert _done(env.adapter.waiting()) == []
+        assert done(env.adapter.waiting()) == []
 
     @pytest.mark.parametrize(
         "index, edit, error, reset",
@@ -1061,8 +1033,7 @@ class TestEditedRecordings:
         tape = _tape("radicale-invalid_token", keep=index + 1)
         _edit(tape, index, **edit)
         with _replaying(tape, store, asynchronous) as env:
-            key = edit_a(env)
-            env.forget_token()
+            key = forgotten_edit(env)
             with pytest.raises(error):
                 env.sync()
         token = env.replica.scope(env.adapter.scope_id).token
@@ -1133,24 +1104,11 @@ class TestRecorder:
         with (
             patch.object(sys, "argv", ["record_caldav", *argv]),
             patch.dict(scenarios._EMBEDDED, radicale=Embedded),
-            patch.object(record_caldav, "run") as recorded,
+            patch("calendaring_sync.tests._scenarios.run") as recorded,
             patch.object(Tape, "save") as saved,
         ):
             record_caldav.main()
         (call,) = recorded.call_args_list
-        assert call.args[:2] == (SERVERS[argv[0]], "reading")
+        assert call.args[:3] == (scenarios, SERVERS[argv[0]], "reading")
         assert call.kwargs["login"] == login
         assert saved.call_args.args[0] == f"{argv[0]}-reading"
-
-    def test_main_records_every_recording_of_a_server(self, monkeypatch):
-        # Run the module as its docstring says to.
-        monkeypatch.setattr(sys, "argv", ["record_caldav", "cyrus"])
-        monkeypatch.delitem(sys.modules, record_caldav.__name__)
-        with (
-            patch("calendaring_sync.tests._caldav_scenarios.run") as recorded,
-            patch.object(Tape, "save"),
-        ):
-            runpy.run_module(record_caldav.__name__, run_name="__main__")
-        assert [c.args[1] for c in recorded.call_args_list] == [
-            s for server, s in RECORDINGS if server == "cyrus"
-        ]

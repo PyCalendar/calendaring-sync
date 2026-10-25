@@ -24,8 +24,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Mapping
 from dataclasses import dataclass, field
 from typing import Any, TypedDict, TypeVar
+from urllib.parse import urlsplit, urlunsplit
 
-from calendaring_sync.objects.push import PushOutcome
+from calendaring_sync.objects.push import PushOutcome, Rejected
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
 from calendaring_sync.replica import Replica, Session
@@ -152,6 +153,21 @@ def _end(session_manager: Any, exc_info: tuple[Any, Any, Any]) -> Steps[None]:
         raise
 
 
+def _url_id(url: str) -> str:
+    """A server URL in one spelling, for a default scope id.
+
+    Scheme and host are case-insensitive (RFC 3986 section 6.2.2.1), so
+    they're lowercased, and a login is left out, so it never reaches a
+    store. An explicit port is kept as a number, even the scheme's default.
+    """
+    parts = urlsplit(url)
+    host = parts.hostname or ""
+    if ":" in host:
+        host = f"[{host}]"
+    netloc = host if parts.port is None else f"{host}:{parts.port}"
+    return urlunsplit(parts._replace(scheme=parts.scheme.lower(), netloc=netloc))
+
+
 class _EditFields(TypedDict):
     """What an edit records beside its content, read from the content as a sync reads it."""
 
@@ -178,9 +194,9 @@ class _Flow(ABC):
     pushes the pending edits. When the server refuses the scope's token,
     the scope is :term:`reset` and listed in a new session. Recording an
     edit reads its fields from the content as a sync would. A subclass
-    sets the session options and writes :meth:`_read`, :meth:`_send`,
-    :meth:`_waits`, :meth:`_new_object_id` and :meth:`_edit_fields` for
-    its protocol.
+    sets the session options and :attr:`_guard_covers_scope`, and writes
+    :meth:`_read`, :meth:`_send`, :meth:`_waits`, :meth:`_new_object_id`
+    and :meth:`_edit_fields` for its protocol.
     """
 
     #: The name of the adapter's fingerprint scheme.
@@ -191,6 +207,10 @@ class _Flow(ABC):
     _guarded_by_version: bool
     #: Whether no two objects in the scope can share a logical key.
     _unique_logical_key: bool
+    #: Whether the server checks a push against the whole scope rather than
+    #: the object, so one rejection means every later push would be rejected
+    #: too, and they wait for the next sync instead.
+    _guard_covers_scope: bool
 
     def __init__(self, replica: Replica, scope_id: str) -> None:
         self._replica = replica
@@ -212,12 +232,19 @@ class _Flow(ABC):
         return key
 
     def _change(self, local_key: int, content: bytes) -> Steps[None]:
-        """Record a change of a record in the scope to this content."""
+        """Record a change of a record in the scope to this content.
+
+        A change to a create that wasn't sent stays a create, so its content
+        must pass what a create's does.
+        """
         fields = self._edit_fields(content, create=False)
-        # A record never changes scope, so this holds when the change runs.
+        # A record never changes scope or stops being a create before it's
+        # sent, so these hold when the change runs.
         record: Record | None = yield _InStore(self._replica.record, (local_key,))
         if record is not None and record.scope != self._scope_id:
             raise ValueError(f"Record {local_key} is in scope {record.scope!r}, not this one")
+        if record is not None and record.is_create:
+            fields = self._edit_fields(content, create=True)
         yield _InStore(self._replica.change, (local_key, content), fields)
 
     def _waiting(self) -> Steps[list[Record]]:
@@ -266,7 +293,11 @@ class _Flow(ABC):
         return result
 
     def _push(self, session: Session) -> Steps[None]:
-        """Push every pending edit, each claimed, sent and settled on its own."""
+        """Push every pending edit, each claimed, sent and settled on its own.
+
+        Where the server checks a push against the whole scope, the pushes
+        stop at the first rejection, and the rest stay pending, unclaimed.
+        """
         records: list[Record] = yield _InStore(session.to_push)
         for record in records:
             if self._waits(record):
@@ -281,6 +312,8 @@ class _Flow(ABC):
             # may have reached the server; the next complete ingest settles it.
             outcome = yield from self._send(claimed)
             yield _InStore(session.settle, (claimed, outcome))
+            if self._guard_covers_scope and isinstance(outcome, Rejected):
+                return
 
     @abstractmethod
     def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[_Read]:

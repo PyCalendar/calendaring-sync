@@ -26,19 +26,19 @@ Unit tests, no server required:
 
 .. code-block:: bash
 
-    pytest src/calendaring_sync/tests/test_sync_unit.py src/calendaring_sync/tests/test_classify_unit.py src/calendaring_sync/tests/test_caldav_unit.py
+    pytest src/calendaring_sync/tests/test_sync_unit.py src/calendaring_sync/tests/test_classify_unit.py src/calendaring_sync/tests/test_caldav_unit.py src/calendaring_sync/tests/test_jmap_unit.py
 
-Tests live inside the package, in ``src/calendaring_sync/tests/``. ``test_classify_unit.py`` holds the classifier's tests, over every combination of its inputs, ``test_caldav_unit.py`` the CalDAV adapter's, and ``test_sync_unit.py`` the rest. Unit tests make no network calls and need no Docker, so they run anywhere.
+Tests live inside the package, in ``src/calendaring_sync/tests/``. ``test_classify_unit.py`` holds the classifier's tests, over every combination of its inputs, ``test_caldav_unit.py`` and ``test_jmap_unit.py`` the adapters', and ``test_sync_unit.py`` the rest. Unit tests make no network calls and need no Docker, so they run anywhere.
 
-The CalDAV adapter's unit tests replay HTTP exchanges recorded from real servers, kept in ``tests/data/caldav/``. Each recording comes from a scenario in ``tests/_caldav_scenarios.py``, which checks what it records. A rule no tested server shows on its own is tested by editing one exchange of a recording in the test itself. To record again, after a python-caldav upgrade or a new scenario, run ``python -m calendaring_sync.tests.record_caldav SERVER [SCENARIO...]``; its docstring says which servers it starts and which you start first.
+The adapters' unit tests replay HTTP exchanges recorded from real servers, kept in ``src/calendaring_sync/tests/data/caldav/`` and ``src/calendaring_sync/tests/data/jmap/``. Each recording comes from a scenario in ``src/calendaring_sync/tests/_caldav_scenarios.py`` or ``src/calendaring_sync/tests/_jmap_scenarios.py``, which checks what it records. A rule no tested server shows on its own is tested by editing one exchange of a recording in the test itself. To record again, after a client library upgrade or a new scenario, run ``python -m calendaring_sync.tests.record_caldav SERVER [SCENARIO...]`` or ``python -m calendaring_sync.tests.record_jmap SERVER [SCENARIO...]``; each docstring says which servers it starts and which you start first. The JMAP scenarios delete every event in the account they use, so record them with a test account.
 
 Integration tests run the adapter against real servers:
 
 .. code-block:: bash
 
-    pytest src/calendaring_sync/tests/test_sync_integration.py
+    pytest src/calendaring_sync/tests/test_sync_integration.py src/calendaring_sync/tests/test_jmap_integration.py
 
-Radicale and Xandikos run embedded, so CI runs them on every release. Cyrus, Stalwart and Baïkal are tested when their Docker fixtures answer and skipped otherwise; one Stalwart test also needs its result limit lowered, as its skip message says. Run the integration tests when you change an adapter, with every server you can start.
+Radicale and Xandikos run embedded, and Stalwart, which serves both CalDAV and JMAP, starts from this repo's fixture with ``tests/docker/stalwart/start.sh``, so CI runs all three on every release. Cyrus and Baïkal are tested when their Docker fixtures answer and skipped otherwise; two Stalwart tests change the whole server, as their skip messages say, so they run only when asked. Run the integration tests when you change an adapter, with every server you can start.
 
 Checking performance
 ====================
@@ -49,7 +49,7 @@ If your change touches ingesting, local edits, pushes, a store or a fingerprint,
 
     python -m calendaring_sync.tests.benchmark
 
-It times a full listing of a large scope, a second listing over local edits and conflicts, a run of single edits, pushes of those edits, and the longest read in another thread while a listing runs, each on a fresh SQLite store, and the CalDAV adapter's fingerprints of as many events. Times differ between machines, so only the comparison means anything. Explain any slowdown beyond run-to-run noise in your pull request. ``--size`` and ``--runs`` change the scope's size and the number of runs.
+It times a full listing of a large scope, a second listing over local edits and conflicts, a run of single edits, pushes of those edits, and the longest read in another thread while a listing runs, each on a fresh SQLite store, and the CalDAV and JMAP adapters' fingerprints of as many events. Times differ between machines, so only the comparison means anything. Explain any slowdown beyond run-to-run noise in your pull request. ``--size`` and ``--runs`` change the scope's size and the number of runs.
 
 Previewing docs
 ===============

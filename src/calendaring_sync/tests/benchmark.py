@@ -27,6 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
 from threading import Event
+from typing import Any
 
 from calendaring_sync import (
     Applied,
@@ -39,6 +40,7 @@ from calendaring_sync import (
     SQLiteStore,
 )
 from calendaring_sync.adapters.caldav import _server_fields
+from calendaring_sync.adapters.jmap import _event_fields
 
 #: The number of objects in the scope: a large calendar.
 DEFAULT_SIZE = 20_000
@@ -194,9 +196,42 @@ def caldav_fingerprints(size: int) -> float:
         ).encode()
         for i in range(size)
     ]
+    return _each(_server_fields, events)
+
+
+def jmap_fingerprints(size: int) -> float:
+    """The JMAP adapter's fingerprints of ``size`` events, as a full listing computes them."""
+    events = [
+        {
+            "@type": "Event",
+            "id": f"e{i}",
+            "uid": f"event-{i}",
+            "title": "Weekly planning",
+            "start": "2026-11-02T10:00:00",
+            "timeZone": "Europe/Berlin",
+            "duration": "PT1H",
+            "calendarIds": {"cal": True},
+            "recurrenceRule": {"@type": "RecurrenceRule", "frequency": "weekly", "count": 10},
+            "alerts": {"a": {"@type": "Alert", "trigger": {"offset": "-PT15M"}}},
+            "participants": {
+                "p": {
+                    "name": "Ana",
+                    "calendarAddress": "mailto:ana@example.org",
+                    "roles": {"chair": True},
+                }
+            },
+            "updated": "2026-10-01T00:00:00Z",
+        }
+        for i in range(size)
+    ]
+    return _each(_event_fields, events)
+
+
+def _each(compute: Callable[[Any], object], items: list[Any]) -> float:
+    """How long ``compute`` takes over every item."""
     started = time.perf_counter()
-    for event in events:
-        _server_fields(event)
+    for item in items:
+        compute(item)
     return time.perf_counter() - started
 
 
@@ -224,6 +259,7 @@ SCENARIOS: dict[str, Callable[[int], float]] = {
     f"pushes of one in {EDITED_SHARE} objects": pushes,
     "longest read during a full listing": read_during_listing,
     "CalDAV fingerprints of every event": caldav_fingerprints,
+    "JMAP fingerprints of every event": jmap_fingerprints,
 }
 
 

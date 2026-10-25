@@ -38,9 +38,10 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 calendaring-sync contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
-# Recorded server exchanges the unit tests replay. JSON has no comments.
+# Recorded server exchanges the unit tests replay, and the Stalwart
+# fixture's settings. JSON has no comments.
 [[annotations]]
-path = "src/calendaring_sync/tests/data/caldav/*.json"
+path = ["src/calendaring_sync/tests/data/*/*.json", "tests/docker/stalwart/config/*.json"]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 calendaring-sync contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"

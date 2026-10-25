@@ -15,7 +15,6 @@ import uuid
 from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from typing import Any, cast
-from urllib.parse import urlsplit, urlunsplit
 
 try:
     import lxml.etree as etree
@@ -41,6 +40,7 @@ from calendaring_sync.adapters._flow import (
     _InStore,
     _Read,
     _run,
+    _url_id,
 )
 from calendaring_sync.error import IncompleteListingError, ScopeGoneError
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
@@ -175,6 +175,7 @@ class _CalDAVFlow(_Flow):
     # guarded by the object's ETag.
     _guarded_by_version = True
     _unique_logical_key = False
+    _guard_covers_scope = False
     # Whether the adapter takes a calendar on an asynchronous client.
     _asynchronous: bool
 
@@ -187,7 +188,8 @@ class _CalDAVFlow(_Flow):
         self._calendar = calendar
         self._url: URL = calendar.url
         self._client: DAVClient = calendar.client
-        super().__init__(replica, self._calendar_id() if scope_id is None else scope_id)
+        default_id = _url_id(str(self._url.canonical()))
+        super().__init__(replica, default_id if scope_id is None else scope_id)
         self._collection = self._object_id(calendar.url)
         self._containers = frozenset({self.scope_id})
         # Whether the collection supports sync-collection; read before its first sync.
@@ -211,12 +213,6 @@ class _CalDAVFlow(_Flow):
             return_type=str,  # pyright: ignore[reportArgumentType]
         )
         return support in _UNRELIABLE_TOKEN_REFUSAL
-
-    def _calendar_id(self) -> str:
-        """The calendar's URL in one spelling, without a login, as the default scope id."""
-        parts = urlsplit(str(self._url.canonical()))
-        # Scheme and host are case-insensitive (RFC 3986 section 6.2.2.1).
-        return urlunsplit(parts._replace(scheme=parts.scheme.lower(), netloc=parts.netloc.lower()))
 
     def _object_id(self, href: Any) -> str:
         """The object id of an href, in one spelling however the server or client wrote it."""
@@ -553,8 +549,9 @@ class CalDAVAdapter(_CalDAVFlow):
         Reads the record, then writes the change, each in a transaction of its own.
 
         Raises:
-            ValueError: If the content isn't UTF-8 iCalendar data, or the
-                record is in another scope.
+            ValueError: If the content isn't UTF-8 iCalendar data, the
+                record is in another scope, or the record is a create not
+                sent yet and the content holds no ``UID``.
             UnknownRecordError: If no record has this local key.
             EditRefusedError: If the record can't take an edit, such as one
                 with an open conflict.
