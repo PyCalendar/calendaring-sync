@@ -36,7 +36,17 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
-      # Radicale and Xandikos run embedded; the servers with Docker fixtures
-      # are skipped, as nothing starts them here.
+      # Stalwart serves both JMAP and CalDAV, from this repo's own fixture.
+      - name: Start Stalwart
+        run: bash tests/docker/stalwart/start.sh
+
+      # Radicale and Xandikos run embedded; Cyrus and Baïkal are skipped, as
+      # nothing starts them here.
       - name: Run integration tests
-        run: pytest src/calendaring_sync/tests/test_sync_integration.py
+        run: |
+          pytest src/calendaring_sync/tests/test_sync_integration.py \
+            src/calendaring_sync/tests/test_jmap_integration.py
+
+      - name: Stop Stalwart
+        if: ${{ always() }}
+        run: bash tests/docker/stalwart/stop.sh

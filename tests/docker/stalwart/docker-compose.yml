@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2026 calendaring-sync contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Stalwart for the integration tests: JMAP and CalDAV for the user
+# testuser@example.org, reachable from this machine only.
+services:
+  stalwart:
+    image: stalwartlabs/stalwart:v0.16.27
+    container_name: calendaring-sync-stalwart
+    # Stalwart names its own host in the session's apiUrl.
+    hostname: localhost
+    # This machine only, on both loopback addresses: localhost can resolve
+    # to either, and a client that tries the one not bound first stalls.
+    ports:
+      - "127.0.0.1:8809:8080"
+      - "[::1]:8809:8080"
+    environment:
+      # The admin login setup_stalwart.py signs in with, before any account exists.
+      - STALWART_RECOVERY_ADMIN=admin:adminpass
+    volumes:
+      # Where Stalwart keeps its database, so it skips its bootstrap mode.
+      - ./config/config.json:/etc/stalwart/config.json:ro
+    tmpfs:
+      - /opt/stalwart/data:size=500m
+      - /opt/stalwart/logs:size=50m
+    healthcheck:
+      # The session endpoint answers once the database is ready.
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8080/.well-known/jmap"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 30s

@@ -8,7 +8,7 @@ Server compatibility
 .. meta::
    :description: How each tested server behaves where sync depends on it, and what calendaring-sync's adapters do about each difference.
 
-Each table lists what the tested servers did where sync depends on it, and what the adapter does about it. The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1, and the JMAP adapter against Cyrus 3.13.7 and Stalwart 0.16.21, between 2026-10-10 and 2026-10-12. The CalDAV adapter's integration tests ran against all five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. Entries marked (tester) come from `caldav-server-tester <https://github.com/python-caldav/caldav-server-tester>`_, which ran these checks against 22 servers in October 2026; python-caldav publishes its results as compatibility hints (`python-caldav/caldav#822 <https://github.com/python-caldav/caldav/pull/822>`_). A later release may behave differently. The probes and logs behind every row are on the `evidence branch <https://github.com/pycalendar/calendaring-sync/tree/evidence/sync-design>`_, with the steps to reproduce them. :doc:`../explanation/adapters` explains each rule, and the :doc:`glossary` defines the sync terms in the Adapter column.
+Each table lists what the tested servers did where sync depends on it, and what the adapter does about it. The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1, and the JMAP adapter against Cyrus 3.13.7 and Stalwart 0.16.21, between 2026-10-10 and 2026-10-12. The CalDAV adapter's integration tests ran against all five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. The JMAP adapter's integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap's main before its 2.0.0 release, and the rows they added are marked with that date. Entries marked (tester) come from `caldav-server-tester <https://github.com/python-caldav/caldav-server-tester>`_, which ran these checks against 22 servers in October 2026; python-caldav publishes its results as compatibility hints (`python-caldav/caldav#822 <https://github.com/python-caldav/caldav/pull/822>`_). A later release may behave differently. The probes and logs behind every row are on the `evidence branch <https://github.com/pycalendar/calendaring-sync/tree/evidence/sync-design>`_, with the steps to reproduce them. :doc:`../explanation/adapters` explains each rule, and the :doc:`glossary` defines the sync terms in the Adapter column.
 
 CalDAV
 ======
@@ -132,10 +132,10 @@ JMAP
      - - Cyrus: ``cannotCalculateChanges``
        - Stalwart: ``invalidArguments``
      - :term:`Resets <reset>` the scope on either
-   * - ``sinceState`` the server never issued but can decode
-     - - Cyrus: ``cannotCalculateChanges``
+   * - ``sinceState`` the server never issued but can decode (2026-10-25)
+     - - Cyrus: a state past its newest is echoed in ``oldState`` and answered with no changes and the newest state
        - Stalwart: answers from a different state; ``oldState`` doesn't echo ``sinceState``
-     - Resets the scope when ``oldState`` doesn't echo
+     - Resets the scope when ``oldState`` doesn't echo. Cyrus' answer looks like a real one, so a scope whose token is newer than the server's, such as after the server is restored from a backup, misses what changed; list it in full then
    * - State whose history the server has discarded
      - Both: ``cannotCalculateChanges``
      - Resets the scope
@@ -145,17 +145,45 @@ JMAP
    * - Properties the server adds to a stored event
      - - Cyrus: ``created``, ``isDraft``, ``isOrigin``, ``prodId``, ``sequence``, ``updated``
        - Stalwart: ``isDraft``, ``isOrigin``, ``updated``
-     - Stores the event as the server returns it; its :term:`fingerprint` leaves those properties out or fills in their defaults
-   * - Create without ``version`` (draft-ietf-jmap-calendars-32 section 5.9: the server sets it)
+     - Stores the event as the server returns it; its :term:`fingerprint` leaves those properties out
+   * - What else the server changes in an event it stores (2026-10-25)
+     - - Cyrus: leaves out members holding their default, such as an alert's ``action`` of ``display`` or a rule's ``interval`` of 1
+       - Stalwart: leaves out a ``@type`` its place implies, ``version`` and ``useDefaultAlerts``; adds ``updated`` inside each recurrence override, changed on every write, and ``iCalendar`` to a location
+       - Both: drop a participant's ``attendee`` role
+     - The fingerprint leaves out defaults, implied types, ``iCalendar``, an override's server-set members and the ``attendee`` role, so your own write isn't news
+   * - Create with participants and no ``organizerCalendarAddress`` (draft-ietf-jmap-calendars-33 section 5.9: the server sets it) (2026-10-25)
+     - Both: set it to the account's address, and add that address as a participant with the ``owner`` role
+     - Reports the event changed at the next sync, once
+   * - Create without ``version`` (draft-ietf-jmap-calendars-33 section 5.9: the server sets it)
      - - Cyrus: refused with ``invalidProperties``
        - Stalwart: accepted
      - Include ``version`` in events you create
-   * - Create with a ``uid`` already in the account (draft-ietf-jmap-calendars-32 section 1.4.1)
+   * - Create with a ``uid`` already in the account (draft-ietf-jmap-calendars-33 section 1.4.1)
      - Both: ``invalidProperties`` on ``uid``
      - Stored as a :term:`conflict record`, refused for its UID
+   * - Create with a ``uid`` another event holds, but another ``recurrenceId`` (draft-ietf-jmap-calendars-33 section 1.4.1: allowed) (2026-10-25)
+     - - Cyrus: accepted
+       - Stalwart: ``invalidProperties`` on ``uid``
+     - Stored as a conflict record where it's refused
+   * - Update sending another ``uid`` (2026-10-25)
+     - - Both: accepted, and the event keeps its own ``uid``
+       - Cyrus: afterwards no longer refuses a create with the ``uid`` that was sent, even once both events are deleted
+     - The next sync stores the event with the ``uid`` the server kept
+   * - Event in two calendars (``calendarIds`` with two entries) (2026-10-25)
+     - - Cyrus: ``invalidProperties`` on ``calendarIds``
+       - Stalwart: stored in both
+     - Raises the refusal; the push stays in flight until the next sync settles it
    * - Update or destroy of an event that's gone
      - Both: ``notFound``
-     - The next :term:`ingest` settles it
+     - A change becomes a conflict and a delete is done; with ``ifInState``, another client's delete is refused for the moved state first, and the next ingest reports the removal
+   * - ``CalendarEvent/query`` paged with ``position`` and ``limit`` (:rfc:`8620#section-5.5`) (2026-10-25)
+     - - Cyrus: right pages, but every answer says ``position`` 0
+       - Stalwart: right pages and positions
+     - Counts the position itself; a listing reads the state again before its last page
+   * - Most objects one ``/get`` returns (``maxObjectsInGet``) (2026-10-25)
+     - - Cyrus: 4096
+       - Stalwart: 500
+     - Asks for 100 at a time
    * - JMAP Tasks (``urn:ietf:params:jmap:tasks``)
      - Both: not advertised, Stalwart also not on its latest image
      - Events only for now

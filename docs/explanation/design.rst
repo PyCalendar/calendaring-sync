@@ -144,7 +144,7 @@ Why the server's answer to a write isn't trusted
 
 Some servers rewrite what they store and still answer the write with a version. So an applied push clears the record's :term:`version` instead of keeping the one the server returned. The next incremental change set includes your write, so the core fetches the object once and stores it as the server holds it. Because the fingerprint ignores what the server rewrites, that copy counts as your own write coming back, not as a remote change. Where the adapter guards each push with the object's version, a new edit to a record whose version was cleared waits until an ingest gives it one again, so it never goes out unguarded.
 
-A rejected push isn't a :term:`conflict` by itself, because some protocols only check whether anything in the scope changed since the last sync, not whether this object did. The next ingest decides: if this object changed, it's a conflict, and if not, the adapter pushes the edit again. An edit stays pending until the server applies it, so your content isn't lost.
+A rejected push isn't a :term:`conflict` by itself, because some protocols only check whether anything in the scope changed since the last sync, not whether this object did. The next ingest decides: if this object changed, it's a conflict, and if not, the adapter pushes the edit again. Where the check covers the whole scope, one rejection means every later push in that sync would be rejected too, so they wait, unsent, for the next sync. An edit stays pending until the server applies it, so your content isn't lost.
 
 Why an object has five states
 =============================

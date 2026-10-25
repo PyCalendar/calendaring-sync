@@ -90,11 +90,15 @@ from calendaring_sync import (
     UpdateHolder,
 )
 from calendaring_sync._checks import _CHECKED_WHEN_BUILT, _fields, argument_check
-from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter
+from calendaring_sync.adapters._flow import Steps, _EditFields, _Flow, _InStore, _Read, _run
+from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter, _CalDAVFlow
+from calendaring_sync.adapters.jmap import AsyncJMAPAdapter, JMAPAdapter, _JMAPFlow
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
 from calendaring_sync.store.memory import _Data
 from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
-from calendaring_sync.tests import benchmark
+from calendaring_sync.tests import _caldav_scenarios, _jmap_scenarios, benchmark
+from calendaring_sync.tests._scenarios import done, run
+from calendaring_sync.tests._tape import Tape
 
 _SCOPE = "cal"
 _OTHER = "other"
@@ -205,6 +209,17 @@ def _snapshot(replica: Replica, store: StateStore) -> tuple[object, ...]:
         trimmed = store.feed_bounds()[0]
     feed = replica.read_feed(trimmed)
     return (replica.scopes(), replica.records(_SCOPE), feed, replica.feed_head())
+
+
+def _timeless(value: object) -> object:
+    """``value`` with every time left out, to compare two runs that can't share a clock."""
+    if isinstance(value, datetime):
+        return None
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return tuple(_timeless(getattr(value, f.name)) for f in dataclasses.fields(value))
+    if isinstance(value, (list, tuple)):
+        return [_timeless(item) for item in value]
+    return value
 
 
 def _new_scope() -> Scope:
@@ -561,6 +576,25 @@ def _seeded_edit(replica: Replica, local: str | None) -> tuple[int, str]:
     return _edit_locally(_seeded(replica), local)
 
 
+def _assert_adapter_refuses(
+    adapter: Any,
+    store: StateStore,
+    call: Callable[[Any], Any],
+    error: type[Exception],
+    match: str | None,
+    before: bool,
+) -> None:
+    """:func:`_assert_refused` for one call of an adapter, run to its end if it's a coroutine."""
+    _assert_refused(
+        adapter._replica,
+        store,
+        lambda: done(call(adapter)),
+        error,
+        match,
+        before_a_transaction=before,
+    )
+
+
 def _assert_refused(
     replica: Replica,
     store: StateStore,
@@ -631,6 +665,36 @@ class TestPackage:
         }
         assert benchmark.entries_after_pushes(size) == {FeedEntryKind.PUSHED: edited}
 
+    @pytest.mark.parametrize(
+        "adapter, dependency, extra",
+        [
+            ("calendaring_sync.adapters.caldav", "caldav.calendarobjectresource", "caldav"),
+            ("calendaring_sync.adapters.jmap", "calendaring_jmap", "jmap"),
+        ],
+    )
+    def test_an_adapter_without_its_extra_names_it_on_import(self, adapter, dependency, extra):
+        # A module set to None in sys.modules can't be imported, as if it
+        # weren't installed; the adapter is imported again under that.
+        importlib.import_module(adapter)
+        with patch.dict(sys.modules, {dependency: None, adapter: None}):
+            del sys.modules[adapter]
+            with pytest.raises(ImportError, match=rf"pip install 'calendaring-sync\[{extra}\]'"):
+                importlib.import_module(adapter)
+
+    @pytest.mark.parametrize("protocol, server", [("caldav", "cyrus"), ("jmap", "stalwart")])
+    def test_a_recorder_records_every_recording_of_a_server(self, monkeypatch, protocol, server):
+        # Run the module as its docstring says to.
+        recorder = f"calendaring_sync.tests.record_{protocol}"
+        scenarios = importlib.import_module(f"calendaring_sync.tests._{protocol}_scenarios")
+        importlib.import_module(recorder)
+        monkeypatch.setattr(sys, "argv", [recorder, server])
+        monkeypatch.delitem(sys.modules, recorder)
+        with patch("calendaring_sync.tests._scenarios.run") as recorded, patch.object(Tape, "save"):
+            runpy.run_module(recorder, run_name="__main__")
+        assert [c.args[2] for c in recorded.call_args_list] == [
+            s for name, s in scenarios.RECORDINGS if name == server
+        ]
+
     def test_every_entry_point_checks_its_types(self):
         for cls in (
             Replica,
@@ -640,6 +704,8 @@ class TestPackage:
             SQLiteStore,
             CalDAVAdapter,
             AsyncCalDAVAdapter,
+            JMAPAdapter,
+            AsyncJMAPAdapter,
         ):
             for name, func in vars(cls).items():
                 if name.startswith("_") and name != "__init__":
@@ -1572,7 +1638,119 @@ class TestConflicts:
         assert _feed(replica, head) == []
 
 
+class _FirstPushRejected(_Flow):
+    """A flow whose server rejects the first push and applies every later one."""
+
+    _fingerprint_scheme = _SCHEME
+    _media_type = _MEDIA
+    _guarded_by_version = False
+    _unique_logical_key = False
+
+    def __init__(self, replica: Replica, guard_covers_scope: bool) -> None:
+        super().__init__(replica, _SCOPE)
+        self._guard_covers_scope = guard_covers_scope
+        self.sent: list[int] = []
+
+    def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[_Read]:
+        yield _InStore(session.ingest, (_page(scope.token, "T2", {}),))
+        return _Read.COMPLETE
+
+    def _send(self, claimed: Record) -> Steps[PushOutcome]:
+        self.sent.append(claimed.local_key)
+        yield from ()
+        return Rejected() if len(self.sent) == 1 else Applied()
+
+    def _waits(self, record: Record) -> bool:
+        return False
+
+    def _new_object_id(self) -> str | None:
+        return "n"
+
+    def _edit_fields(self, content: bytes, *, create: bool) -> _EditFields:
+        return {"fingerprint": content.decode(), "containers": frozenset(), "logical_key": None}
+
+
+# Each protocol's scenario module, and each recording of each.
+_PROTOCOLS = (_caldav_scenarios, _jmap_scenarios)
+_RECORDED = [
+    pytest.param(module, server, scenario, id=f"{module.PROTOCOL}-{server}-{scenario}")
+    for module in _PROTOCOLS
+    for server, scenario in module.RECORDINGS
+]
+
+
+class TestRecordings:
+    @pytest.mark.parametrize("scenarios, server, scenario", _RECORDED)
+    def test_every_recording_replays(self, scenarios, server, scenario, store, asynchronous):
+        tape = Tape.load(scenarios.PROTOCOL, f"{server}-{scenario}")
+        run(
+            scenarios,
+            scenarios.SERVERS[server],
+            scenario,
+            tape,
+            store=store,
+            asynchronous=asynchronous,
+        )
+        assert tape.finished
+
+    @pytest.mark.parametrize("scenarios, server, scenario", _RECORDED)
+    def test_sync_and_async_adapters_leave_the_same_store(self, scenarios, server, scenario):
+        def replayed(asynchronous: bool) -> object:
+            store = MemoryStore()
+            tape = Tape.load(scenarios.PROTOCOL, f"{server}-{scenario}")
+            run(
+                scenarios,
+                scenarios.SERVERS[server],
+                scenario,
+                tape,
+                store=store,
+                asynchronous=asynchronous,
+            )
+            replica = Replica(store)
+            scopes = replica.scopes()
+            held = (scopes, [replica.records(s.id) for s in scopes], replica.read_feed(0))
+            return _timeless(held)
+
+        assert replayed(asynchronous=True) == replayed(asynchronous=False)
+
+    @pytest.mark.parametrize("scenarios", _PROTOCOLS, ids=lambda module: module.PROTOCOL)
+    def test_every_scenario_is_recorded(self, scenarios):
+        assert {scenario for _, scenario in scenarios.RECORDINGS} == set(scenarios.SCENARIOS)
+
+
 class TestPushes:
+    @pytest.mark.parametrize(
+        "flow, guarded_by_version, unique_logical_key, guard_covers_scope",
+        [
+            # A push carries the object's ETag; one calendar may hold two
+            # objects with one UID; a refusal is about that object alone.
+            pytest.param(_CalDAVFlow, True, False, False, id="caldav"),
+            # A push carries the account's state; one account holds one event
+            # per uid and recurrence id; a refusal covers every event.
+            pytest.param(_JMAPFlow, False, True, True, id="jmap"),
+        ],
+    )
+    def test_each_adapter_declares_what_its_server_checks(
+        self, flow, guarded_by_version, unique_logical_key, guard_covers_scope
+    ):
+        declared = (flow._guarded_by_version, flow._unique_logical_key, flow._guard_covers_scope)
+        assert declared == (guarded_by_version, unique_logical_key, guard_covers_scope)
+
+    @pytest.mark.parametrize("covers_scope", [True, False], ids=["scope", "object"])
+    def test_a_rejected_push_stops_the_rest_where_the_check_covers_the_scope(
+        self, replica, covers_scope
+    ):
+        _seeded(replica)
+        flow = _FirstPushRejected(replica, covers_scope)
+        _run(flow._change(_key(replica), b"fl"))
+        created = _run(flow._create(b"fn"))
+        _run(flow._sync(full_listing=False))
+        # Where the check covers the scope, the create would be rejected too, so it waits unsent.
+        assert flow.sent == ([_key(replica)] if covers_scope else [_key(replica), created])
+        later = replica.record(created)
+        assert later is not None
+        assert later.state is (RecordState.PENDING if covers_scope else RecordState.SYNCED)
+
     def test_to_push_lists_pending_edits_by_local_key(self, replica):
         _edited(replica)
         created = _create(replica, "fn")

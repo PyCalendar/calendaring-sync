@@ -1,0 +1,1 @@
+Added the JMAP adapter: ``JMAPAdapter`` and ``AsyncJMAPAdapter`` sync one account's calendar events through calendaring-jmap 2.0.0 or later, installed with the ``jmap`` extra, with every write guarded by ``ifInState``. An event's fingerprint ignores what servers fill in or leave out on their own, so a server's copy of your own write isn't reported as a change.
