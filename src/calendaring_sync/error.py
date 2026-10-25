@@ -109,6 +109,26 @@ class ScopeMismatchError(CalendaringSyncError):
     """
 
 
+class ScopeGoneError(CalendaringSyncError):
+    """The server no longer has the :term:`scope`, such as a calendar that was deleted.
+
+    Nothing was ingested, so the :term:`store` is as it was. A server that
+    lost the scope only for a moment has it back at the next sync. If it's
+    gone for good, :meth:`~calendaring_sync.replica.Replica.drop_scope`
+    returns the pending edits and open conflicts it discards.
+    """
+
+
+class IncompleteListingError(CalendaringSyncError):
+    """The server cut a :term:`full listing` short, so it wasn't ingested.
+
+    A listing that leaves objects out can't tell them from objects the
+    server removed, so the :term:`store` is left as it was. Raising the
+    server's limit on how many results it lists lets the next listing
+    through.
+    """
+
+
 class SessionError(CalendaringSyncError):
     """A :term:`session` was used out of order.
 

@@ -60,7 +60,7 @@ class Gone:
 @checked_when_built
 @dataclass(frozen=True)
 class LogicalKeyTaken:
-    """The server refused a create because another object holds its :term:`logical key`.
+    """The server refused a create or a change because another object holds its :term:`logical key`.
 
     Attributes:
         holder: The :term:`object id` of the object that holds the key, when

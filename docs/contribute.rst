@@ -26,20 +26,30 @@ Unit tests, no server required:
 
 .. code-block:: bash
 
-    pytest src/calendaring_sync/tests/test_sync_unit.py src/calendaring_sync/tests/test_classify_unit.py
+    pytest src/calendaring_sync/tests/test_sync_unit.py src/calendaring_sync/tests/test_classify_unit.py src/calendaring_sync/tests/test_caldav_unit.py
 
-Tests live inside the package, in ``src/calendaring_sync/tests/``. ``test_classify_unit.py`` holds the classifier's tests, over every combination of its inputs, and ``test_sync_unit.py`` holds the rest. Unit tests make no network calls and need no Docker, so they run anywhere.
+Tests live inside the package, in ``src/calendaring_sync/tests/``. ``test_classify_unit.py`` holds the classifier's tests, over every combination of its inputs, ``test_caldav_unit.py`` the CalDAV adapter's, and ``test_sync_unit.py`` the rest. Unit tests make no network calls and need no Docker, so they run anywhere.
+
+The CalDAV adapter's unit tests replay HTTP exchanges recorded from real servers, kept in ``tests/data/caldav/``. Each recording comes from a scenario in ``tests/_caldav_scenarios.py``, which checks what it records. A rule no tested server shows on its own is tested by editing one exchange of a recording in the test itself. To record again, after a python-caldav upgrade or a new scenario, run ``python -m calendaring_sync.tests.record_caldav SERVER [SCENARIO...]``; its docstring says which servers it starts and which you start first.
+
+Integration tests run the adapter against real servers:
+
+.. code-block:: bash
+
+    pytest src/calendaring_sync/tests/test_sync_integration.py
+
+Radicale and Xandikos run embedded, so CI runs them on every release. Cyrus, Stalwart and Baïkal are tested when their Docker fixtures answer and skipped otherwise; one Stalwart test also needs its result limit lowered, as its skip message says. Run the integration tests when you change an adapter, with every server you can start.
 
 Checking performance
 ====================
 
-If your change touches ingesting, local edits, pushes or a store, run the benchmarks on ``main`` and on your branch, on the same machine, and compare:
+If your change touches ingesting, local edits, pushes, a store or a fingerprint, run the benchmarks on ``main`` and on your branch, on the same machine, and compare:
 
 .. code-block:: bash
 
     python -m calendaring_sync.tests.benchmark
 
-It times a full listing of a large scope, a second listing over local edits and conflicts, a run of single edits, pushes of those edits, and the longest read in another thread while a listing runs, each on a fresh SQLite store. Times differ between machines, so only the comparison means anything. Explain any slowdown beyond run-to-run noise in your pull request. ``--size`` and ``--runs`` change the scope's size and the number of runs.
+It times a full listing of a large scope, a second listing over local edits and conflicts, a run of single edits, pushes of those edits, and the longest read in another thread while a listing runs, each on a fresh SQLite store, and the CalDAV adapter's fingerprints of as many events. Times differ between machines, so only the comparison means anything. Explain any slowdown beyond run-to-run noise in your pull request. ``--size`` and ``--runs`` change the scope's size and the number of runs.
 
 Previewing docs
 ===============
@@ -126,7 +136,7 @@ No hardcoding
     A literal that means something (a status value, a format string, a default path) belongs in a named constant defined once, not inlined at every call site. A one-off literal with no reused meaning (a test fixture's arbitrary ID) doesn't need this.
 
 Argument types
-    The public methods of ``Replica``, ``Session`` and the stores, and the value classes an adapter builds, check their argument types at runtime, from their annotations, so give every parameter of a new public method an annotation. A built-in type such as ``str`` or ``int`` has to match exactly, so ``True`` isn't taken as ``1``. The unit tests build every check and fail on a parameter without an annotation, or on one the checks can't read.
+    The public methods of ``Replica``, ``Session``, the stores and the adapters, and the value classes an adapter builds, check their argument types at runtime, from their annotations, so give every parameter of a new public method an annotation. A built-in type such as ``str`` or ``int`` has to match exactly, so ``True`` isn't taken as ``1``. The unit tests build every check and fail on a parameter without an annotation, or on one the checks can't read.
 
 RFC citations
     The core doesn't cite RFCs; see :ref:`write-about-sync`. In adapter docstrings (not comments, not test files, see below), cite a real, finalized RFC with Sphinx's ``:rfc:`` role, and always merge the section number into the role itself: ``:rfc:`5545#section-3.6.1```, not ``:rfc:`5545` section 3.6.1``. The latter renders as two disconnected pieces, a link to the RFC's front page and plain text next to it, so a reader has to manually find the section after clicking through. Verify the section number against the actual RFC text before citing it; don't guess from a related section or trust an existing comment's number without checking.

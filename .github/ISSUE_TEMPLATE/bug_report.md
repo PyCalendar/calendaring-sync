@@ -40,6 +40,7 @@ Output:
 - [ ] Operating system: <!-- For example, Ubuntu 22, macOS Tahoe 26, Windows 10 -->
 - [ ] Python version: <!-- For example, Python 3.14 -->
 - [ ] calendaring-sync version: <!-- Run `python3 -c 'from calendaring_sync import __version__; print(__version__)'` -->
+- [ ] Adapter and server, if one is involved: <!-- For example, the CalDAV adapter, python-caldav 3.6.0, Radicale 3.8.3 -->
 
 ## Additional context
 

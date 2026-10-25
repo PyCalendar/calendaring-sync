@@ -1,0 +1,109 @@
+{
+ "server": "radicale",
+ "scenario": "listing",
+ "caldav": "3.6.0",
+ "recorded": "2026-10-23",
+ "exchanges": [
+  {
+   "method": "DELETE",
+   "path": "/user1/calendaring-sync-listing/",
+   "status": 404,
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "The requested resource could not be found."
+  },
+  {
+   "method": "MKCALENDAR",
+   "path": "/user1/calendaring-sync-listing/",
+   "status": 201,
+   "headers": {},
+   "body": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/user1/calendaring-sync-listing/a.ics",
+   "status": 201,
+   "headers": {
+    "etag": "\"a295381d60e0973131279650745d34b8c27d6d2691f0cfe82cbbefdd9c17f63a\""
+   },
+   "body": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/user1/calendaring-sync-listing/b.ics",
+   "status": 201,
+   "headers": {
+    "etag": "\"087a0833e797b6d6ed71920f528c8c881be27e73a89a432753435fe9e56f97c1\""
+   },
+   "body": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/user1/calendaring-sync-listing/",
+   "status": 207,
+   "headers": {
+    "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
+    "content-type": "text/xml; charset=utf-8"
+   },
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-listing/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/f938f41a2e7c9d21614feaa6b6277fa3c0c55fcfc9338aa3a48a30b968dd662b</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/user1/calendaring-sync-listing/",
+   "status": 207,
+   "headers": {
+    "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
+    "content-type": "text/xml; charset=utf-8"
+   },
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-listing/</href><propstat><prop><getetag>\"b515b1b17439657f494c84f15923b5c739b4ab31710b083eda7a527b78986c1e\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-listing/a.ics</href><propstat><prop><getetag>\"a295381d60e0973131279650745d34b8c27d6d2691f0cfe82cbbefdd9c17f63a\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-listing/b.ics</href><propstat><prop><getetag>\"087a0833e797b6d6ed71920f528c8c881be27e73a89a432753435fe9e56f97c1\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/user1/calendaring-sync-listing/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=utf-8"
+   },
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/user1/calendaring-sync-listing/b.ics</href><propstat><prop><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:listing-b\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nSUMMARY:one\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data><getetag>\"087a0833e797b6d6ed71920f528c8c881be27e73a89a432753435fe9e56f97c1\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat><propstat><prop><C:schedule-tag /></prop><status>HTTP/1.1 404 Not Found</status></propstat></response><response><href>/user1/calendaring-sync-listing/a.ics</href><propstat><prop><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:listing-a\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nSUMMARY:one\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data><getetag>\"a295381d60e0973131279650745d34b8c27d6d2691f0cfe82cbbefdd9c17f63a\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat><propstat><prop><C:schedule-tag /></prop><status>HTTP/1.1 404 Not Found</status></propstat></response></multistatus>"
+  },
+  {
+   "method": "PUT",
+   "path": "/user1/calendaring-sync-listing/b.ics",
+   "status": 204,
+   "headers": {
+    "etag": "\"dedeef986c620a807292f6c8c9b36111f02d2fe89a1879df2d45ed71ca6ee31b\""
+   },
+   "body": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/user1/calendaring-sync-listing/",
+   "status": 207,
+   "headers": {
+    "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
+    "content-type": "text/xml; charset=utf-8"
+   },
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-listing/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/d02a2a74f07036762fd7fa9ec75d60563d962666e9498d43d98ee859acd05848</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/user1/calendaring-sync-listing/",
+   "status": 207,
+   "headers": {
+    "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
+    "content-type": "text/xml; charset=utf-8"
+   },
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-listing/</href><propstat><prop><getetag>\"244aaebc733bb2191aa689230fe0c0ed489fd0a37a90eae2edfed4bc0cfe7a75\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-listing/a.ics</href><propstat><prop><getetag>\"a295381d60e0973131279650745d34b8c27d6d2691f0cfe82cbbefdd9c17f63a\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-listing/b.ics</href><propstat><prop><getetag>\"dedeef986c620a807292f6c8c9b36111f02d2fe89a1879df2d45ed71ca6ee31b\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+  },
+  {
+   "method": "REPORT",
+   "path": "/user1/calendaring-sync-listing/",
+   "status": 207,
+   "headers": {
+    "content-type": "text/xml; charset=utf-8"
+   },
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/user1/calendaring-sync-listing/b.ics</href><propstat><prop><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:listing-b\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nSUMMARY:two\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data><getetag>\"dedeef986c620a807292f6c8c9b36111f02d2fe89a1879df2d45ed71ca6ee31b\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat><propstat><prop><C:schedule-tag /></prop><status>HTTP/1.1 404 Not Found</status></propstat></response></multistatus>"
+  }
+ ]
+}

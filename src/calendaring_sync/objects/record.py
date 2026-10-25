@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
 
-from calendaring_sync.objects.conflict import Conflict
+from calendaring_sync.objects.conflict import Conflict, ConflictKind
 from calendaring_sync.objects.edit import EditKind, LocalEdit
 
 
@@ -93,14 +93,28 @@ class Record:
         return self.edit is not None and self.edit.kind is EditKind.CREATE
 
     @property
+    def is_refused_change(self) -> bool:
+        """Whether the server refused this record's change for its :term:`logical key`.
+
+        The server then still holds the synced copy, and the conflict holds
+        no copy of its own.
+        """
+        return (
+            self.conflict is not None
+            and self.conflict.kind is ConflictKind.LOGICAL_KEY_TAKEN
+            and not self.is_create
+        )
+
+    @property
     def server_version(self) -> str | None:
         """The :term:`version` of the server's copy, ``None`` if the store knows none.
 
-        That's the conflict's while the record is in conflict, and ``None``
-        once the server removed the object.
+        That's the conflict's while the record is in conflict, but the synced
+        one for a change the server refused, and ``None`` once the server
+        removed the object.
         """
         if self.state is RecordState.REMOVED:
             return None
-        if self.conflict is not None:
+        if self.conflict is not None and not self.is_refused_change:
             return self.conflict.remote_version
         return self.version
