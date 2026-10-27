@@ -3,6 +3,9 @@
 
 blank_issues_enabled: true
 contact_links:
+  - name: Documentation
+    url: https://calendaring-sync.readthedocs.io/en/stable/
+    about: Guides for each task, the design and why it works that way, and the full API reference
   - name: Discussions
-    url: https://github.com/pycalendar/calendaring-sync/discussions
-    about: For questions, ideas, and community discussions
+    url: https://github.com/PyCalendar/calendaring-sync/discussions
+    about: Questions, ideas, and help with using calendaring-sync

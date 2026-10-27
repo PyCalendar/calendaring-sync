@@ -1,1 +1,0 @@
-A change the server refuses because another object holds its logical key becomes a ``LOGICAL_KEY_TAKEN`` conflict, resolved as a refused create is, except that dropping it keeps the object as it was synced.

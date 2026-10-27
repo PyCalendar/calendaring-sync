@@ -1,19 +1,12 @@
 ---
 name: Blank issue
-about: Unstructured template for anything not covered by bug reports
+about: Anything a bug report doesn't fit
 title: ''
 labels: ''
 assignees: ''
 ---
 
 <!--
-This is an unstructured issue template to use if you don't need guidance.
-
-Here are some hints, though.
-
-- Show code.
-- Show logs, stack traces, error output, or other output that differs from what you expect.
-- Add links to related issues or pull requests.
-
-Thanks for taking your time to report this!
+Show code, and the output that differs from what you expected, and link
+related issues or pull requests. For a question, Discussions is the place.
 -->

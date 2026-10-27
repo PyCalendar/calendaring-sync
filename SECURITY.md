@@ -3,4 +3,4 @@
 
 # Security policy
 
-See our [security policy](https://calendaring-sync.readthedocs.io/en/latest/security.html) for how to report a vulnerability.
+Report a vulnerability through [GitHub's private vulnerability reporting](https://github.com/PyCalendar/calendaring-sync/security/advisories/new), not a public issue. The [security policy](https://calendaring-sync.readthedocs.io/en/stable/security.html) says which versions get fixes and the risks to know.

@@ -5,19 +5,22 @@
 ================================
 
 .. meta::
-   :description: The calendaring_sync package, generated from its source.
+   :description: Every public class and method of calendaring-sync, the sync terms its pages use, and how tested servers behave.
 
-``calendaring_sync`` exports every public name, so ``from calendaring_sync import Replica, SQLiteStore`` works for every one. Each module's page below documents its names. New to sync? :doc:`../explanation/design` walks through one sync first, and the :doc:`glossary` defines each term the pages link.
+.. automodule:: calendaring_sync
+   :no-members:
 
 .. toctree::
    :maxdepth: 1
 
    replica
+   session
    store
    objects
    errors
    constants
    adapters
+   guarantees
    glossary
    server-compatibility
    ../changelog

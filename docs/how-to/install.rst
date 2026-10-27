@@ -5,26 +5,50 @@
 Install
 =======
 
-calendaring-sync has no release on PyPI yet, so install it from GitHub:
+.. meta::
+   :description: Install calendaring-sync, and the extra for each adapter you use that ships with it.
+
+calendaring-sync needs Python 3.11 or later:
 
 .. code-block:: bash
 
-    pip install git+https://github.com/pycalendar/calendaring-sync
+    pip install calendaring-sync
 
-The CalDAV adapter needs python-caldav and icalendar, which the ``caldav`` extra installs:
+The :term:`core` uses only the Python standard library. That's all you need to keep sync state with an :term:`adapter` of your own, as :doc:`write-an-adapter` shows.
+
+The package ships its type hints (:pep:`561`), so a type checker reads them without a stub package.
+
+Adapters that ship with calendaring-sync
+========================================
+
+Each adapter that ships with calendaring-sync needs its protocol's client library, which an extra of the same name installs:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Extra
+     - Adapter
+     - Installs
+   * - ``caldav``
+     - :class:`~calendaring_sync.adapters.caldav.CalDAVAdapter`
+     - python-caldav, icalendar, lxml
+   * - ``jmap``
+     - :class:`~calendaring_sync.adapters.jmap.JMAPAdapter`
+     - calendaring-jmap
+
+Name the extras you use when you install:
 
 .. code-block:: bash
 
-    pip install "calendaring-sync[caldav] @ git+https://github.com/pycalendar/calendaring-sync"
+    pip install "calendaring-sync[caldav]"
 
-The JMAP adapter needs calendaring-jmap, which the ``jmap`` extra installs:
+From source
+===========
+
+To try a change that isn't released yet, install from GitHub:
 
 .. code-block:: bash
 
-    pip install "calendaring-sync[jmap] @ git+https://github.com/pycalendar/calendaring-sync"
+    pip install "calendaring-sync @ git+https://github.com/PyCalendar/calendaring-sync"
 
-To work on calendaring-sync itself, see :doc:`../contribute` for the development setup instead.
-
-Without an extra, it has no runtime dependencies beyond the Python standard library. It needs Python 3.11 or newer.
-
-The package ships inline type hints and a ``py.typed`` marker (:pep:`561`), so a type checker reads them directly without a separate stub package.
+To work on calendaring-sync itself, set up a development environment as :doc:`../contribute` describes.

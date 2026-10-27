@@ -6,12 +6,13 @@ Explanation
 ===========
 
 .. meta::
-   :description: Background and design rationale for why calendaring-sync is built the way it is.
+   :description: What calendaring-sync is for, and why it works the way it does.
 
-Background and design rationale: why calendaring-sync is built the way it is, not how to use it. See the how-to guides for task-focused instructions instead.
+What calendaring-sync is for, and why it works the way it does. The how-to guides cover what to do.
 
 .. toctree::
    :maxdepth: 1
 
+   when-to-use
    design
    adapters

@@ -21,11 +21,16 @@ extensions = [
     "sphinx_design",
     "sphinx_issues",
     "sphinx_last_updated_by_git",
+    "sphinx_llms_txt",
     "sphinxcontrib.mermaid",
     "sphinxext.opengraph",
 ]
 
-html_baseurl = "https://calendaring-sync.readthedocs.io/"
+# Read the Docs gives each build its address with the language and version,
+# so the links built from it, in social cards and llms.txt, reach real pages.
+html_baseurl = os.environ.get(
+    "READTHEDOCS_CANONICAL_URL", "https://calendaring-sync.readthedocs.io/en/stable/"
+)
 
 ogp_site_url = html_baseurl
 ogp_site_name = "calendaring-sync"
@@ -39,15 +44,22 @@ ogp_social_cards = {
 }
 
 # sphinx_issues configuration: enables :issue:`N`, :pr:`N`, :user:`name` roles
-issues_github_path = "pycalendar/calendaring-sync"
+issues_github_path = "PyCalendar/calendaring-sync"
 
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/pycalendar/calendaring-sync",
+            "url": "https://github.com/PyCalendar/calendaring-sync",
             "icon": "fa-brands fa-square-github",
+            "type": "fontawesome",
+            "attributes": {"target": "_blank", "rel": "noopener me"},
+        },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/calendaring-sync",
+            "icon": "fa-custom fa-pypi",
             "type": "fontawesome",
             "attributes": {"target": "_blank", "rel": "noopener me"},
         },
@@ -61,13 +73,18 @@ html_theme_options = {
     "navigation_with_keys": True,
     "collapse_navigation": False,
     "search_bar_text": "Search documentation",
-    "secondary_sidebar_items": ["page-toc"],
+    "secondary_sidebar_items": ["page-toc", "edit-this-page", "sourcelink"],
+    "use_edit_page_button": True,
     "article_footer_items": ["last-updated"],
 }
 html_last_updated_fmt = "%Y-%m-%d"
+# sphinx-last-updated-by-git hides the source of a page git doesn't track yet,
+# and sphinx-llms-txt needs every page's source, so a new page would fail the
+# build until it's committed.
+git_untracked_show_sourcelink = True
 
 html_context = {
-    "github_user": "pycalendar",
+    "github_user": "PyCalendar",
     "github_repo": "calendaring-sync",
     "github_version": "main",
     "doc_path": "docs",
@@ -75,10 +92,11 @@ html_context = {
 
 templates_path = ["_templates"]
 html_static_path = ["_static"]
-# sync-bootstrap-theme mirrors data-theme onto data-bs-theme so Bootstrap's own
-# dark-mode variables (dropdown menus, tooltips) activate instead of staying
-# stuck in light mode.
+# Custom fa-custom/fa-pypi icon used in icon_links above; sync-bootstrap-theme
+# mirrors data-theme onto data-bs-theme so Bootstrap's own dark-mode variables
+# (dropdown menus, tooltips) activate instead of staying stuck in light mode.
 html_js_files = [
+    ("js/custom-icons.js", {"defer": "defer"}),
     ("js/sync-bootstrap-theme.js", {"defer": "defer"}),
 ]
 # Loaded as a separate <link> rather than @import inside pycal-theme.css:
@@ -108,20 +126,35 @@ mermaid_version = "12.1.0"
 # Measure labels in the site's own font, so they fit the boxes drawn for them.
 mermaid_init_config = {"startOnLoad": False, "fontFamily": "var(--pst-font-family-base)"}
 
+# The link check fails on a broken link. GitHub sends anyone signed out of
+# the private vulnerability form to its login page, which isn't broken.
+linkcheck_ignore = [r"https://github\.com/PyCalendar/calendaring-sync/security/advisories/new"]
+linkcheck_timeout = 10
+linkcheck_retries = 2
+
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
+    "caldav": ("https://caldav.readthedocs.io/stable/", None),
+    "calendaring_jmap": ("https://calendaring-jmap.readthedocs.io/en/stable/", None),
 }
+
+# Every reference must resolve, so a renamed class or method can't leave a
+# link that quietly renders as plain text.
+nitpicky = True
+nitpick_ignore = [
+    # The type variable inside the Steps alias, which has no page of its own.
+    ("py:obj", "calendaring_sync.adapters.base._T"),
+]
 
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = True
-# Render "Attributes:" as :ivar: field-list entries instead of standalone
-# attribute directives, which collide with autodoc's own dataclass field
-# introspection and produce "duplicate object description" warnings.
-napoleon_use_ivar = True
+# Each "Attributes:" entry becomes the field's own entry, with its type and a
+# link target, and autodoc leaves out members without a docstring, so a
+# dataclass field is listed once.
+napoleon_use_ivar = False
 
 autodoc_default_options = {
     "members": True,
-    "undoc-members": True,
     "show-inheritance": True,
 }
