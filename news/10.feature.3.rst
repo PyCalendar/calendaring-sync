@@ -1,1 +1,0 @@
-``Replica.records()`` takes ``states``, to read only the records in those states.

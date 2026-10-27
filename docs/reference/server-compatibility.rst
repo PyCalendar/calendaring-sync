@@ -6,12 +6,14 @@ Server compatibility
 ====================
 
 .. meta::
-   :description: How each tested server behaves where sync depends on it, and what calendaring-sync's adapters do about each difference.
+   :description: How each tested server behaves where sync depends on it, and what each adapter that ships with calendaring-sync does about it.
 
-Each table lists what the tested servers did where sync depends on it, and what the adapter does about it. The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1, and the JMAP adapter against Cyrus 3.13.7 and Stalwart 0.16.21, between 2026-10-10 and 2026-10-12. The CalDAV adapter's integration tests ran against all five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. The JMAP adapter's integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap's main before its 2.0.0 release, and the rows they added are marked with that date. Entries marked (tester) come from `caldav-server-tester <https://github.com/python-caldav/caldav-server-tester>`_, which ran these checks against 22 servers in October 2026; python-caldav publishes its results as compatibility hints (`python-caldav/caldav#822 <https://github.com/python-caldav/caldav/pull/822>`_). A later release may behave differently. The probes and logs behind every row are on the `evidence branch <https://github.com/pycalendar/calendaring-sync/tree/evidence/sync-design>`_, with the steps to reproduce them. :doc:`../explanation/adapters` explains each rule, and the :doc:`glossary` defines the sync terms in the Adapter column.
+Each table lists how the tested servers behave where sync depends on it, and what the adapter does about it. Each section names the versions it was tested with; a later release may behave differently. The probes and logs behind every row are on the `evidence branch <https://github.com/PyCalendar/calendaring-sync/tree/evidence/sync-design>`_, with the steps to reproduce them. :doc:`../explanation/adapters` explains each rule, and the :doc:`glossary` defines the sync terms in the Adapter column.
 
 CalDAV
 ======
+
+The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1 between 2026-10-10 and 2026-10-12. Its integration tests ran against the same five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. Entries marked (tester) come from `caldav-server-tester <https://github.com/python-caldav/caldav-server-tester>`_, which ran these checks against 22 servers in October 2026; python-caldav publishes its results as compatibility hints (`python-caldav/caldav#822 <https://github.com/python-caldav/caldav/pull/822>`_).
 
 .. list-table::
    :header-rows: 1
@@ -34,7 +36,7 @@ CalDAV
      - Lists with ``PROPFIND``, never an empty token
    * - Member created and deleted between two reports (:rfc:`6578#section-3.5.2`: reported as removed)
      - - Xandikos: not reported
-       - Stalwart 0.16.11: reported only when a member that existed at the earlier token also changed in between (tester)
+       - Stalwart 0.16.11: reported only when a member that existed at the earlier token also changed since (tester)
        - Bedework 5: not reported (tester)
        - Others: reported as removed
      - A create of yours that's never mentioned stays :term:`pending <pending edit>`
@@ -113,6 +115,8 @@ Conditional writes behaved as :rfc:`9110#section-13.1.1` and :rfc:`9110#section-
 
 JMAP
 ====
+
+The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2026-10-10 and 2026-10-12. Its integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap before its 2.0.0 release, and the rows they added are marked with that date.
 
 .. list-table::
    :header-rows: 1

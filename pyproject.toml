@@ -16,7 +16,7 @@ authors = [{ name = "Sashank Bhamidi" }]
 dynamic = ["version"]
 keywords = ["calendar", "calendaring", "sync", "synchronization", "conflict-detection"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
   "Operating System :: OS Independent",
@@ -25,6 +25,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Topic :: Office/Business :: Scheduling",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -34,19 +35,19 @@ dependencies = []
 [project.optional-dependencies]
 dev = [
   "pytest==9.1.1",
-  "ruff==0.16.10",
+  "ruff==0.17.2",
   "mypy==2.4.0",
-  "coverage==7.16.2",
+  "coverage==7.17.0",
   "pytest-cov==7.1.0",
   "reuse==6.2.0",
   "towncrier==26.9.0",
-  "pre-commit==4.6.2",
+  "pre-commit==4.7.0",
   "caldav==3.6.0",
   "icalendar==7.3.0",
   "lxml==6.1.3",
   "radicale==3.8.3",
   "xandikos==0.4.10",
-  "calendaring-jmap @ git+https://github.com/pycalendar/calendaring-jmap@21a3f25d55b393b821a4b74c6e93a4c6c1d701c2",
+  "calendaring-jmap @ git+https://github.com/PyCalendar/calendaring-jmap@21a3f25d55b393b821a4b74c6e93a4c6c1d701c2",
   "niquests==3.21.2",
 ]
 caldav = [
@@ -58,7 +59,7 @@ jmap = [
   "calendaring-jmap>=2.0.0",
 ]
 docs = [
-  "sphinx==9.1.0",
+  "sphinx==9.2.0",
   "pydata-sphinx-theme==0.23.0",
   "matplotlib==3.11.2",
   "sphinx-autobuild==2025.8.25",
@@ -66,18 +67,19 @@ docs = [
   "sphinx-design==0.7.0",
   "sphinx-issues==6.0.0",
   "sphinx-last-updated-by-git==0.3.8",
+  "sphinx-llms-txt==0.7.1",
   "sphinx-notfound-page==1.1.0",
   "sphinxcontrib-mermaid==2.1.1",
   "sphinxext-opengraph==0.13.0",
   "caldav==3.6.0",
-  "calendaring-jmap @ git+https://github.com/pycalendar/calendaring-jmap@21a3f25d55b393b821a4b74c6e93a4c6c1d701c2",
+  "calendaring-jmap @ git+https://github.com/PyCalendar/calendaring-jmap@21a3f25d55b393b821a4b74c6e93a4c6c1d701c2",
 ]
 
 [project.urls]
-Repository = "https://github.com/pycalendar/calendaring-sync"
-Issues = "https://github.com/pycalendar/calendaring-sync/issues"
-Documentation = "https://calendaring-sync.readthedocs.io/en/latest/"
-Changelog = "https://calendaring-sync.readthedocs.io/en/latest/changelog.html"
+Repository = "https://github.com/PyCalendar/calendaring-sync"
+Issues = "https://github.com/PyCalendar/calendaring-sync/issues"
+Documentation = "https://calendaring-sync.readthedocs.io/en/stable/"
+Changelog = "https://calendaring-sync.readthedocs.io/en/stable/changelog.html"
 
 [tool.hatch.version]
 source = "vcs"
@@ -109,8 +111,14 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# Each block a docs page shows brings its own imports, after the setup it doesn't show.
+"docs/examples/*.py" = ["E402"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["calendaring_sync"]
+# The modules the docs examples share.
+known-local-folder = ["memory_adapter", "start"]
 
 [tool.pytest.ini_options]
 testpaths = ["src/calendaring_sync/tests"]
@@ -118,7 +126,7 @@ testpaths = ["src/calendaring_sync/tests"]
 [tool.towncrier]
 directory = "news/"
 filename = "docs/changelog.rst"
-issue_format = "`#{issue} <https://github.com/pycalendar/calendaring-sync/issues/{issue}>`_"
+issue_format = "`#{issue} <https://github.com/PyCalendar/calendaring-sync/issues/{issue}>`_"
 start_string = ".. towncrier release notes start\n"
 title_format = "{version} ({project_date})"
 underlines = ["-", "~", "`"]

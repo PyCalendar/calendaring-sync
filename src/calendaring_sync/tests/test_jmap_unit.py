@@ -29,6 +29,7 @@ from calendaring_sync import (
     EditKind,
     Gone,
     LogicalKeyTaken,
+    OtherScopeError,
     RecordState,
     Rejected,
     Replica,
@@ -61,6 +62,7 @@ from calendaring_sync.tests._scenarios import (
     create_c,
     done,
     edit_answer,
+    fields_of,
     forgotten_edit,
     recorded,
     replaying,
@@ -395,6 +397,14 @@ class TestAdapter:
                 id="no calendar",
             ),
             pytest.param(
+                lambda a: a.edit_fields(_content(calendarIds={})),
+                _SCOPE,
+                ValueError,
+                "in a calendar",
+                True,
+                id="fields, no calendar",
+            ),
+            pytest.param(
                 lambda a: a.change(1, _content(uid="")),
                 _SCOPE,
                 ValueError,
@@ -424,7 +434,7 @@ class TestAdapter:
             pytest.param(
                 lambda a: a.change(1, _content()),
                 "nope",
-                ValueError,
+                OtherScopeError,
                 f"^Record 1 is in scope '{_SCOPE}', not this one$",
                 False,
                 id="other scope",
@@ -453,6 +463,7 @@ class TestAdapter:
             "event-1",
             frozenset({_CALENDAR}),
         )
+        assert fields_of(adapter.edit_fields(_content())) == fields_of(edit)
         # The server picks a created event's id, and no JMAP edit waits.
         assert record.object_id is None
         assert done(adapter.waiting()) == []

@@ -1,1 +1,1 @@
-``MemoryStore`` reads and saves its data through two methods a subclass can override, ``_load()`` and ``_save()``, so a store that keeps the same objects in a file with ``pickle`` or in an object database is a small subclass.
+A :class:`~calendaring_sync.store.memory.MemoryStore` subclass can keep its data elsewhere, such as in a file with ``pickle``, by overriding ``_load()`` and ``_save()``.

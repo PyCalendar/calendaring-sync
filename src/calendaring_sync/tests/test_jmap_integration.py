@@ -32,6 +32,7 @@ from calendaring_jmap import JMAPAuthError, JMAPClient, JMAPMethodError
 from calendaring_sync import RecordState
 from calendaring_sync.adapters import jmap as adapter_module
 from calendaring_sync.adapters.jmap import PAGE_SIZE
+from calendaring_sync.tests import _examples
 from calendaring_sync.tests import _jmap_scenarios as scenarios
 from calendaring_sync.tests._jmap_scenarios import (
     SCENARIOS,
@@ -43,6 +44,7 @@ from calendaring_sync.tests._jmap_scenarios import (
 )
 from calendaring_sync.tests._live import (
     CHECKS,
+    answers,
     created_and_removed,
     live_environment,
     refused_login,
@@ -53,7 +55,6 @@ from calendaring_sync.tests._scenarios import (
     edit_a,
 )
 from calendaring_sync.tests._tape import Exchange
-from calendaring_sync.tests.test_sync_integration import answers
 
 # Set to run the test that makes Stalwart forget its change history, which
 # turns every later incremental sync on that server into a full listing
@@ -276,3 +277,11 @@ def test_an_expired_state_lists_the_account_again(live, asynchronous):
         )
         assert env.at(key).state is RecordState.SYNCED
         assert env.record("b").state is RecordState.SYNCED
+
+
+def test_the_docs_example(live, tmp_path, monkeypatch):
+    _, (url, username, password) = live
+    ran = _examples.run(
+        "jmap_sync", monkeypatch, tmp_path, URL=url, USERNAME=username, PASSWORD=password
+    )
+    assert ran["replica"].scope(ran["adapter"].scope_id).last_sync_at is not None

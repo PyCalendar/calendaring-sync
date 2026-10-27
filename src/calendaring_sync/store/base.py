@@ -54,6 +54,13 @@ _CONFLICT_SIDES: dict[ConflictKind, tuple[frozenset[EditKind], bool]] = {
 }
 
 
+class _Transaction(local):
+    """This thread's open transaction."""
+
+    #: Whether it writes, or ``None`` when the thread has none open.
+    write: bool | None = None
+
+
 def _check_record(record: Record) -> None:
     """Raise :class:`RecordValueError` if the record holds what its state can't."""
     state, edit, conflict = record.state, record.edit, record.conflict
@@ -120,8 +127,10 @@ class StateStore(ABC):
     The public methods check that they run inside a transaction of the right
     kind, then call a method of the same name with a leading underscore. A
     store implements those, along with :meth:`_begin`, :meth:`_commit` and
-    :meth:`_rollback`, and needs no checks of its own. It turns the errors of
-    the storage it uses into store errors by overriding :meth:`_store_error`.
+    :meth:`_rollback`, and needs no checks of its own; it may also override
+    :meth:`_scope_records_in` to filter records by state itself. It turns
+    the errors of the storage it uses into store errors by overriding
+    :meth:`_store_error`.
     Its ``__init__`` calls ``super().__init__()`` first. A hook runs in the
     thread of the transaction it's for, and :meth:`_writing` says whether
     that transaction writes.
@@ -138,8 +147,7 @@ class StateStore(ABC):
         # Held by the write transaction, or by every transaction of a store
         # that doesn't read beside a write.
         self._turn = Lock()
-        # This thread's open transaction: whether it writes, or None.
-        self._thread = local()
+        self._thread = _Transaction()
         self._open = 0
         self._closed = False
 
@@ -167,8 +175,8 @@ class StateStore(ABC):
             if self._in_transaction():
                 raise TransactionError("A store transaction is already open in this thread")
             self._open += 1
-        waits = write or not self._reads_beside_writes
         try:
+            waits = write or not self._reads_beside_writes
             if waits:
                 self._turn.acquire()
             try:
@@ -193,11 +201,11 @@ class StateStore(ABC):
 
     def _in_transaction(self) -> bool:
         """Whether this thread has a transaction open."""
-        return getattr(self._thread, "write", None) is not None
+        return self._thread.write is not None
 
     def _writing(self) -> bool:
         """Whether this thread's open transaction writes."""
-        return getattr(self._thread, "write", None) is True
+        return self._thread.write is True
 
     def _operation(self, *, write: bool) -> AbstractContextManager[None]:
         """Check that this thread's transaction allows the operation, then guard its errors."""
@@ -404,16 +412,15 @@ class StateStore(ABC):
         Args:
             scope_id: The scope to read.
             states: Only the records in one of these states; ``None`` for
-                every record. An empty set matches none, without asking the
-                store, since not every database takes an empty list.
+                every record. An empty set always returns an empty list.
 
         Raises:
             TransactionRequiredError: If no transaction is open in this thread.
         """
         with self._operation(write=False):
-            if states is not None and not states:
-                return []
-            return self._scope_records(scope_id, states)
+            if states is None:
+                return self._scope_records(scope_id)
+            return self._scope_records_in(scope_id, states) if states else []
 
     def removed_records(self, through: int) -> list[Record]:
         """Return the removed records no feed entry after ``through`` is about.
@@ -563,9 +570,16 @@ class StateStore(ABC):
     def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]: ...
 
     @abstractmethod
-    def _scope_records(
-        self, scope_id: str, states: frozenset[RecordState] | None
-    ) -> list[Record]: ...
+    def _scope_records(self, scope_id: str) -> list[Record]: ...
+
+    def _scope_records_in(self, scope_id: str, states: frozenset[RecordState]) -> list[Record]:
+        """The scope's records in one of ``states``, ordered by local key.
+
+        It filters what ``_scope_records`` returns. A store that can
+        filter where it keeps its records, such as with an index, overrides
+        it. It never gets an empty set.
+        """
+        return [record for record in self._scope_records(scope_id) if record.state in states]
 
     @abstractmethod
     def _removed_records(self, through: int) -> list[Record]: ...

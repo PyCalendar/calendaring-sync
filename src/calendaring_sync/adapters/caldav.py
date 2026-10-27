@@ -3,7 +3,7 @@
 
 """The CalDAV :term:`adapter`, which syncs one calendar collection through python-caldav.
 
-Install it with the ``caldav`` extra: ``pip install 'calendaring-sync[caldav]'``.
+It needs the ``caldav`` extra, as :doc:`/how-to/install` shows.
 :doc:`/explanation/adapters` explains every rule it follows, and
 :doc:`/reference/server-compatibility` how each tested server behaves.
 """
@@ -32,29 +32,29 @@ except ImportError as exc:
     ) from exc
 
 from calendaring_sync._checks import check_argument_types
-from calendaring_sync.adapters._flow import (
+from calendaring_sync.adapters.base import (
+    Adapter,
+    AsyncAdapter,
+    InStore,
+    ReadResult,
     Steps,
-    _arun,
-    _EditFields,
-    _Flow,
-    _InStore,
-    _Read,
-    _run,
+    SyncAdapter,
     _url_id,
 )
 from calendaring_sync.error import IncompleteListingError, ScopeGoneError
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
-from calendaring_sync.objects.edit import EditKind, LocalEdit
+from calendaring_sync.objects.edit import EditFields, EditKind, LocalEdit
 from calendaring_sync.objects.push import Applied, Gone, LogicalKeyTaken, PushOutcome, Rejected
 from calendaring_sync.objects.record import Record
 from calendaring_sync.objects.scope import Scope
-from calendaring_sync.replica import Replica, Session
+from calendaring_sync.replica import Replica
+from calendaring_sync.session import Session
 
 #: The name of the canonical fingerprint this adapter computes. A change to
 #: how it's computed gets a new name, so every scope is listed again.
 FINGERPRINT_SCHEME = "caldav-canonical-1"
-#: The media type of a CalDAV scope's content: iCalendar data.
+#: The media type of a CalDAV scope's content, iCalendar data.
 MEDIA_TYPE = "text/calendar"
 #: How many objects one ``calendar-multiget`` fetches, and one page of a
 #: :term:`full listing` holds.
@@ -166,7 +166,7 @@ def _chunks(items: Sequence[str], size: int) -> Iterator[Sequence[str]]:
         yield items[start : start + size]
 
 
-class _CalDAVFlow(_Flow):
+class _CalDAVFlow(Adapter):
     """Everything the sync and async CalDAV adapters share."""
 
     _fingerprint_scheme = FINGERPRINT_SCHEME
@@ -200,9 +200,10 @@ class _CalDAVFlow(_Flow):
         """Whether the server may leave changes out without refusing the scope's token.
 
         Read from the server profile configured on the client, python-caldav's
-        ``sync-token.invalid-token`` feature. When it's true, schedule regular
-        full listings with ``sync(full_listing=True)``: a listing only fetches
-        objects whose ETag changed, so it costs little more than a sync.
+        ``sync-token.invalid-token`` feature;
+        :attr:`Adapter.needs_full_listings
+        <calendaring_sync.adapters.base.Adapter.needs_full_listings>` says
+        what to do when it's ``True``.
         """
         features = self._client.features
         if features is None:
@@ -223,15 +224,11 @@ class _CalDAVFlow(_Flow):
         # back spelled another way.
         return self._object_id(f"{uuid.uuid4()}.ics")
 
-    def _edit_fields(self, content: bytes, *, create: bool) -> _EditFields:
+    def _edit_fields(self, content: bytes, *, create: bool) -> EditFields:
         fields = _fields(content)
         if create and fields.logical_key is None:
             raise ValueError("Calendar data must hold an object with a UID")
-        return {
-            "fingerprint": fields.fingerprint,
-            "containers": self._containers,
-            "logical_key": fields.logical_key,
-        }
+        return EditFields(fields.fingerprint, self._containers, fields.logical_key)
 
     def _ask(self, request: Any) -> Steps[Any]:
         """Send one request about the collection; a collection that's gone raises.
@@ -244,22 +241,22 @@ class _CalDAVFlow(_Flow):
         except dav_error.NotFoundError as exc:
             raise ScopeGoneError(f"The server has no calendar at {self._url}") from exc
 
-    def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[_Read]:
+    def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[ReadResult]:
         # A collection that names no token (one that supports the report
         # must, RFC 6578 section 4) is listed every time too.
         if full_listing or not scope.token or not (yield from self._supports_changes()):
             yield from self._list(session, scope)
-            return _Read.COMPLETE
+            return ReadResult.COMPLETE
         try:
             found = yield from self._ask(
                 lambda: self._calendar.get_objects_by_sync_token(scope.token, disable_fallback=True)
             )
         except dav_error.DAVError as exc:
             if _VALID_SYNC_TOKEN in exc.preconditions:
-                return _Read.INVALID_TOKEN
+                return ReadResult.INVALID_TOKEN
             raise
         removed = {self._object_id(url) for url in found.deleted_urls}
-        known: dict[str, str] = yield _InStore(self._replica.known_versions, (self.scope_id,))
+        known: dict[str, str] = yield InStore(self._replica.known_versions, (self.scope_id,))
         # A member reported with the ETag already stored hasn't changed since,
         # such as one this sync already fetched or that came back twice.
         reported = ((self._object_id(obj.url), obj.etag) for obj in found.objects)
@@ -282,8 +279,8 @@ class _CalDAVFlow(_Flow):
         change_set = ChangeSet(
             self.scope_id, scope.token, token, changes, truncated=found.truncated
         )
-        yield _InStore(session.ingest, (change_set,))
-        return _Read.TRUNCATED if found.truncated else _Read.COMPLETE
+        yield InStore(session.ingest, (change_set,))
+        return ReadResult.TRUNCATED if found.truncated else ReadResult.COMPLETE
 
     def _supports_changes(self) -> Steps[bool]:
         """Whether the collection lists ``sync-collection`` in its supported reports."""
@@ -318,7 +315,7 @@ class _CalDAVFlow(_Flow):
             self._object_id(entry.href): entry.properties.get(dav.GetEtag.tag)
             for entry in response.parse_propfind()
         }
-        known: dict[str, str] = yield _InStore(self._replica.known_versions, (self.scope_id,))
+        known: dict[str, str] = yield InStore(self._replica.known_versions, (self.scope_id,))
         pages = list(_chunks(list(versions), MULTIGET_SIZE)) or [()]
         for number, page in enumerate(pages, start=1):
             changes: dict[str, Change] = {
@@ -335,7 +332,7 @@ class _CalDAVFlow(_Flow):
                 full_listing=True,
                 truncated=number < len(pages),
             )
-            yield _InStore(session.ingest, (change_set,))
+            yield InStore(session.ingest, (change_set,))
 
     def _fetch(self, object_ids: Iterable[str]) -> Steps[dict[str, Changed]]:
         """Fetch objects' content and ETags together, a multiget at a time.
@@ -452,32 +449,18 @@ class _CalDAVFlow(_Flow):
 
 
 @check_argument_types
-class CalDAVAdapter(_CalDAVFlow):
-    """Syncs one calendar collection with a :class:`~calendaring_sync.replica.Replica`.
+class CalDAVAdapter(_CalDAVFlow, SyncAdapter):
+    """Syncs one calendar collection through a synchronous python-caldav client.
 
-    The calendar is a python-caldav ``Calendar`` on a synchronous client,
-    and it's one :term:`scope`. Your application calls :meth:`sync` when it
-    decides to sync, and records its edits with :meth:`create` and
-    :meth:`change`, which build an object's fingerprint and logical key the
-    same way a sync does. Deletes and discards need nothing from the
-    content, so they go to :meth:`~calendaring_sync.replica.Replica.delete`
-    and :meth:`~calendaring_sync.replica.Replica.discard`.
-
-    With no server profile on the client, python-caldav searches the
-    calendar for a create's ``UID`` before sending it. Configuring the
-    client's ``features`` (``features="radicale"``, for example) lets the
-    server check instead, in the same request.
-
-    A change or delete of an object whose stored ETag is weak (``W/``)
-    waits, unsent, until a sync stores a strong one, since ``If-Match``
-    never matches a weak ETag; :meth:`waiting` lists such edits.
-
-    Every method also raises the store's errors, as
-    :class:`~calendaring_sync.replica.Replica` describes.
+    The calendar is one :term:`scope`. The content :meth:`create` and
+    :meth:`change` take is iCalendar data in UTF-8, and a create's must
+    hold an object with a ``UID``; anything else raises
+    :class:`ValueError`. A failure python-caldav reports, such as a refused
+    login, reaches you as its ``caldav.lib.error.DAVError``, unchanged.
 
     Args:
         replica: Where the sync state is kept.
-        calendar: The calendar collection to sync.
+        calendar: The calendar to sync.
         scope_id: The scope's id. Defaults to the calendar's URL, without
             a login and spelled one way, so calendars on two servers never
             share a scope and one calendar always gets the same one.
@@ -503,82 +486,13 @@ class CalDAVAdapter(_CalDAVFlow):
     ) -> None:
         super().__init__(replica, calendar, scope_id)
 
-    def sync(self, *, full_listing: bool = False) -> None:
-        """Sync the calendar: ingest what changed on the server, then push your edits.
-
-        Changes since the scope's token come from a ``sync-collection``
-        report, and a calendar that has none, or a scope that has no token,
-        is listed in full instead. When the server refuses the token, the
-        scope is :term:`reset` and listed in full. Your edits are pushed only
-        once everything the server reported was ingested. Each step runs in
-        a store transaction of its own.
-
-        Args:
-            full_listing: List every object instead of asking for changes.
-                Members whose ETag didn't change aren't fetched.
-
-        Raises:
-            ScopeGoneError: If the server has no calendar at its URL.
-            IncompleteListingError: If the server cut a full listing short.
-            StaleChangeSetError: If another process ingested the scope first.
-            SessionError: If this replica already has a session open for the scope.
-            ScopeMismatchError: If the scope's content has another media type.
-            TransactionError: If a store transaction is open in this thread.
-            caldav.lib.error.DAVError: For any other failure python-caldav
-                reports, such as a refused login, unchanged. A push it
-                interrupted is settled by the next sync.
-        """
-        _run(self._sync(full_listing=full_listing))
-
-    def create(self, content: bytes) -> int:
-        """Record a create of an object with this iCalendar data, and return its local key.
-
-        The object gets an href of its own; the next :meth:`sync` sends it.
-        Runs in a write transaction.
-
-        Raises:
-            ValueError: If the content isn't UTF-8 iCalendar data with a ``UID``.
-            UnknownScopeError: If the calendar was never synced.
-            TransactionError: If a store transaction is open in this thread.
-        """
-        return _run(self._create(content))
-
-    def change(self, local_key: int, content: bytes) -> None:
-        """Record a change of an object to this iCalendar data; the next :meth:`sync` sends it.
-
-        Reads the record, then writes the change, each in a transaction of its own.
-
-        Raises:
-            ValueError: If the content isn't UTF-8 iCalendar data, the
-                record is in another scope, or the record is a create not
-                sent yet and the content holds no ``UID``.
-            UnknownRecordError: If no record has this local key.
-            EditRefusedError: If the record can't take an edit, such as one
-                with an open conflict.
-            TransactionError: If a store transaction is open in this thread.
-        """
-        _run(self._change(local_key, content))
-
-    def waiting(self) -> list[Record]:
-        """Return the pending edits the next :meth:`sync` won't send, and can't yet.
-
-        That's a change or delete of an object whose stored ETag is weak.
-        Runs in a read transaction.
-
-        Raises:
-            UnknownScopeError: If the calendar was never synced.
-            TransactionError: If a store transaction is open in this thread.
-        """
-        return _run(self._waiting())
-
 
 @check_argument_types
-class AsyncCalDAVAdapter(_CalDAVFlow):
+class AsyncCalDAVAdapter(_CalDAVFlow, AsyncAdapter):
     """:class:`CalDAVAdapter` for a calendar on an asynchronous client.
 
-    :meth:`sync`, :meth:`create` and :meth:`change` are coroutines; each
-    store call runs in a worker thread, so a long ingest doesn't block the
-    event loop. Everything else is as :class:`CalDAVAdapter` describes.
+    Its methods are coroutines, as :class:`~calendaring_sync.adapters.base.AsyncAdapter`
+    describes; everything else is as :class:`CalDAVAdapter` describes.
 
     Raises:
         TypeError: If the calendar is on a synchronous client, or an
@@ -592,19 +506,3 @@ class AsyncCalDAVAdapter(_CalDAVFlow):
         self, replica: Replica, calendar: Calendar, *, scope_id: str | None = None
     ) -> None:
         super().__init__(replica, calendar, scope_id)
-
-    async def sync(self, *, full_listing: bool = False) -> None:
-        """See :meth:`CalDAVAdapter.sync`."""
-        await _arun(self._sync(full_listing=full_listing))
-
-    async def create(self, content: bytes) -> int:
-        """See :meth:`CalDAVAdapter.create`."""
-        return await _arun(self._create(content))
-
-    async def change(self, local_key: int, content: bytes) -> None:
-        """See :meth:`CalDAVAdapter.change`."""
-        await _arun(self._change(local_key, content))
-
-    async def waiting(self) -> list[Record]:
-        """See :meth:`CalDAVAdapter.waiting`."""
-        return await _arun(self._waiting())

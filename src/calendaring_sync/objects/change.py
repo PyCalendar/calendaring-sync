@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TypeAlias
 
 from calendaring_sync._checks import check_data, checked_when_built
 
@@ -27,7 +28,7 @@ class Changed:
 
     Raises:
         TypeError: If a field has the wrong type.
-        ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
+        LoneSurrogateError: If a string holds a lone surrogate.
 
     Examples:
         An :term:`adapter` reports an object the server changed, and one it
@@ -64,4 +65,4 @@ class Unchanged:
 
 
 #: Any one of the three.
-Change = Changed | Removed | Unchanged
+Change: TypeAlias = Changed | Removed | Unchanged

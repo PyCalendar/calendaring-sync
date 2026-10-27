@@ -314,6 +314,12 @@ def _load(reader: _Reader, row: sqlite3.Row) -> Any:
 _PRIVATE = (":memory:", "")
 
 
+class _ReadTurn(local):
+    """Whether this thread's transaction holds the read turn."""
+
+    taken: bool = False
+
+
 def _connect(path: str | os.PathLike[str], timeout: float) -> sqlite3.Connection:
     """Open a connection to the store's file the way every one of its connections is opened."""
     conn = sqlite3.connect(path, timeout=timeout, isolation_level=None, check_same_thread=False)
@@ -368,7 +374,7 @@ class SQLiteStore(StateStore):
         # process is open while it runs. Each thread notes whether it has the
         # turn, so only the thread that took it gives it back.
         self._read_turn = Lock()
-        self._turn_taken = local()
+        self._turn_taken = _ReadTurn()
         with self._errors():
             self._writer = _connect(path, timeout)
         try:
@@ -478,7 +484,7 @@ class SQLiteStore(StateStore):
 
     def _end_read(self) -> None:
         """Give the read turn back, if this thread's transaction took it."""
-        if getattr(self._turn_taken, "taken", False):
+        if self._turn_taken.taken:
             self._turn_taken.taken = False
             self._read_turn.release()
 
@@ -539,9 +545,10 @@ class SQLiteStore(StateStore):
             (scope_id, logical_key, scope_id, logical_key),
         )
 
-    def _scope_records(self, scope_id: str, states: frozenset[RecordState] | None) -> list[Record]:
-        if states is None:
-            return self._select(Record, _RECORDS, "WHERE scope = ? ORDER BY local_key", (scope_id,))
+    def _scope_records(self, scope_id: str) -> list[Record]:
+        return self._select(Record, _RECORDS, "WHERE scope = ? ORDER BY local_key", (scope_id,))
+
+    def _scope_records_in(self, scope_id: str, states: frozenset[RecordState]) -> list[Record]:
         marks = ", ".join("?" for _ in states)
         return self._select(
             Record,

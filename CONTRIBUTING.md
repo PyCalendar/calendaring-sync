@@ -3,4 +3,4 @@
 
 # Contributing
 
-See our [contributing guide](https://calendaring-sync.readthedocs.io/en/latest/contribute.html) for complete information on how to contribute to calendaring-sync.
+The [contributing guide](https://calendaring-sync.readthedocs.io/en/stable/contribute.html) covers setting up, how the code is laid out, the checks a pull request must pass, and the conventions reviewers hold it to.

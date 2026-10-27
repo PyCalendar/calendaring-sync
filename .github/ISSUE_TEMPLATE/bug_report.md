@@ -1,49 +1,47 @@
 ---
 name: Bug report
-about: Create a bug report to help us improve calendaring-sync
+about: Report something calendaring-sync does wrong
 title: '[Bug] '
 labels: ''
 assignees: ''
 ---
 
-<!-- This template is here to guide you and help us. If you can't complete everything here, that is fine. -->
+<!-- Fill in what you can; a partial report still helps. -->
 
-## Describe the bug
+## What happened
 
-<!-- A clear and concise description of the bug. -->
+<!-- What calendaring-sync did. -->
 
-## To reproduce
+## How to reproduce it
 
-<!-- Add the necessary steps and code examples to reproduce the issue on your machine. -->
+<!-- The steps and code that show it, as small as you can make them. -->
 
 ```python
 import calendaring_sync
-### ...
 ```
 
 Output:
 
-<!-- Add logs, stack traces, or error outputs to help explain the issue. -->
+<!-- The traceback, log, or other output. -->
 
 ```pycon
 
 ```
 
-## Expected behavior
+## What you expected
 
-<!-- A clear and concise description of what you expected to happen. -->
+<!-- What calendaring-sync should have done instead. -->
 
 ## Environment
 
-<!-- Complete the following information. -->
-
-- [ ] Operating system: <!-- For example, Ubuntu 22, macOS Tahoe 26, Windows 10 -->
-- [ ] Python version: <!-- For example, Python 3.14 -->
-- [ ] calendaring-sync version: <!-- Run `python3 -c 'from calendaring_sync import __version__; print(__version__)'` -->
-- [ ] Adapter and server, if one is involved: <!-- For example, the CalDAV adapter, python-caldav 3.6.0, Radicale 3.8.3 -->
+- [ ] Operating system: <!-- Such as Ubuntu 24.04, macOS 26, or Windows 11 -->
+- [ ] Python version: <!-- Such as 3.14 -->
+- [ ] calendaring-sync version: <!-- Run `python -c "import calendaring_sync; print(calendaring_sync.__version__)"` -->
+- [ ] Store: <!-- Such as SQLiteStore, MemoryStore, or one you wrote -->
+- [ ] Adapter, its client library's version, and the server, if one is involved:
 
 ## Additional context
 
-<!-- Add any other context about the issue here, including related issues and pull requests. -->
+<!-- Related issues or pull requests, or anything else that helps. -->
 
-- [ ] I tested it with the latest version.
+- [ ] I reproduced it with the latest release.

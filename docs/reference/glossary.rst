@@ -14,22 +14,22 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
    :sorted:
 
    adapter
-      The part that connects calendaring-sync to one kind of server. It asks the server what changed, hands the answer to the :term:`core` as a :term:`change set`, and sends your :term:`pushes <push>`.
+      The part that connects calendaring-sync to one kind of server. It asks the server what changed, hands the answer to the :term:`core` as a :term:`change set`, and sends your :term:`pushes <push>`. Some ship with calendaring-sync, and you can write your own.
 
    change set
       What an adapter hands the core after asking the server what changed in one :term:`scope`: the objects that changed or were removed, the :term:`sync token` it was fetched from, and the token it leads to.
 
    change feed
-      The numbered list of every change the core made to the store, which your application reads from its :term:`cursor`.
+      The numbered list of what syncs, resolved conflicts and dropped scopes changed in the store, which your application reads from its :term:`cursor`.
 
    checkpoint
       The sync token a :term:`truncated page` ends at. The next request continues from it.
 
    claim
-      To mark a :term:`pending edit` :term:`in flight` just before pushing it, in one step that fails if another process got there first.
+      To mark a :term:`pending edit` :term:`in flight` before it's pushed, in one step that fails if another process got there first. :ref:`design-states` shows a record's states and what moves it between them.
 
    conflict
-      An object where your :term:`pending edit` and the server disagree: both sides changed it, one side deleted it while the other edited it, or the server refused your create or change because another object holds its :term:`UID`. calendaring-sync reports it and leaves the decision to you.
+      An object where your :term:`pending edit` and the server disagree: both sides changed it, one side deleted it while the other edited it, or the server refused your create or change because another object holds its :term:`logical key`. calendaring-sync reports it and leaves the decision to you.
 
    conflict record
       What the core stores for one :term:`conflict`: the :term:`synced content`, your edit, the server's side, and the kind of conflict. It stays open until you resolve it or it resolves itself.
@@ -88,7 +88,7 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
       To delete removed records from the store for good, up to a point your application chooses.
 
    push
-      To send one :term:`pending edit` to the server. :doc:`../explanation/design` describes how a push can end.
+      To send one :term:`pending edit` to the server. :data:`~calendaring_sync.objects.push.PushOutcome` lists how a push can end.
 
    record
       Everything the core stores about one :term:`object`, including its current state.
@@ -97,7 +97,7 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
       To forget a scope's :term:`sync token`, so that the next sync of that scope is a :term:`full listing`.
 
    resolver
-      A function you write and pass to ``resolve_conflicts()``. It receives each open :term:`conflict record` and says how to resolve it.
+      A function you write and pass to :meth:`~calendaring_sync.replica.Replica.resolve_conflicts`. It receives each open :term:`conflict record` and says how to resolve it.
 
    scope
       The set of objects one :term:`sync token` covers, such as one calendar.

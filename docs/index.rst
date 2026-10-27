@@ -13,23 +13,29 @@ A Python library for calendar sync state: sync tokens, object versions, change t
 .. grid:: 2
     :gutter: 2
 
-    .. grid-item-card:: 📋 How-to guides
-        :link: how-to/install
+    .. grid-item-card:: 🚀 Quickstart
+        :link: tutorials/quickstart
         :link-type: doc
 
-        Install calendaring-sync.
+        Sync a calendar into a SQLite file.
+
+    .. grid-item-card:: 📋 How-to guides
+        :link: how-to/index
+        :link-type: doc
+
+        Connect a server, record edits, read changes, resolve conflicts, run in production.
 
     .. grid-item-card:: 📖 Reference
         :link: reference/index
         :link-type: doc
 
-        Sync terms, server behavior, and every class and method.
+        Every class and method, guarantees and limits, sync terms, and server behavior.
 
-    .. grid-item-card:: 💡 Design
-        :link: explanation/design
+    .. grid-item-card:: 💡 Explanation
+        :link: explanation/index
         :link-type: doc
 
-        Why calendaring-sync is built the way it is.
+        When to use calendaring-sync, and why it works the way it does.
 
     .. grid-item-card:: 🤝 Contribute
         :link: contribute
@@ -41,11 +47,12 @@ A Python library for calendar sync state: sync tokens, object versions, change t
         :link: security
         :link-type: doc
 
-        Report a vulnerability.
+        Report a vulnerability, and the risks to know.
 
 .. toctree::
    :hidden:
 
+   tutorials/quickstart
    how-to/index
    Reference <reference/index>
    explanation/index

@@ -1,0 +1,1 @@
+Added a quickstart, how-to guides for each task from connecting to a server to writing an adapter or using the core without one, pages on when to use calendaring-sync and on what it guarantees, and the risks to know on the security page. Every code example on these pages runs as a test.

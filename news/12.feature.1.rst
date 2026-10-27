@@ -1,0 +1,1 @@
+Added the adapter base classes :class:`~calendaring_sync.adapters.base.Adapter`, :class:`~calendaring_sync.adapters.base.SyncAdapter` and :class:`~calendaring_sync.adapters.base.AsyncAdapter` in :mod:`calendaring_sync.adapters.base`: an adapter for another protocol writes how it reads changes and sends one edit, and gets the rest of a sync, and an asynchronous variant, from them.

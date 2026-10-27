@@ -347,6 +347,11 @@ def done(step: Any) -> Any:
     return asyncio.run(step) if asyncio.iscoroutine(step) else step
 
 
+def fields_of(held: Any) -> tuple[Any, Any, Any]:
+    """The fingerprint, containers and logical key an edit or a read of content holds."""
+    return held.fingerprint, held.containers, held.logical_key
+
+
 def record(scenarios: Any, library: tuple[str, str]) -> None:
     """The recorder's command line: record one server's scenarios, or all its recordings.
 

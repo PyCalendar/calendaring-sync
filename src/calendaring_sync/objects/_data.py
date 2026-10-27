@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import TypeAlias
+
 #: The fields that hold an object's data, in every copy of it: a record's
 #: synced side, a change from the server, a local edit, and a conflict's
 #: server side. Two copies hold the same data when these match, and a record
@@ -15,7 +17,7 @@ DATA_FIELDS = ("fingerprint", "content", "containers", "logical_key")
 REMOTE = "remote_"
 
 #: A copy's data: its fingerprint, content, containers and logical key.
-Data = tuple[str | None, bytes | None, frozenset[str], str | None]
+Data: TypeAlias = tuple[str | None, bytes | None, frozenset[str], str | None]
 
 #: The data of a copy that isn't there, such as an object the server removed.
 NO_DATA: Data = (None, None, frozenset(), None)

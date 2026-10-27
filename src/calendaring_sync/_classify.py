@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import TypeAlias
 
 from calendaring_sync.objects._data import REMOTE, data
 from calendaring_sync.objects.change import Changed, Removed
@@ -14,7 +15,7 @@ from calendaring_sync.objects.edit import EditKind, LocalEdit
 from calendaring_sync.objects.record import Record
 
 #: A copy of an object: the synced copy, a server's change, or a local edit.
-Copy = Record | Changed | LocalEdit
+Copy: TypeAlias = Record | Changed | LocalEdit
 
 
 class ChangeClass(StrEnum):
