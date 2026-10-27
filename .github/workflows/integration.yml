@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -30,7 +30,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
+          python-version: "3.15"
           pip-version: "26.2.2"
 
       - name: Install dependencies
@@ -44,7 +44,7 @@ jobs:
       # nothing starts them here.
       - name: Run integration tests
         run: |
-          pytest src/calendaring_sync/tests/test_sync_integration.py \
+          pytest src/calendaring_sync/tests/test_caldav_integration.py \
             src/calendaring_sync/tests/test_jmap_integration.py
 
       - name: Stop Stalwart
