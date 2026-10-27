@@ -30,6 +30,7 @@ from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
 from threading import Event
+from types import SimpleNamespace
 from typing import Any, Literal
 from unittest.mock import patch
 
@@ -73,6 +74,7 @@ from calendaring_sync import (
     RemovedRecordError,
     Replica,
     Scope,
+    ScopeGoneError,
     ScopeMismatchError,
     Session,
     SessionError,
@@ -685,19 +687,39 @@ def _docstring_examples() -> list[doctest.DocTest]:
     return tests
 
 
-def _sync_fails_once(monkeypatch: pytest.MonkeyPatch, error: Exception) -> list[int]:
-    """Make every adapter's sync raise ``error`` the first time; return a list of the calls."""
+def _sync_fails(
+    monkeypatch: pytest.MonkeyPatch, error: Exception, failing: frozenset[int] = frozenset({1})
+) -> list[int]:
+    """Make every adapter's sync raise ``error`` on the calls numbered in ``failing``.
+
+    Returns the list of calls, which grows by one with each.
+    """
     sync = SyncAdapter.sync
     calls: list[int] = []
 
-    def fails_once(adapter: SyncAdapter, **kwargs: bool) -> None:
+    def fails(adapter: SyncAdapter, **kwargs: bool) -> None:
         calls.append(1)
-        if len(calls) == 1:
+        if len(calls) in failing:
             raise error
         sync(adapter, **kwargs)
 
-    monkeypatch.setattr(SyncAdapter, "sync", fails_once)
+    monkeypatch.setattr(SyncAdapter, "sync", fails)
     return calls
+
+
+def _memory_adapter(asynchronous: bool) -> tuple[Any, Replica, Any]:
+    """The example adapter, synced with a server holding a; return the server, replica, adapter."""
+    memory = _examples.load("memory_adapter")
+    server = memory.MemoryServer()
+    server.put("a", b"theirs", if_version=None)
+    replica = Replica(MemoryStore())
+    adapter = (
+        memory.AsyncMemoryAdapter(replica, memory.AsyncMemoryServer(server), _SCOPE)
+        if asynchronous
+        else memory.MemoryAdapter(replica, server, _SCOPE)
+    )
+    done(adapter.sync())
+    return server, replica, adapter
 
 
 @_needs_examples
@@ -714,18 +736,8 @@ class TestExamples:
         assert set(_examples.names()) - _examples.SHARED <= shown
 
     def test_memory_adapter(self):
-        memory = _examples.load("memory_adapter")
-
         def synced(asynchronous: bool) -> object:
-            server = memory.MemoryServer()
-            server.put("a", b"theirs", if_version=None)
-            replica = Replica(MemoryStore())
-            adapter = (
-                memory.AsyncMemoryAdapter(replica, memory.AsyncMemoryServer(server), _SCOPE)
-                if asynchronous
-                else memory.MemoryAdapter(replica, server, _SCOPE)
-            )
-            done(adapter.sync())
+            server, replica, adapter = _memory_adapter(asynchronous)
             created = done(adapter.create(b"new"))
             done(adapter.change(_key(replica), b"ours"))
             done(adapter.sync())
@@ -742,6 +754,32 @@ class TestExamples:
             [b"ours"],
         )
 
+    @pytest.mark.parametrize("asynchronous", [False, True])
+    def test_memory_adapter_refusals(self, asynchronous):
+        server, replica, adapter = _memory_adapter(asynchronous)
+        key = _key(replica)
+        # Written past the server's log, so no sync reports it and only the push meets it.
+        server.objects["a"] = ("99", b"theirs, again")
+        done(adapter.change(key, b"ours"))
+        done(adapter.sync())
+        assert _summary(replica.record(key)) == _pending(EditKind.CHANGE)
+        del server.objects["a"]
+        done(adapter.sync())
+        assert _summary(replica.record(key)) == _conflicted(
+            EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY
+        )
+        server.removed = True
+        with pytest.raises(ScopeGoneError):
+            done(adapter.sync(full_listing=True))
+
+    def test_run_replaces_a_setting(self, tmp_path, monkeypatch):
+        (tmp_path / "setting.py").write_text("answer = 1\ndoubled = answer * 2\n")
+        monkeypatch.setattr(_examples, "EXAMPLES", tmp_path)
+        monkeypatch.setattr(_examples, "load", lambda name: None)
+        assert _examples.run("setting", monkeypatch, tmp_path, answer=21)["doubled"] == 42
+        with pytest.raises(AssertionError, match="^setting has no missing to replace$"):
+            _examples.run("setting", monkeypatch, tmp_path, missing=1)
+
     def test_readme_shows_the_quickstart(self):
         quickstart = (_examples.EXAMPLES / "quickstart.py").read_text(encoding="utf-8")
         shown = quickstart.split("# start: sync\n")[1].split("# end: sync\n")[0]
@@ -752,11 +790,16 @@ class TestExamples:
         ran = _examples.run("start", monkeypatch, tmp_path)
         assert [r.content for r in ran["replica"].records(_EXAMPLE_SCOPE)] == [b"Team meeting"]
 
-    def test_local_edits(self, tmp_path, monkeypatch):
+    @pytest.mark.parametrize(
+        "found, content", [(True, b"Team meeting, room 3"), (False, b"Team meeting")]
+    )
+    def test_local_edits(self, tmp_path, monkeypatch, found, content):
+        if not found:
+            monkeypatch.setattr(Replica, "find_record", lambda *args: None)
         ran = _examples.run("local_edits", monkeypatch, tmp_path)
         replica = ran["replica"]
-        meeting = replica.record(ran[_EXAMPLE_EVENT].local_key)
-        assert (meeting.state, meeting.content) == (RecordState.SYNCED, b"Team meeting, room 3")
+        meeting = replica.record(_examples.load("start").meeting.local_key)
+        assert (meeting.state, meeting.content) == (RecordState.SYNCED, content)
         assert replica.record(ran["lunch"]).state is RecordState.REMOVED
         assert list(_examples.load("start").server.objects) == [_EXAMPLE_EVENT]
 
@@ -786,10 +829,26 @@ class TestExamples:
         assert (meeting.state, meeting.content) == (RecordState.SYNCED, merged)
         assert _examples.load("start").server.objects[_EXAMPLE_EVENT][1] == merged
 
-    def test_errors(self, tmp_path, monkeypatch):
+    @pytest.mark.parametrize(
+        "kind, resolution",
+        [(ConflictKind.REMOVED_REMOTELY, KeepServer()), (ConflictKind.DELETED_LOCALLY, None)],
+    )
+    def test_conflicts_resolver(self, tmp_path, monkeypatch, kind, resolution):
+        ran = _examples.run("conflicts", monkeypatch, tmp_path)
+        record = SimpleNamespace(conflict=SimpleNamespace(kind=kind))
+        assert ran["resolver"](record) == resolution
+
+    @pytest.mark.parametrize(
+        "busy, unsent, scopes",
+        [(False, [b"Team meeting, room 3"], []), (True, [], [_EXAMPLE_SCOPE])],
+    )
+    def test_errors(self, tmp_path, monkeypatch, busy, unsent, scopes):
+        if busy:
+            # The first sync is the starting state's, the second the example's.
+            _sync_fails(monkeypatch, StoreBusyError("busy"), frozenset({2}))
         ran = _examples.run("errors", monkeypatch, tmp_path)
-        assert ran["unsent"] == [b"Team meeting, room 3"]
-        assert ran["replica"].scopes() == []
+        assert ran["unsent"] == unsent
+        assert [scope.id for scope in ran["replica"].scopes()] == scopes
 
     def test_mirror(self, tmp_path, monkeypatch):
         ran = _examples.run("mirror", monkeypatch, tmp_path)
@@ -814,11 +873,12 @@ class TestExamples:
         replica = ran["replica"]
         assert [scope.id for scope in replica.scopes()] == ["home", "team", "work"]
 
-    def test_parallel_retry(self, tmp_path, monkeypatch):
+    @pytest.mark.parametrize("failing", [frozenset({1}), frozenset({1, 2})])
+    def test_parallel_retry(self, tmp_path, monkeypatch, failing):
         ran = _examples.run("parallel", monkeypatch, tmp_path)
-        calls = _sync_fails_once(monkeypatch, StaleChangeSetError("stale"))
+        calls = _sync_fails(monkeypatch, StaleChangeSetError("stale"), failing)
         ran["sync"](ran["adapters"][0])
-        assert len(calls) == 2
+        assert len(calls) == len(failing) + 1
 
     def test_inspect_scope(self, tmp_path, monkeypatch):
         ran = _examples.run("inspect_scope", monkeypatch, tmp_path)
@@ -844,15 +904,20 @@ class TestExamples:
             (FeedEntryKind.REMOVED, "lunch"),
         ]
 
-    def test_sqlite(self, tmp_path, monkeypatch):
-        calls = _sync_fails_once(monkeypatch, StoreBusyError("busy"))
+    # Busy once, the sync goes through on the retry; busy every time, it gives up after three.
+    @pytest.mark.parametrize(
+        "failing, calls, scopes",
+        [(frozenset({1}), 2, [_EXAMPLE_SCOPE]), (frozenset({1, 2, 3}), 3, [])],
+    )
+    def test_sqlite(self, tmp_path, monkeypatch, failing, calls, scopes):
+        made = _sync_fails(monkeypatch, StoreBusyError("busy"), failing)
         monkeypatch.setattr("time.sleep", lambda seconds: None)
         _examples.run("sqlite", monkeypatch, tmp_path)
-        assert len(calls) == 2
+        assert len(made) == calls
         with closing(sqlite3.connect(tmp_path / "sync.db")) as connection:
             assert connection.execute("PRAGMA journal_mode").fetchone() == ("wal",)
         with SQLiteStore(tmp_path / "sync.db") as store:
-            assert [scope.id for scope in Replica(store).scopes()] == [_EXAMPLE_SCOPE]
+            assert [scope.id for scope in Replica(store).scopes()] == scopes
 
 
 class TestPackage:
