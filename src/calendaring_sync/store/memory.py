@@ -36,6 +36,13 @@ class _Data:
         )
 
 
+class _View(local):
+    """This thread's open transaction's view of the data."""
+
+    #: The view, or ``None`` when the thread has no transaction open.
+    data: _Data | None = None
+
+
 @check_argument_types
 class MemoryStore(StateStore):
     """A store held in memory and lost when the process ends.
@@ -105,14 +112,13 @@ class MemoryStore(StateStore):
     def __init__(self) -> None:
         super().__init__()
         self._committed = _Data()
-        # Each thread's open transaction's view of the data.
-        self._views = local()
+        self._view = _View()
 
     @property
     def _data(self) -> _Data:
         """This thread's transaction's view of the data."""
-        data: _Data = self._views.data
-        return data
+        # Every hook runs inside a transaction, after _begin set the view.
+        return cast(_Data, self._view.data)
 
     def _load(self) -> _Data:
         """Return the data the last committed write saved."""
@@ -124,7 +130,7 @@ class MemoryStore(StateStore):
 
     def _begin(self, *, write: bool) -> None:
         data = self._load()
-        self._views.data = data.copy() if write else data
+        self._view.data = data.copy() if write else data
 
     def _commit(self) -> None:
         data = self._end_view()
@@ -138,7 +144,7 @@ class MemoryStore(StateStore):
 
     def _end_view(self) -> _Data | None:
         """Drop and return this thread's view, so an idle thread keeps no old copy of the data."""
-        data: _Data | None = vars(self._views).pop("data", None)
+        data, self._view.data = self._view.data, None
         return data
 
     def _get_scope(self, scope_id: str) -> Scope | None:
@@ -182,16 +188,12 @@ class MemoryStore(StateStore):
     def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
         return [
             r
-            for r in self._scope_records(scope_id, None)
+            for r in self._scope_records(scope_id)
             if logical_key in (r.logical_key, r.edit and r.edit.logical_key)
         ]
 
-    def _scope_records(self, scope_id: str, states: frozenset[RecordState] | None) -> list[Record]:
-        return [
-            r
-            for r in self._ordered_records()
-            if r.scope == scope_id and (states is None or r.state in states)
-        ]
+    def _scope_records(self, scope_id: str) -> list[Record]:
+        return [r for r in self._ordered_records() if r.scope == scope_id]
 
     def _removed_records(self, through: int) -> list[Record]:
         return [

@@ -5,10 +5,12 @@
 
 Every error the library raises on purpose derives from
 :class:`CalendaringSyncError`, except for arguments that can never be
-valid: those raise :class:`ValueError`, such as a negative cursor, or
-:class:`TypeError`, such as content that isn't bytes. A record a store
-can't hold raises :class:`RecordValueError`, which is both a
-:class:`CalendaringSyncError` and a :class:`ValueError`.
+valid: those raise :class:`ValueError`, such as a feed page size of 0, or
+:class:`TypeError`, such as content that isn't bytes. An argument refused
+for what the store holds, such as a record of another scope, raises an
+error that is both a :class:`CalendaringSyncError` and a
+:class:`ValueError`, as a record a store can't hold does with
+:class:`RecordValueError`.
 """
 
 
@@ -20,8 +22,26 @@ class StaleChangeSetError(CalendaringSyncError):
     """A :term:`change set` was fetched from a token the :term:`scope` no longer has.
 
     Another process ingested first, or started another listing of the same
-    scope. The changes it fetched are already outdated, so the adapter
-    fetches again from the scope's current token.
+    scope, so the changes fetched are outdated. Nothing was ingested; the
+    next sync fetches from the scope's current token.
+    """
+
+
+class ListingRequiredError(CalendaringSyncError, ValueError):
+    """An incremental :term:`change set` arrived for a :term:`scope` with no :term:`sync token`.
+
+    A scope gets its token from its first :term:`full listing`, and again
+    after a :term:`reset`, so only a listing can be ingested until then.
+    """
+
+
+class UnknownVersionError(CalendaringSyncError, ValueError):
+    """A :term:`full listing` reported an object unchanged, but the store holds no version for it.
+
+    An adapter reports an object unchanged only when its version equals
+    one :meth:`~calendaring_sync.replica.Replica.known_versions` returned,
+    so the listing was built from versions the store no longer has. Nothing
+    was ingested; build the listing again.
     """
 
 
@@ -31,6 +51,14 @@ class TrimmedFeedError(CalendaringSyncError):
     The entries after the cursor were trimmed, so they can't be read. Read
     the scope's records again, and continue from
     :meth:`~calendaring_sync.replica.Replica.feed_head`.
+    """
+
+
+class FeedRangeError(CalendaringSyncError, ValueError):
+    """A :term:`change feed` number is below 0 or past the last entry.
+
+    No entry has that number yet, so the number didn't come from this
+    store's feed, or the store was replaced since.
     """
 
 
@@ -44,6 +72,29 @@ class UnknownRecordError(CalendaringSyncError):
 
 class DuplicateObjectError(CalendaringSyncError):
     """Another :term:`record` in the :term:`scope` already has this :term:`object id`."""
+
+
+class OtherScopeError(CalendaringSyncError, ValueError):
+    """A :term:`record` or :term:`change set` belongs to another :term:`scope`.
+
+    A session or adapter works on one scope, and refuses what belongs to
+    another before anything is written.
+    """
+
+
+class ObjectIdAssignedError(CalendaringSyncError, ValueError):
+    """The :term:`record` already has an :term:`object id`, so it can't be given another.
+
+    Only a create that has none takes an object id when its push is
+    claimed; claim any other record without one.
+    """
+
+
+class LoneSurrogateError(CalendaringSyncError, ValueError):
+    """A string holds a :ref:`lone surrogate <lone-surrogates>`, which no store can keep.
+
+    It's refused where the string comes in, before anything is written.
+    """
 
 
 class RecordValueError(CalendaringSyncError, ValueError):

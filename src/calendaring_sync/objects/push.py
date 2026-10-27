@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TypeAlias
 
 from calendaring_sync._checks import check_text, checked_when_built
 
@@ -22,7 +23,7 @@ class Applied:
 
     Raises:
         TypeError: If the id isn't a string or ``None``.
-        ValueError: If the id holds a :ref:`lone surrogate <lone-surrogates>`.
+        LoneSurrogateError: If the id holds a lone surrogate.
 
     Examples:
         An :term:`adapter` reports a create the server stored under an id it
@@ -44,8 +45,8 @@ class Rejected:
     """The server refused the write because something changed since your last sync.
 
     The edit stays pending. The next :term:`ingest` makes it a
-    :term:`conflict` only if this object changed, and otherwise it's pushed
-    again.
+    :term:`conflict` only if the object the edit is for changed, and
+    otherwise it's pushed again.
     """
 
 
@@ -68,7 +69,7 @@ class LogicalKeyTaken:
 
     Raises:
         TypeError: If the id isn't a string or ``None``.
-        ValueError: If the id holds a :ref:`lone surrogate <lone-surrogates>`.
+        LoneSurrogateError: If the id holds a lone surrogate.
     """
 
     holder: str | None = None
@@ -87,4 +88,4 @@ class Unknown:
 
 
 #: Any one of the five.
-PushOutcome = Applied | Rejected | Gone | LogicalKeyTaken | Unknown
+PushOutcome: TypeAlias = Applied | Rejected | Gone | LogicalKeyTaken | Unknown

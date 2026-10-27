@@ -26,7 +26,8 @@ class ConflictKind(StrEnum):
     #: The server has a new object at the id your unsent create chose.
     BOTH_CREATED = "both_created"
     #: The server refused your create, or your change, because another
-    #: object holds its :term:`logical key`.
+    #: object holds its :term:`logical key`. Once that object stops holding
+    #: it, the edit is pending again.
     LOGICAL_KEY_TAKEN = "logical_key_taken"
 
 

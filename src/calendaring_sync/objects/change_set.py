@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""What an :term:`adapter` hands the core after asking the server what changed."""
+"""A :term:`change set`, whole or one page of it."""
 
 from __future__ import annotations
 
@@ -35,8 +35,7 @@ class ChangeSet:
 
     Raises:
         TypeError: If a field has the wrong type.
-        ValueError: If the scope id, a token or an object id holds a
-            :ref:`lone surrogate <lone-surrogates>`.
+        LoneSurrogateError: If the scope id, a token or an object id holds a lone surrogate.
     """
 
     scope: str

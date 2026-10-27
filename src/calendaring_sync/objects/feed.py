@@ -13,8 +13,8 @@ from enum import StrEnum
 class FeedEntryKind(StrEnum):
     """What a feed entry records."""
 
-    #: A remote change was applied: the object is new, changed, or back on
-    #: the server.
+    #: A remote change was applied, to an object that's new, changed, or
+    #: back on the server.
     CHANGED = "changed"
     #: A remote removal was applied.
     REMOVED = "removed"

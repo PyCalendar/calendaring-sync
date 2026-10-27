@@ -14,14 +14,12 @@ compatibility page has a test here or a scenario run against every server.
 from __future__ import annotations
 
 import os
-import socket
 import sys
 import time
 from collections.abc import Iterator
 from functools import partial
 from typing import Any
 from unittest.mock import patch
-from urllib.parse import urlsplit
 
 import pytest
 import radicale.config
@@ -31,6 +29,7 @@ from caldav.lib import error as dav_error
 
 from calendaring_sync import RecordState
 from calendaring_sync.tests import _caldav_scenarios as scenarios
+from calendaring_sync.tests import _examples
 from calendaring_sync.tests._caldav_scenarios import (
     SCENARIOS,
     SERVERS,
@@ -39,10 +38,13 @@ from calendaring_sync.tests._caldav_scenarios import (
     Server,
     adapter_class,
     caldav_client,
+    calendar_path,
+    ics,
     started,
 )
 from calendaring_sync.tests._live import (
     CHECKS,
+    answers,
     live_environment,
     refused_login,
     removed_and_created,
@@ -52,17 +54,6 @@ from calendaring_sync.tests._scenarios import (
     put_a_and_b,
 )
 
-
-def answers(url: str) -> bool:
-    """Whether a server listens at the host and port of ``url``."""
-    parts = urlsplit(url)
-    try:
-        socket.create_connection((parts.hostname, parts.port), timeout=1).close()
-    except OSError:
-        return False
-    return True
-
-
 # Set to run the scenario that needs Stalwart's result limit lowered to 2,
 # as record_caldav's docstring says; the other Stalwart tests need the default.
 _LIMITED_STALWART = "CALENDARING_SYNC_STALWART_LIMITED"
@@ -70,6 +61,8 @@ _LIMITED_STALWART = "CALENDARING_SYNC_STALWART_LIMITED"
 _TOKEN_AGE = 1
 # Where that Radicale listens, next to the one every other test uses.
 _EXPIRY_PORT = 5233
+# Where the Radicale of the docs' examples listens, with nothing else on it.
+_EXAMPLES_PORT = 5234
 
 
 @pytest.fixture(scope="session", params=sorted(SERVERS))
@@ -164,3 +157,49 @@ def test_an_expired_token_lists_the_calendar_again(asynchronous):
         refused = [e for e in env.tape.exchanges if e.method == "REPORT" and e.status == 403]
         assert len(refused) == 1 and "valid-sync-token" in refused[0].body
         assert env.at(key).state is RecordState.SYNCED
+
+
+@pytest.mark.parametrize("example", sorted(_examples.LIVE - {"jmap_sync", "every_calendar"}))
+def test_the_docs_examples(example, tmp_path, monkeypatch, capsys):
+    server = SERVERS["radicale"]
+    with started(server, {"port": _EXAMPLES_PORT}) as (url, username, password):
+        calendar_url = f"{url}{calendar_path(server, 'docs')}"
+        client = caldav_client(False, url=url, username=username, password=password)
+        client.request(calendar_url, "MKCALENDAR")
+        client.request(
+            f"{calendar_url}meeting.ics",
+            "PUT",
+            ics("meeting", "Team meeting"),
+            {"Content-Type": "text/calendar"},
+        )
+        client.close()
+        settings = {"URL": url, "USERNAME": username, "PASSWORD": password}
+        if example == "caldav_sync":
+            settings.update(CALENDAR_URL=calendar_url, SERVER=server.name)
+        ran = _examples.run(example, monkeypatch, tmp_path, **settings)
+    if example == "quickstart":
+        # The store is closed by then; the example printed the feed.
+        assert capsys.readouterr().out == "changed /user1/calendaring-sync-docs/meeting.ics\n"
+    else:
+        replica = ran["replica"]
+        held = [r.logical_key for scope in replica.scopes() for r in replica.records(scope.id)]
+        assert held == ["meeting"]
+
+
+def test_the_docs_example_of_every_calendar(tmp_path, monkeypatch):
+    server = SERVERS["radicale"]
+    with started(server, {"port": _EXAMPLES_PORT}) as (url, username, password):
+        client = caldav_client(False, url=url, username=username, password=password)
+        calendars = [f"{url}{calendar_path(server, name)}" for name in ("work", "home")]
+        for calendar_url in calendars:
+            client.request(calendar_url, "MKCALENDAR")
+        login = {"URL": url, "USERNAME": username, "PASSWORD": password}
+        ran = _examples.run("every_calendar", monkeypatch, tmp_path, **login)
+        assert len(ran["adapters"]) == 2 and ran["dropped"] == []
+        # A calendar deleted on the server loses its scope at the next run.
+        client.request(calendars[1], "DELETE")
+        client.close()
+        ran = _examples.run("every_calendar", monkeypatch, tmp_path, **login)
+    assert [d.scope for d in ran["dropped"]] == [
+        ran["adapters"][0].scope_id.replace("work", "home")
+    ]

@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""
-Calendar sync state.
+"""Calendar sync state: sync tokens, object versions, change tracking, and conflict detection.
 
-Tracks sync tokens and per-object versions across sync cycles, keeps a local
-copy of synced calendar objects, and detects conflicts between local and remote
-changes.
+An application starts from :class:`~calendaring_sync.replica.Replica`
+and a :term:`store`; an :term:`adapter`, or code of your own, tells them
+what changed.
+Import every public name from ``calendaring_sync`` itself, such as
+``from calendaring_sync import Replica, SQLiteStore``, except the
+adapters, which each come from their own module.
 """
 
 from calendaring_sync._version import __version__
@@ -14,8 +16,13 @@ from calendaring_sync.error import (
     CalendaringSyncError,
     DuplicateObjectError,
     EditRefusedError,
+    FeedRangeError,
     IncompleteListingError,
+    ListingRequiredError,
+    LoneSurrogateError,
+    ObjectIdAssignedError,
     OpenConflictError,
+    OtherScopeError,
     PendingEditError,
     PushInFlightError,
     RecordValueError,
@@ -36,12 +43,13 @@ from calendaring_sync.error import (
     UnknownHolderError,
     UnknownRecordError,
     UnknownScopeError,
+    UnknownVersionError,
 )
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
 from calendaring_sync.objects.conflict import Conflict, ConflictKind
 from calendaring_sync.objects.dropped_scope import DroppedScope
-from calendaring_sync.objects.edit import EditKind, LocalEdit
+from calendaring_sync.objects.edit import EditFields, EditKind, LocalEdit
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
 from calendaring_sync.objects.push import (
     Applied,
@@ -54,14 +62,15 @@ from calendaring_sync.objects.push import (
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.resolution import (
     Delete,
-    KeepEdit,
+    KeepLocal,
+    KeepServer,
     Merge,
     Resolution,
-    TakeServer,
     UpdateHolder,
 )
 from calendaring_sync.objects.scope import Scope
-from calendaring_sync.replica import Replica, Session, SessionState
+from calendaring_sync.replica import Replica
+from calendaring_sync.session import Session, SessionState
 from calendaring_sync.store.base import StateStore
 from calendaring_sync.store.memory import MemoryStore
 from calendaring_sync.store.sqlite import SQLiteStore
@@ -77,18 +86,25 @@ __all__ = [
     "Delete",
     "DroppedScope",
     "DuplicateObjectError",
+    "EditFields",
     "EditKind",
     "EditRefusedError",
     "FeedEntry",
     "FeedEntryKind",
+    "FeedRangeError",
     "Gone",
     "IncompleteListingError",
-    "KeepEdit",
+    "KeepLocal",
+    "KeepServer",
+    "ListingRequiredError",
+    "LoneSurrogateError",
     "LocalEdit",
     "LogicalKeyTaken",
     "MemoryStore",
     "Merge",
+    "ObjectIdAssignedError",
     "OpenConflictError",
+    "OtherScopeError",
     "PendingEditError",
     "PushInFlightError",
     "PushOutcome",
@@ -113,7 +129,6 @@ __all__ = [
     "StoreBusyError",
     "StoreError",
     "StoreVersionError",
-    "TakeServer",
     "TransactionError",
     "TransactionPermissionError",
     "TransactionRequiredError",
@@ -124,6 +139,7 @@ __all__ = [
     "UnknownHolderError",
     "UnknownRecordError",
     "UnknownScopeError",
+    "UnknownVersionError",
     "UpdateHolder",
     "__version__",
 ]

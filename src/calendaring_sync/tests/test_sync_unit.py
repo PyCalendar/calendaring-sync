@@ -24,7 +24,7 @@ import weakref
 from collections import Counter
 from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import AbstractContextManager, ExitStack, contextmanager, suppress
+from contextlib import AbstractContextManager, ExitStack, closing, contextmanager, suppress
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from functools import partial
@@ -45,15 +45,23 @@ from calendaring_sync import (
     ConflictKind,
     Delete,
     DuplicateObjectError,
+    EditFields,
     EditKind,
+    FeedEntry,
     FeedEntryKind,
+    FeedRangeError,
     Gone,
-    KeepEdit,
+    KeepLocal,
+    KeepServer,
+    ListingRequiredError,
     LocalEdit,
     LogicalKeyTaken,
+    LoneSurrogateError,
     MemoryStore,
     Merge,
+    ObjectIdAssignedError,
     OpenConflictError,
+    OtherScopeError,
     PendingEditError,
     PushInFlightError,
     PushOutcome,
@@ -76,7 +84,6 @@ from calendaring_sync import (
     StoreBusyError,
     StoreError,
     StoreVersionError,
-    TakeServer,
     TransactionError,
     TransactionPermissionError,
     TransactionRequiredError,
@@ -87,16 +94,17 @@ from calendaring_sync import (
     UnknownHolderError,
     UnknownRecordError,
     UnknownScopeError,
+    UnknownVersionError,
     UpdateHolder,
 )
 from calendaring_sync._checks import _CHECKED_WHEN_BUILT, _fields, argument_check
-from calendaring_sync.adapters._flow import Steps, _EditFields, _Flow, _InStore, _Read, _run
+from calendaring_sync.adapters.base import Adapter, AsyncAdapter, Steps, SyncAdapter
 from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter, _CalDAVFlow
 from calendaring_sync.adapters.jmap import AsyncJMAPAdapter, JMAPAdapter, _JMAPFlow
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
 from calendaring_sync.store.memory import _Data
 from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
-from calendaring_sync.tests import _caldav_scenarios, _jmap_scenarios, benchmark
+from calendaring_sync.tests import _caldav_scenarios, _examples, _jmap_scenarios, benchmark
 from calendaring_sync.tests._scenarios import done, run
 from calendaring_sync.tests._tape import Tape
 
@@ -110,6 +118,13 @@ _START = datetime(2026, 10, 1, tzinfo=UTC)
 _SHORT_TIMEOUT = 0.1
 # How long a test waits for another thread before it counts as stuck.
 _WAIT = 5.0
+# The scope and event the docs' examples start from, in their start.py.
+_EXAMPLE_SCOPE = "work"
+_EXAMPLE_EVENT = "meeting"
+# The tests that run the docs' examples, which an installed wheel doesn't hold.
+_needs_examples = pytest.mark.skipif(
+    not _examples.EXAMPLES.is_dir(), reason="The docs examples aren't installed"
+)
 
 
 class _Clock:
@@ -467,6 +482,20 @@ def _summary(record: Record | None) -> tuple[object, ...] | None:
     )
 
 
+def _assert_ended(
+    replica: Replica,
+    key: int,
+    head: int,
+    expected: tuple[object, ...] | None,
+    feed: list[FeedEntryKind],
+) -> Record | None:
+    """Check the summary a record ended with and the feed kinds since ``head``, and return it."""
+    record = replica.record(key)
+    assert _summary(record) == expected
+    assert [kind for kind, _ in _feed(replica, head)] == feed
+    return record
+
+
 def _edited(replica: Replica) -> Replica:
     """A seeded scope at token T2 where a holds a pending change and b an open conflict."""
     _seeded(replica)
@@ -531,6 +560,19 @@ def _refused_create(
     """
     key, _ = _edit_locally(replica, local, logical_key=logical_key)
     _push(replica, key, LogicalKeyTaken(holder), since, token)
+    return key
+
+
+def _refused_edit(replica: Replica, refused: EditKind) -> int:
+    """Have the server refuse an edit for b's logical key u, at T2 to T3; return its key.
+
+    A create gets the id n, and a change goes to a.
+    """
+    if refused is EditKind.CREATE:
+        return _refused_create(replica, "b", "T2", "T3")
+    key = _key(replica)
+    _change(replica, key, "fl", logical_key="u")
+    _push(replica, key, LogicalKeyTaken("b"), "T2", "T3")
     return key
 
 
@@ -623,7 +665,7 @@ def _assert_refused(
 
 
 # Examples that continue from the replica the Replica class example builds.
-_CONTINUING = ("calendaring_sync.replica.Replica.", "calendaring_sync.replica.Session")
+_CONTINUING = ("calendaring_sync.replica.Replica.", "calendaring_sync.session.Session")
 
 
 def _docstring_examples() -> list[doctest.DocTest]:
@@ -641,6 +683,176 @@ def _docstring_examples() -> list[doctest.DocTest]:
         if test.name.startswith(_CONTINUING):
             test.examples = start + test.examples
     return tests
+
+
+def _sync_fails_once(monkeypatch: pytest.MonkeyPatch, error: Exception) -> list[int]:
+    """Make every adapter's sync raise ``error`` the first time; return a list of the calls."""
+    sync = SyncAdapter.sync
+    calls: list[int] = []
+
+    def fails_once(adapter: SyncAdapter, **kwargs: bool) -> None:
+        calls.append(1)
+        if len(calls) == 1:
+            raise error
+        sync(adapter, **kwargs)
+
+    monkeypatch.setattr(SyncAdapter, "sync", fails_once)
+    return calls
+
+
+@_needs_examples
+class TestExamples:
+    """Each example a docs page shows does what the page says."""
+
+    def test_every_example_is_run_and_shown(self):
+        tested = {name.removeprefix("test_") for name in vars(TestExamples)}
+        assert set(_examples.names()) - _examples.LIVE <= tested
+        pages = "".join(
+            p.read_text(encoding="utf-8") for p in _examples.EXAMPLES.parent.rglob("*.rst")
+        )
+        shown = {name for name in _examples.names() if f"examples/{name}.py" in pages}
+        assert set(_examples.names()) - _examples.SHARED <= shown
+
+    def test_memory_adapter(self):
+        memory = _examples.load("memory_adapter")
+
+        def synced(asynchronous: bool) -> object:
+            server = memory.MemoryServer()
+            server.put("a", b"theirs", if_version=None)
+            replica = Replica(MemoryStore())
+            adapter = (
+                memory.AsyncMemoryAdapter(replica, memory.AsyncMemoryServer(server), _SCOPE)
+                if asynchronous
+                else memory.MemoryAdapter(replica, server, _SCOPE)
+            )
+            done(adapter.sync())
+            created = done(adapter.create(b"new"))
+            done(adapter.change(_key(replica), b"ours"))
+            done(adapter.sync())
+            replica.delete(created)
+            # The token expires, so the sync that sends the delete lists the scope again.
+            server.oldest = int(server.token()) + 1
+            done(adapter.sync())
+            records = [(r.local_key, r.state, r.content) for r in replica.records(_SCOPE)]
+            return records, sorted(content for _, content in server.objects.values())
+
+        assert synced(asynchronous=True) == synced(asynchronous=False)
+        assert synced(asynchronous=False) == (
+            [(1, RecordState.SYNCED, b"ours"), (2, RecordState.REMOVED, b"new")],
+            [b"ours"],
+        )
+
+    def test_readme_shows_the_quickstart(self):
+        quickstart = (_examples.EXAMPLES / "quickstart.py").read_text(encoding="utf-8")
+        shown = quickstart.split("# start: sync\n")[1].split("# end: sync\n")[0]
+        readme = (_examples.EXAMPLES.parents[1] / "README.md").read_text(encoding="utf-8")
+        assert f"```python\n{shown}```\n" in readme
+
+    def test_start(self, tmp_path, monkeypatch):
+        ran = _examples.run("start", monkeypatch, tmp_path)
+        assert [r.content for r in ran["replica"].records(_EXAMPLE_SCOPE)] == [b"Team meeting"]
+
+    def test_local_edits(self, tmp_path, monkeypatch):
+        ran = _examples.run("local_edits", monkeypatch, tmp_path)
+        replica = ran["replica"]
+        meeting = replica.record(ran[_EXAMPLE_EVENT].local_key)
+        assert (meeting.state, meeting.content) == (RecordState.SYNCED, b"Team meeting, room 3")
+        assert replica.record(ran["lunch"]).state is RecordState.REMOVED
+        assert list(_examples.load("start").server.objects) == [_EXAMPLE_EVENT]
+
+    def test_change_feed(self, tmp_path, monkeypatch):
+        ran = _examples.run("change_feed", monkeypatch, tmp_path)
+        assert ran["handled"] == [(FeedEntryKind.CHANGED, _EXAMPLE_EVENT)]
+        assert (tmp_path / "feed-cursor.txt").read_text() == "1"
+        replica = ran["replica"]
+        # The meeting the server deleted is purged, and the feed trimmed.
+        assert replica.records(_EXAMPLE_SCOPE) == []
+        with pytest.raises(TrimmedFeedError):
+            replica.read_feed(0)
+
+    def test_change_feed_after_a_trim(self, tmp_path, monkeypatch):
+        def trimmed(*args: object, **kwargs: object) -> list[FeedEntry]:
+            raise TrimmedFeedError("trimmed")
+
+        monkeypatch.setattr(Replica, "read_feed", trimmed)
+        ran = _examples.run("change_feed", monkeypatch, tmp_path)
+        assert ran["handled"] == []
+        assert (tmp_path / "feed-cursor.txt").read_text() == "1"
+
+    def test_conflicts(self, tmp_path, monkeypatch):
+        ran = _examples.run("conflicts", monkeypatch, tmp_path)
+        merged = b"Team sync, room 3 / Team sync, at 10"
+        meeting = ran["replica"].find_record(_EXAMPLE_SCOPE, _EXAMPLE_EVENT)
+        assert (meeting.state, meeting.content) == (RecordState.SYNCED, merged)
+        assert _examples.load("start").server.objects[_EXAMPLE_EVENT][1] == merged
+
+    def test_errors(self, tmp_path, monkeypatch):
+        ran = _examples.run("errors", monkeypatch, tmp_path)
+        assert ran["unsent"] == [b"Team meeting, room 3"]
+        assert ran["replica"].scopes() == []
+
+    def test_mirror(self, tmp_path, monkeypatch):
+        ran = _examples.run("mirror", monkeypatch, tmp_path)
+        assert ran["moved"] == [(b"Team meeting, moved",)]
+        assert ran["after_delete"] == []
+
+    def test_mirror_after_a_drop(self, tmp_path, monkeypatch):
+        ran = _examples.run("mirror", monkeypatch, tmp_path)
+        replica = ran["replica"]
+        db = sqlite3.connect(tmp_path / "app.db")
+        _examples.load("start").server.put("lunch", b"Lunch", if_version=None)
+        ran["adapter"].sync()
+        ran["mirror"](replica, db)
+        assert db.execute("SELECT count(*) FROM events").fetchone() == (1,)
+        replica.drop_scope(_EXAMPLE_SCOPE)
+        ran["mirror"](replica, db)
+        assert db.execute("SELECT count(*) FROM events").fetchone() == (0,)
+        db.close()
+
+    def test_parallel(self, tmp_path, monkeypatch):
+        ran = _examples.run("parallel", monkeypatch, tmp_path)
+        replica = ran["replica"]
+        assert [scope.id for scope in replica.scopes()] == ["home", "team", "work"]
+
+    def test_parallel_retry(self, tmp_path, monkeypatch):
+        ran = _examples.run("parallel", monkeypatch, tmp_path)
+        calls = _sync_fails_once(monkeypatch, StaleChangeSetError("stale"))
+        ran["sync"](ran["adapters"][0])
+        assert len(calls) == 2
+
+    def test_inspect_scope(self, tmp_path, monkeypatch):
+        ran = _examples.run("inspect_scope", monkeypatch, tmp_path)
+        assert [r.edit.content for r in ran["unsent"]] == [b"Team meeting, room 3"]
+        assert (ran["conflicts"], ran["blocked"]) == ([], [])
+        assert ran["token"] is not None
+        # The repairs sent the edit and left the scope listed again.
+        meeting = ran["replica"].find_record(_EXAMPLE_SCOPE, _EXAMPLE_EVENT)
+        assert (meeting.state, meeting.content) == (RecordState.SYNCED, b"Team meeting, room 3")
+
+    def test_testing(self, tmp_path, monkeypatch):
+        ran = _examples.run("testing", monkeypatch, tmp_path)
+        assert ran["replica"].scope(_EXAMPLE_SCOPE).token == "t3"
+
+    def test_snapshots(self, tmp_path, monkeypatch):
+        ran = _examples.run("snapshots", monkeypatch, tmp_path)
+        feed = [(entry.kind, entry.object_id) for entry in ran["replica"].read_feed()]
+        # The second, unchanged snapshot adds nothing.
+        assert feed == [
+            (FeedEntryKind.CHANGED, _EXAMPLE_EVENT),
+            (FeedEntryKind.CHANGED, "lunch"),
+            (FeedEntryKind.CHANGED, _EXAMPLE_EVENT),
+            (FeedEntryKind.REMOVED, "lunch"),
+        ]
+
+    def test_sqlite(self, tmp_path, monkeypatch):
+        calls = _sync_fails_once(monkeypatch, StoreBusyError("busy"))
+        monkeypatch.setattr("time.sleep", lambda seconds: None)
+        _examples.run("sqlite", monkeypatch, tmp_path)
+        assert len(calls) == 2
+        with closing(sqlite3.connect(tmp_path / "sync.db")) as connection:
+            assert connection.execute("PRAGMA journal_mode").fetchone() == ("wal",)
+        with SQLiteStore(tmp_path / "sync.db") as store:
+            assert [scope.id for scope in Replica(store).scopes()] == [_EXAMPLE_SCOPE]
 
 
 class TestPackage:
@@ -702,6 +914,9 @@ class TestPackage:
             StateStore,
             MemoryStore,
             SQLiteStore,
+            Adapter,
+            SyncAdapter,
+            AsyncAdapter,
             CalDAVAdapter,
             AsyncCalDAVAdapter,
             JMAPAdapter,
@@ -723,7 +938,14 @@ class TestPackage:
             if isinstance(cls, type) and dataclasses.is_dataclass(cls):
                 _fields(cls)
         # The values an adapter or application builds check themselves.
-        assert _CHECKED_WHEN_BUILT == {Changed, ChangeSet, Applied, LogicalKeyTaken, Merge}
+        assert _CHECKED_WHEN_BUILT == {
+            Changed,
+            ChangeSet,
+            Applied,
+            LogicalKeyTaken,
+            Merge,
+            EditFields,
+        }
 
     def test_a_check_refuses_what_it_cant_read(self):
         def takes_many(*values: str) -> None: ...
@@ -861,7 +1083,11 @@ class TestIngest:
         with _open_session(replica) as session:
             page = _page(None, "T1", {"a": _changed("fa")})
             _assert_refused(
-                replica, store, lambda: session.ingest(page), ValueError, "needs a full listing"
+                replica,
+                store,
+                lambda: session.ingest(page),
+                ListingRequiredError,
+                "needs a full listing",
             )
 
     def test_unchanged_outside_listing_is_refused(self, replica, store):
@@ -873,7 +1099,9 @@ class TestIngest:
     def test_unchanged_needs_a_live_record_with_a_version(self, replica, store, object_id):
         _a_removed(replica)
         page = _page("T2", "L", {object_id: Unchanged()}, full=True)
-        _assert_refused(replica, store, lambda: _sync(replica, page), ValueError, "no version")
+        _assert_refused(
+            replica, store, lambda: _sync(replica, page), UnknownVersionError, "no version"
+        )
 
     def test_change_set_for_another_scope_is_refused(self, replica, store):
         with _open_session(replica) as session:
@@ -882,7 +1110,7 @@ class TestIngest:
                 replica,
                 store,
                 lambda: session.ingest(page),
-                ValueError,
+                OtherScopeError,
                 "in a session for",
                 before_a_transaction=True,
             )
@@ -1130,7 +1358,11 @@ class TestSessions:
             assert replica.known_versions(_SCOPE) == {}
             page = _page(None, "T2", {})
             _assert_refused(
-                replica, store, lambda: session.ingest(page), ValueError, "needs a full listing"
+                replica,
+                store,
+                lambda: session.ingest(page),
+                ListingRequiredError,
+                "needs a full listing",
             )
 
     def test_listing_after_a_scheme_change_reports_only_new_content(self, replica):
@@ -1376,33 +1608,33 @@ _UNCLAIMED = ("not claimed", "another record")
 # The rows of _SETTLED_LATE where the server reported nothing new.
 _NOTHING_NEW = (None, "edited", "claimed again")
 
-_MERGED = Merge(_content("fm"), fingerprint="fm")
+_MERGED = Merge(_content("fm"), EditFields("fm"))
 
 # Each conflict resolved each way: the conflict's kind, the kind of edit a
 # refused one was, the resolution, then what the record ends up as, or None
 # once it's gone.
 _RESOLVED = [
-    (ConflictKind.BOTH_CHANGED, "create", TakeServer(), _SYNCED),
-    (ConflictKind.BOTH_CHANGED, "create", KeepEdit(), _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CHANGED, "create", KeepServer(), _SYNCED),
+    (ConflictKind.BOTH_CHANGED, "create", KeepLocal(), _pending(EditKind.CHANGE)),
     (ConflictKind.BOTH_CHANGED, "create", _MERGED, _pending(EditKind.CHANGE)),
     (ConflictKind.BOTH_CHANGED, "create", Delete(), _pending(EditKind.DELETE)),
-    (ConflictKind.REMOVED_REMOTELY, "create", TakeServer(), _REMOVED),
-    (ConflictKind.REMOVED_REMOTELY, "create", KeepEdit(), _pending(EditKind.CREATE)),
+    (ConflictKind.REMOVED_REMOTELY, "create", KeepServer(), _REMOVED),
+    (ConflictKind.REMOVED_REMOTELY, "create", KeepLocal(), _pending(EditKind.CREATE)),
     (ConflictKind.REMOVED_REMOTELY, "create", _MERGED, _pending(EditKind.CREATE)),
     (ConflictKind.REMOVED_REMOTELY, "create", Delete(), _REMOVED),
-    (ConflictKind.DELETED_LOCALLY, "create", TakeServer(), _SYNCED),
-    (ConflictKind.DELETED_LOCALLY, "create", KeepEdit(), _pending(EditKind.DELETE)),
+    (ConflictKind.DELETED_LOCALLY, "create", KeepServer(), _SYNCED),
+    (ConflictKind.DELETED_LOCALLY, "create", KeepLocal(), _pending(EditKind.DELETE)),
     (ConflictKind.DELETED_LOCALLY, "create", _MERGED, _pending(EditKind.CHANGE)),
     (ConflictKind.DELETED_LOCALLY, "create", Delete(), _pending(EditKind.DELETE)),
-    (ConflictKind.BOTH_CREATED, "create", TakeServer(), _SYNCED),
-    (ConflictKind.BOTH_CREATED, "create", KeepEdit(), _pending(EditKind.CHANGE)),
+    (ConflictKind.BOTH_CREATED, "create", KeepServer(), _SYNCED),
+    (ConflictKind.BOTH_CREATED, "create", KeepLocal(), _pending(EditKind.CHANGE)),
     (ConflictKind.BOTH_CREATED, "create", _MERGED, _pending(EditKind.CHANGE)),
     (ConflictKind.BOTH_CREATED, "create", Delete(), _pending(EditKind.DELETE)),
-    (ConflictKind.LOGICAL_KEY_TAKEN, "create", TakeServer(), None),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "create", KeepServer(), None),
     (ConflictKind.LOGICAL_KEY_TAKEN, "create", _MERGED, _pending(EditKind.CREATE)),
     (ConflictKind.LOGICAL_KEY_TAKEN, "create", Delete(), None),
     (ConflictKind.LOGICAL_KEY_TAKEN, "create", UpdateHolder(), None),
-    (ConflictKind.LOGICAL_KEY_TAKEN, "change", TakeServer(), _SYNCED),
+    (ConflictKind.LOGICAL_KEY_TAKEN, "change", KeepServer(), _SYNCED),
     (ConflictKind.LOGICAL_KEY_TAKEN, "change", _MERGED, _pending(EditKind.CHANGE)),
     (ConflictKind.LOGICAL_KEY_TAKEN, "change", Delete(), _pending(EditKind.DELETE)),
     (ConflictKind.LOGICAL_KEY_TAKEN, "change", UpdateHolder(), _SYNCED),
@@ -1536,8 +1768,7 @@ class TestConflicts:
         key, object_id = _seeded_edit(replica, local)
         head = replica.feed_head()
         _sync(replica, _page("T1", "T2", {} if remote is None else {object_id: _remote(remote)}))
-        assert _summary(replica.record(key)) == expected
-        assert [kind for kind, _ in _feed(replica, head)] == feed
+        _assert_ended(replica, key, head, expected, feed)
 
     @pytest.mark.parametrize("local, opening, following, expected, feed", _SETTLED)
     def test_an_open_conflict_meets_the_next_report(
@@ -1548,10 +1779,8 @@ class TestConflicts:
         opened_at = replica.record(key).conflict.opened_at
         head = replica.feed_head()
         _sync(replica, _page("T2", "T3", {object_id: _remote(following, "v3")}))
-        record = replica.record(key)
-        assert _summary(record) == expected
-        assert [kind for kind, _ in _feed(replica, head)] == feed
-        if record.conflict is not None:
+        record = _assert_ended(replica, key, head, expected, feed)
+        if record is not None and record.conflict is not None:
             assert record.conflict.opened_at == opened_at
             assert record.conflict.remote_version == (None if following == "removed" else "v3")
 
@@ -1578,8 +1807,110 @@ class TestConflicts:
         assert replica.known_versions(_SCOPE)["a"] == replica.record(key).version
         head = replica.feed_head()
         _sync(replica, _page("T2", "T3", {"a": _remote(following, "v3")}))
-        assert _summary(replica.record(key)) == expected
-        assert [kind for kind, _ in _feed(replica, head)] == feed
+        _assert_ended(replica, key, head, expected, feed)
+
+    @pytest.mark.parametrize("refused", [EditKind.CREATE, EditKind.CHANGE])
+    @pytest.mark.parametrize(
+        "held, report, lifted, feed",
+        [
+            (
+                True,
+                {"b": Removed()},
+                True,
+                [FeedEntryKind.REMOVED, FeedEntryKind.CONFLICT_RESOLVED],
+            ),
+            (
+                True,
+                {"b": _changed("fb", "v3", logical_key="w")},
+                True,
+                [FeedEntryKind.CHANGED, FeedEntryKind.CONFLICT_RESOLVED],
+            ),
+            # A listing that leaves the holder out removes it.
+            (
+                True,
+                {"a": Unchanged()},
+                True,
+                [FeedEntryKind.REMOVED, FeedEntryKind.CONFLICT_RESOLVED],
+            ),
+            (True, {"b": _changed("fx", "v3", logical_key="u")}, False, [FeedEntryKind.CHANGED]),
+            (
+                True,
+                {"b": Removed(), "c": _changed("fc", logical_key="u")},
+                False,
+                [FeedEntryKind.REMOVED, FeedEntryKind.CHANGED],
+            ),
+            # An object outside the scope holds the key, so nothing here frees it.
+            (False, {"b": Removed()}, False, [FeedEntryKind.REMOVED]),
+        ],
+        ids=[
+            "holder-removed",
+            "holder-rekeyed",
+            "holder-unlisted",
+            "holder-kept",
+            "key-taken-again",
+            "holder-elsewhere",
+        ],
+    )
+    def test_a_refusal_ends_when_the_server_frees_its_key(
+        self, replica, refused, held, report, lifted, feed
+    ):
+        holding = {"b": _changed("fb", "v2", logical_key="u")} if held else {}
+        _sync(_seeded(replica), _page("T1", "T2", holding))
+        key = _refused_edit(replica, refused)
+        head = replica.feed_head()
+        listing = any(isinstance(change, Unchanged) for change in report.values())
+        _sync(replica, _page("T3", "T4", report, full=listing))
+        expected = (
+            _pending(refused) if lifted else _conflicted(refused, ConflictKind.LOGICAL_KEY_TAKEN)
+        )
+        _assert_ended(replica, key, head, expected, feed)
+
+    @pytest.mark.parametrize("refused", [EditKind.CREATE, EditKind.CHANGE])
+    def test_a_refusal_ends_when_your_push_frees_its_key(self, replica, refused):
+        _sync(_seeded(replica), _page("T1", "T2", {"b": _changed("fb", "v2", logical_key="u")}))
+        key = _refused_edit(replica, refused)
+        holder = _key(replica, "b")
+        replica.delete(holder)
+        head = replica.feed_head()
+        _push(replica, holder, Applied(), "T3", "T4")
+        _assert_ended(
+            replica,
+            key,
+            head,
+            _pending(refused),
+            [FeedEntryKind.PUSHED, FeedEntryKind.CONFLICT_RESOLVED],
+        )
+
+    def test_a_refused_change_is_not_the_holder_of_its_own_key(self, replica):
+        # a's synced copy already has u, so the server keeps it under u; only b blocks it.
+        holding = {k: _changed(f"f{k}", "v2", logical_key="u") for k in "ab"}
+        _sync(_seeded(replica), _page("T1", "T2", holding))
+        key = _refused_edit(replica, EditKind.CHANGE)
+        head = replica.feed_head()
+        _sync(replica, _page("T3", "T4", {"b": Removed()}))
+        _assert_ended(
+            replica,
+            key,
+            head,
+            _pending(EditKind.CHANGE),
+            [FeedEntryKind.REMOVED, FeedEntryKind.CONFLICT_RESOLVED],
+        )
+
+    @pytest.mark.parametrize("refused", [EditKind.CREATE, EditKind.CHANGE])
+    def test_a_holder_in_conflict_holds_the_key_of_the_server_side(self, replica, refused):
+        _sync(_seeded(replica), _page("T1", "T2", {"b": _changed("fb", "v2", logical_key="u")}))
+        key = _refused_edit(replica, refused)
+        # b's synced copy keeps u, but the server's side of its conflict moved to w.
+        _change(replica, _key(replica, "b"), "fl")
+        head = replica.feed_head()
+        _sync(replica, _page("T3", "T4", {"b": _changed("fx", "v3", logical_key="w")}))
+        _assert_ended(
+            replica,
+            key,
+            head,
+            _pending(refused),
+            [FeedEntryKind.CONFLICT_OPENED, FeedEntryKind.CONFLICT_RESOLVED],
+        )
 
     def test_a_version_only_change_moves_the_version_under_an_edit(self, replica):
         key, _ = _seeded_edit(replica, "change")
@@ -1638,36 +1969,28 @@ class TestConflicts:
         assert _feed(replica, head) == []
 
 
-class _FirstPushRejected(_Flow):
-    """A flow whose server rejects the first push and applies every later one."""
+def _first_push_rejected(replica: Replica, guard_covers_scope: bool) -> Any:
+    """The docs' example adapter, its first push rejected and every later one applied."""
+    memory = _examples.load("memory_adapter")
+    # Loaded from its file, so a type checker can't see its classes.
+    example: Any = memory.MemoryAdapter
 
-    _fingerprint_scheme = _SCHEME
-    _media_type = _MEDIA
-    _guarded_by_version = False
-    _unique_logical_key = False
+    class FirstPushRejected(example):
+        def __init__(self) -> None:
+            server = memory.MemoryServer()
+            server.put("a", b"a", if_version=None)
+            super().__init__(replica, server, _SCOPE)
+            self._guard_covers_scope = guard_covers_scope
+            self.sent: list[int] = []
 
-    def __init__(self, replica: Replica, guard_covers_scope: bool) -> None:
-        super().__init__(replica, _SCOPE)
-        self._guard_covers_scope = guard_covers_scope
-        self.sent: list[int] = []
+        def _send(self, claimed: Record) -> Steps[PushOutcome]:
+            self.sent.append(claimed.local_key)
+            if len(self.sent) == 1:
+                yield from ()
+                return Rejected()
+            return (yield from super()._send(claimed))
 
-    def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[_Read]:
-        yield _InStore(session.ingest, (_page(scope.token, "T2", {}),))
-        return _Read.COMPLETE
-
-    def _send(self, claimed: Record) -> Steps[PushOutcome]:
-        self.sent.append(claimed.local_key)
-        yield from ()
-        return Rejected() if len(self.sent) == 1 else Applied()
-
-    def _waits(self, record: Record) -> bool:
-        return False
-
-    def _new_object_id(self) -> str | None:
-        return "n"
-
-    def _edit_fields(self, content: bytes, *, create: bool) -> _EditFields:
-        return {"fingerprint": content.decode(), "containers": frozenset(), "logical_key": None}
+    return FirstPushRejected()
 
 
 # Each protocol's scenario module, and each recording of each.
@@ -1736,17 +2059,19 @@ class TestPushes:
         declared = (flow._guarded_by_version, flow._unique_logical_key, flow._guard_covers_scope)
         assert declared == (guarded_by_version, unique_logical_key, guard_covers_scope)
 
+    @_needs_examples
     @pytest.mark.parametrize("covers_scope", [True, False], ids=["scope", "object"])
     def test_a_rejected_push_stops_the_rest_where_the_check_covers_the_scope(
         self, replica, covers_scope
     ):
-        _seeded(replica)
-        flow = _FirstPushRejected(replica, covers_scope)
-        _run(flow._change(_key(replica), b"fl"))
-        created = _run(flow._create(b"fn"))
-        _run(flow._sync(full_listing=False))
+        flow = _first_push_rejected(replica, covers_scope)
+        flow.sync()
+        changed = _key(replica)
+        flow.change(changed, b"fl")
+        created = flow.create(b"fn")
+        flow.sync()
         # Where the check covers the scope, the create would be rejected too, so it waits unsent.
-        assert flow.sent == ([_key(replica)] if covers_scope else [_key(replica), created])
+        assert flow.sent == ([changed] if covers_scope else [changed, created])
         later = replica.record(created)
         assert later is not None
         assert later.state is (RecordState.PENDING if covers_scope else RecordState.SYNCED)
@@ -1781,9 +2106,8 @@ class TestPushes:
         key, _ = _seeded_edit(replica, local)
         head = replica.feed_head()
         _push(replica, key, outcome)
-        record = replica.record(key)
-        assert _summary(record) == expected
-        assert [kind for kind, _ in _feed(replica, head)] == feed
+        record = _assert_ended(replica, key, head, expected, feed)
+        assert record is not None
         if expected == _SYNCED:
             # The server may store the edit rewritten, so it gives no version to keep.
             assert (record.version, record.fingerprint, record.content) == (
@@ -1792,7 +2116,7 @@ class TestPushes:
                 _content("fl"),
             )
         if isinstance(outcome, LogicalKeyTaken):
-            assert record.conflict.holder == outcome.holder
+            assert record.conflict is not None and record.conflict.holder == outcome.holder
 
     @pytest.mark.parametrize(
         "local, outcome, message",
@@ -1858,16 +2182,20 @@ class TestPushes:
         _sync(replica, _page(None, "O1", {}, full=True, scope=_OTHER))
         elsewhere = _create(replica, "fn", scope=_OTHER)
         with _pushing(replica) as session:
-            for call, match in [
-                (lambda: session.claim(elsewhere), "belongs to scope"),
-                (lambda: session.claim(key, object_id="x"), "already has object id"),
+            for call, error, match in [
+                (lambda: session.claim(elsewhere), OtherScopeError, "belongs to scope"),
+                (
+                    lambda: session.claim(key, object_id="x"),
+                    ObjectIdAssignedError,
+                    "already has object id",
+                ),
             ]:
-                _assert_refused(replica, store, call, ValueError, match)
+                _assert_refused(replica, store, call, error, match)
             _assert_refused(
                 replica,
                 store,
                 lambda: session.claim(key, object_id=_BAD_TEXT),
-                ValueError,
+                LoneSurrogateError,
                 "^object_id ",
                 before_a_transaction=True,
             )
@@ -1961,8 +2289,7 @@ class TestPushes:
             session.ingest(_page("T2", "C", {}, truncated=True))
             assert _summary(replica.record(key)) == (RecordState.IN_FLIGHT, EditKind(local), None)
             session.ingest(_page("C", "T3", reported))
-        assert _summary(replica.record(key)) == expected
-        assert [kind for kind, _ in _feed(replica, head)] == feed
+        _assert_ended(replica, key, head, expected, feed)
 
     def test_a_listing_settles_pushes_it_never_mentions(self, replica):
         _seeded(replica)
@@ -2060,9 +2387,7 @@ class TestResolutions:
         )
         head = replica.feed_head()
         replica.resolve(replica.record(key), resolution)
-        record = replica.record(key)
-        assert _summary(record) == expected
-        assert [kind for kind, _ in _feed(replica, head)] == [FeedEntryKind.CONFLICT_RESOLVED]
+        record = _assert_ended(replica, key, head, expected, [FeedEntryKind.CONFLICT_RESOLVED])
         if record is not None and record.state is not RecordState.REMOVED:
             # Whatever is pushed next goes out against the server's current copy.
             assert (record.version, record.content) == server
@@ -2078,8 +2403,8 @@ class TestResolutions:
         "kind, resolution, message",
         [
             *((kind, UpdateHolder(), "^Only an edit refused") for kind in _OPENED_BY),
-            (ConflictKind.LOGICAL_KEY_TAKEN, KeepEdit(), "can't be pushed again unchanged$"),
-            (None, TakeServer(), "takes a record in conflict$"),
+            (ConflictKind.LOGICAL_KEY_TAKEN, KeepLocal(), "can't be pushed again unchanged$"),
+            (None, KeepServer(), "takes a record in conflict$"),
         ],
     )
     def test_a_resolution_that_does_not_fit_is_refused(
@@ -2099,7 +2424,7 @@ class TestResolutions:
 
     def test_a_merge_the_server_already_holds_is_synced(self, replica):
         key = _in_conflict(_seeded(replica))
-        replica.resolve(replica.record(key), Merge(_content("fx"), fingerprint="fx"))
+        replica.resolve(replica.record(key), Merge(_content("fx"), EditFields("fx")))
         assert _summary(replica.record(key)) == _SYNCED
 
     @pytest.mark.parametrize("following", ["fx", "fy", "removed", "fl"])
@@ -2109,12 +2434,12 @@ class TestResolutions:
         _sync(replica, _page("T2", "T3", {"a": _remote(following, "v3")}))
         if following == "fx":
             # Only the version moved, and the edit goes out against the new one.
-            replica.resolve(read, KeepEdit())
+            replica.resolve(read, KeepLocal())
             record = replica.record(key)
             assert (record.state, record.version) == (RecordState.PENDING, "v3")
         else:
             _assert_refused(
-                replica, store, lambda: replica.resolve(read, KeepEdit()), StaleConflictError
+                replica, store, lambda: replica.resolve(read, KeepLocal()), StaleConflictError
             )
 
     @pytest.mark.parametrize(
@@ -2187,9 +2512,9 @@ class TestResolutions:
         _sync(replica, _page("O1", "O2", {"a": _changed("fx", "v2")}, scope=_OTHER))
         seen = []
 
-        def resolver(record: Record) -> TakeServer | None:
+        def resolver(record: Record) -> KeepServer | None:
             seen.append(record.local_key)
-            return None if record.local_key == a else TakeServer()
+            return None if record.local_key == a else KeepServer()
 
         assert replica.resolve_conflicts(resolver) == 2
         assert seen == [a, b, other]
@@ -2203,24 +2528,24 @@ class TestResolutions:
     def test_resolve_conflicts_skips_a_conflict_that_moved_on(self, replica):
         a, b = _two_conflicts(replica)
 
-        def resolver(record: Record) -> TakeServer:
+        def resolver(record: Record) -> KeepServer:
             if record.local_key == a:
                 # A sync brings news about b while the application decides about a.
                 _sync(replica, _page("T3", "T4", {"b": _changed("fy", "v4")}))
-            return TakeServer()
+            return KeepServer()
 
         assert replica.resolve_conflicts(resolver) == 1
         assert replica.record(b).state is RecordState.CONFLICT
-        assert replica.resolve_conflicts(lambda record: TakeServer()) == 1
+        assert replica.resolve_conflicts(lambda record: KeepServer()) == 1
         assert replica.record(b).content == _content("fy")
 
     def test_an_error_from_the_resolver_keeps_earlier_resolutions(self, replica):
         a, b = _two_conflicts(replica)
 
-        def resolver(record: Record) -> TakeServer:
+        def resolver(record: Record) -> KeepServer:
             if record.local_key == b:
                 raise RuntimeError("the application failed")
-            return TakeServer()
+            return KeepServer()
 
         with pytest.raises(RuntimeError, match="the application failed"):
             replica.resolve_conflicts(resolver)
@@ -2261,7 +2586,7 @@ class TestLocalCopy:
         built: list[tuple[Callable[[], object], type[Exception], str]] = [
             (
                 lambda: Changed("v1", _BAD_TEXT, b"c"),
-                ValueError,
+                LoneSurrogateError,
                 "^fingerprint holds a lone surrogate at 1",
             ),
             (lambda: Changed("v1", "fa", _NOT_BYTES), TypeError, "^content must be bytes, not str"),
@@ -2295,17 +2620,18 @@ class TestLocalCopy:
                 TypeError,
                 "^changes must be mapping of str to Changed, Removed or Unchanged, not list",
             ),
-            (lambda: _page(None, "T1", {_BAD_TEXT: Removed()}), ValueError, "^object_ids "),
+            (lambda: _page(None, "T1", {_BAD_TEXT: Removed()}), LoneSurrogateError, "^object_ids "),
             (
                 lambda: _page(None, "T1", {"a": _wrong("removed")}),
                 TypeError,
                 r"^changes\['a'\] must be Changed, Removed or Unchanged, not str",
             ),
-            (lambda: Applied(_BAD_TEXT), ValueError, "^object_id "),
+            (lambda: Applied(_BAD_TEXT), LoneSurrogateError, "^object_id "),
             (lambda: Applied(_wrong(1)), TypeError, "^object_id must be str or None, not int"),
-            (lambda: LogicalKeyTaken(_BAD_TEXT), ValueError, "^holder "),
-            (lambda: Merge(b"c", fingerprint=_BAD_TEXT), ValueError, "^fingerprint "),
-            (lambda: Merge(_NOT_BYTES, fingerprint="f"), TypeError, "^content "),
+            (lambda: LogicalKeyTaken(_BAD_TEXT), LoneSurrogateError, "^holder "),
+            (lambda: Merge(b"c", EditFields(_BAD_TEXT)), LoneSurrogateError, "^fingerprint "),
+            (lambda: EditFields(_wrong(1)), TypeError, "^fingerprint must be str, not int"),
+            (lambda: Merge(_NOT_BYTES, EditFields("f")), TypeError, "^content "),
             (
                 lambda: SQLiteStore(db_path, timeout=_wrong("5")),
                 TypeError,
@@ -2321,18 +2647,18 @@ class TestLocalCopy:
         key = _key(replica)
         synced = replica.record(key)
         refused: list[tuple[Callable[[], object], type[Exception], str]] = [
-            (lambda: _enter(_open_session(replica, _BAD_TEXT)), ValueError, "^scope_id "),
+            (lambda: _enter(_open_session(replica, _BAD_TEXT)), LoneSurrogateError, "^scope_id "),
             (lambda: _enter(_open_session(replica, _wrong(1))), TypeError, "^scope_id must be str"),
             (
                 lambda: replica.create(
                     _SCOPE, b"c", fingerprint="f", containers=frozenset({_BAD_TEXT})
                 ),
-                ValueError,
+                LoneSurrogateError,
                 "^containers ",
             ),
             (
                 lambda: _change(replica, key, "fl", logical_key=_BAD_TEXT),
-                ValueError,
+                LoneSurrogateError,
                 "^logical_key ",
             ),
             (lambda: replica.create(_SCOPE, _NOT_BYTES, fingerprint="f"), TypeError, "^content "),
@@ -2391,17 +2717,22 @@ class TestFeed:
 
     # A limit out of range is refused before the feed is read; a cursor needs the feed.
     @pytest.mark.parametrize(
-        "after, limit, unread",
-        [(-1, 10, False), (3, 10, False), (0, 0, True), (0, FEED_PAGE_SIZE + 1, True)],
+        "after, limit, error",
+        [
+            (-1, 10, FeedRangeError),
+            (3, 10, FeedRangeError),
+            (0, 0, ValueError),
+            (0, FEED_PAGE_SIZE + 1, ValueError),
+        ],
     )
-    def test_bad_read_arguments(self, replica, store, after, limit, unread):
+    def test_bad_read_arguments(self, replica, store, after, limit, error):
         _seeded(replica)
         _assert_refused(
             replica,
             store,
             lambda: replica.read_feed(after, limit),
-            ValueError,
-            before_a_transaction=unread,
+            error,
+            before_a_transaction=error is ValueError,
         )
 
     def test_trim_and_trimmed_cursor(self, replica, store):
@@ -2417,7 +2748,7 @@ class TestFeed:
     def test_bad_through(self, replica, store, method, through):
         _seeded(replica)
         call = getattr(replica, method)
-        _assert_refused(replica, store, lambda: call(through), ValueError)
+        _assert_refused(replica, store, lambda: call(through), FeedRangeError)
 
     def test_purge(self, replica):
         _a_removed(replica)
@@ -2602,13 +2933,15 @@ class TestStores:
         _edited(replica)
         with (
             store.transaction(write=False),
-            patch.object(store, "_scope_records", wraps=store._scope_records) as hook,
+            patch.object(store, "_scope_records", wraps=store._scope_records) as every,
+            patch.object(store, "_scope_records_in", wraps=store._scope_records_in) as some,
         ):
             records = store.scope_records(_SCOPE, states=states)
         assert [r.object_id for r in records] == expected
         assert replica.records(_SCOPE, states=states) == records
         # An empty set is answered by the base class, so no store sees one.
-        assert hook.called == (states != frozenset())
+        assert (every.called or some.called) == (states != frozenset())
+        assert some.called == bool(states)
 
     @pytest.mark.parametrize("record", _BAD_RECORDS.values(), ids=_BAD_RECORDS)
     def test_records_holding_what_their_state_cant_are_refused(self, store, record):

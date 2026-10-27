@@ -5,70 +5,86 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import dataclass
+from typing import TypeAlias
 
 from calendaring_sync._checks import check_data, checked_when_built
+from calendaring_sync.objects.edit import EditFields
 
 
 @dataclass(frozen=True)
-class TakeServer:
-    """Keep the server's side and drop your edit.
+class KeepServer:
+    """Keep the server's side, and drop your :term:`local edit`.
 
-    For a create the server refused because another object holds its
-    :term:`logical key`, the server has nothing of yours, so the create is
-    discarded; for a refused change, the object stays as it was synced.
+    Where the server has the object, the record takes the server's copy.
+    Where it doesn't, because the server removed the object or refused your
+    create, the record is removed, or deleted if the server never had it.
     """
 
 
 @dataclass(frozen=True)
-class KeepEdit:
-    """Push your edit as it is, over the server's current copy.
+class KeepLocal:
+    """Push your :term:`local edit` as it is, over the server's current copy.
 
-    Where the server removed the object, a change is pushed as a create.
+    Where the server removed the object, a change goes out as a create. An
+    edit the server refused because another object holds its
+    :term:`logical key` can't go out unchanged, so this refuses it.
     """
 
 
 @checked_when_built
 @dataclass(frozen=True)
 class Merge:
-    """Push new content you made from both sides, over the server's current copy.
+    """Push content you merged from the conflict's versions, over the server's current copy.
 
-    Build ``fingerprint``, ``containers`` and ``logical_key`` with the
-    :term:`adapter`'s function for them, as for
-    :meth:`~calendaring_sync.replica.Replica.change`.
+    A record in conflict holds three versions of its object: the
+    :term:`synced content` both sides last agreed on, in
+    :attr:`~calendaring_sync.objects.record.Record.content`; your
+    :term:`local edit`, in :attr:`~calendaring_sync.objects.record.Record.edit`;
+    and the server's side, in
+    :attr:`~calendaring_sync.objects.record.Record.conflict`. Your application
+    merges them into new content, and reads its fields with the
+    :term:`adapter`'s :meth:`~calendaring_sync.adapters.base.Adapter.edit_fields`,
+    so they match what a sync reads from the server's copy. Where the server
+    removed the object, the merge goes out as a create.
 
     Attributes:
         content: The merged :term:`content`.
-        fingerprint: Its :term:`fingerprint`.
-        containers: The :term:`containers <container>` it belongs to.
-        logical_key: Its :term:`logical key`, if it has one.
+        fields: Its fingerprint, containers and logical key.
 
     Raises:
         TypeError: If a field has the wrong type.
-        ValueError: If a string holds a :ref:`lone surrogate <lone-surrogates>`.
+        LoneSurrogateError: If a string holds a lone surrogate.
 
     Examples:
-        Your application keeps what both sides changed in one copy:
+        Your application keeps the room your edit set and the time the
+        server's side moved to, in one copy. An adapter would read its
+        fields; these are made up:
 
-        >>> from calendaring_sync import Merge
-        >>> merged = Merge(b"Team meeting, room 3, moved", fingerprint="fp-merged")
-        >>> merged.containers, merged.logical_key
-        (frozenset(), None)
+        >>> from calendaring_sync import EditFields, Merge
+        >>> content = b"Team meeting, room 3, moved"
+        >>> merged = Merge(content, EditFields("fp-merged"))
+        >>> merged.fields.fingerprint
+        'fp-merged'
     """
 
     content: bytes
-    _: KW_ONLY
-    fingerprint: str
-    containers: frozenset[str] = frozenset()
-    logical_key: str | None = None
+    fields: EditFields
 
     def __post_init__(self) -> None:
-        check_data(self.fingerprint, self.containers, self.logical_key)
+        # Every other way in checks these strings where the core takes them.
+        check_data(self.fields.fingerprint, self.fields.containers, self.fields.logical_key)
 
 
 @dataclass(frozen=True)
 class Delete:
-    """Delete the object, whatever the server's side holds."""
+    """Delete the object, whatever the server's side holds.
+
+    Where the server has the object, the delete goes out over its current
+    copy, and for a change the server refused for its :term:`logical key`,
+    that's the object the change was for. Where the server doesn't have it,
+    the record is removed, or deleted if the server never had it.
+    """
 
 
 @dataclass(frozen=True)
@@ -82,4 +98,4 @@ class UpdateHolder:
 
 
 #: Any one of the five.
-Resolution = TakeServer | KeepEdit | Merge | Delete | UpdateHolder
+Resolution: TypeAlias = KeepServer | KeepLocal | Merge | Delete | UpdateHolder

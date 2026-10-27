@@ -3,7 +3,7 @@
 
 """The JMAP :term:`adapter`, which syncs one account's calendar events through calendaring-jmap.
 
-Install it with the ``jmap`` extra: ``pip install 'calendaring-sync[jmap]'``.
+It needs the ``jmap`` extra, as :doc:`/how-to/install` shows.
 :doc:`/explanation/adapters` explains every rule it follows, and
 :doc:`/reference/server-compatibility` how each tested server behaves.
 """
@@ -25,29 +25,29 @@ except ImportError as exc:
     ) from exc
 
 from calendaring_sync._checks import check_argument_types
-from calendaring_sync.adapters._flow import (
+from calendaring_sync.adapters.base import (
+    Adapter,
+    AsyncAdapter,
+    InStore,
+    ReadResult,
     Steps,
-    _arun,
-    _EditFields,
-    _Flow,
-    _InStore,
-    _Read,
-    _run,
+    SyncAdapter,
     _url_id,
 )
 from calendaring_sync.error import ScopeGoneError
 from calendaring_sync.objects.change import Change, Changed, Removed
 from calendaring_sync.objects.change_set import ChangeSet
-from calendaring_sync.objects.edit import EditKind, LocalEdit
+from calendaring_sync.objects.edit import EditFields, EditKind, LocalEdit
 from calendaring_sync.objects.push import Applied, Gone, LogicalKeyTaken, PushOutcome, Rejected
 from calendaring_sync.objects.record import Record
 from calendaring_sync.objects.scope import Scope
-from calendaring_sync.replica import Replica, Session
+from calendaring_sync.replica import Replica
+from calendaring_sync.session import Session
 
 #: The name of the canonical fingerprint this adapter computes. A change to
 #: how it's computed gets a new name, so every scope is listed again.
 FINGERPRINT_SCHEME = "jmap-canonical-1"
-#: The media type of a JMAP scope's content: JSCalendar (RFC 8984).
+#: The media type of a JMAP scope's content, JSCalendar (RFC 8984).
 MEDIA_TYPE = "application/jscalendar+json"
 #: How many events one ``/changes`` page reports, and one page of a
 #: :term:`full listing` holds. Below every tested server's ``maxObjectsInGet``.
@@ -139,15 +139,6 @@ _REFUSED_STATE = frozenset({"cannotCalculateChanges", "invalidArguments"})
 
 
 @dataclass(frozen=True)
-class _Fields:
-    """What the adapter reads from an event for the core."""
-
-    fingerprint: str
-    containers: frozenset[str]
-    logical_key: str | None
-
-
-@dataclass(frozen=True)
 class _ChangesPage:
     """One page of ``/changes`` from a state, with the events it names fetched."""
 
@@ -220,7 +211,7 @@ def _canonical(event: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _event_fields(event: dict[str, Any]) -> _Fields:
+def _event_fields(event: dict[str, Any]) -> EditFields:
     """Read the fingerprint, the calendars and the logical key from an event."""
     canonical = json.dumps(
         _canonical(event), sort_keys=True, separators=(",", ":"), ensure_ascii=False
@@ -239,7 +230,8 @@ def _event_fields(event: dict[str, Any]) -> _Fields:
         logical_key = f"{uid} {recurrence_id}"
     else:
         logical_key = uid
-    return _Fields(hashlib.sha256(canonical.encode("utf-8")).hexdigest(), containers, logical_key)
+    fingerprint = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return EditFields(fingerprint, containers, logical_key)
 
 
 def _event(content: bytes) -> dict[str, Any]:
@@ -274,7 +266,7 @@ def _refusal(kind: EditKind, error: JMAPMethodError) -> PushOutcome | None:
     return None
 
 
-class _JMAPFlow(_Flow):
+class _JMAPFlow(Adapter):
     """Everything the sync and async JMAP adapters share."""
 
     _fingerprint_scheme = FINGERPRINT_SCHEME
@@ -295,18 +287,6 @@ class _JMAPFlow(_Flow):
         # The account's state as this sync last saw it, which each write must match.
         self._state = ""
 
-    @property
-    def needs_full_listings(self) -> bool:
-        """Whether the server may leave changes out without refusing the scope's state; never.
-
-        Every tested server refuses a state it can't calculate changes from,
-        and the scope is listed again. The one answer that looks like a real
-        one: Cyrus answers a state newer than any it issued as if nothing
-        changed. So after restoring a server from a backup, list each scope
-        once with ``sync(full_listing=True)``.
-        """
-        return False
-
     def _new_object_id(self) -> None:
         # The server picks a created event's id.
         return None
@@ -314,18 +294,14 @@ class _JMAPFlow(_Flow):
     def _waits(self, record: Record) -> bool:
         return False
 
-    def _edit_fields(self, content: bytes, *, create: bool) -> _EditFields:
+    def _edit_fields(self, content: bytes, *, create: bool) -> EditFields:
         event = _event(content)
         fields = _event_fields(event)
         if create and not (isinstance(event.get(_UID), str) and event[_UID]):
             raise ValueError("A created event must have a uid")
         if create and not fields.containers:
             raise ValueError("A created event must be in a calendar")
-        return {
-            "fingerprint": fields.fingerprint,
-            "containers": fields.containers,
-            "logical_key": fields.logical_key,
-        }
+        return fields
 
     def _ask(self, request: Callable[[], Any]) -> Steps[Any]:
         """Make one call about the account; an account that's gone raises.
@@ -369,14 +345,14 @@ class _JMAPFlow(_Flow):
             return None
         return _ChangesPage(self._changed([*added, *modified]), destroyed, new_state, more)
 
-    def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[_Read]:
+    def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[ReadResult]:
         if full_listing or not scope.token:
             return (yield from self._list(session, scope))
         state = scope.token
         while True:
             page = yield from self._changes_page(state)
             if page is None:
-                return _Read.INVALID_TOKEN
+                return ReadResult.INVALID_TOKEN
             changes: dict[str, Change] = {
                 **dict.fromkeys(page.destroyed, Removed()),
                 **page.changed,
@@ -384,13 +360,13 @@ class _JMAPFlow(_Flow):
             change_set = ChangeSet(
                 self.scope_id, state, page.new_state, changes, truncated=page.more
             )
-            yield _InStore(session.ingest, (change_set,))
+            yield InStore(session.ingest, (change_set,))
             state = page.new_state
             if not page.more:
                 self._state = state
-                return _Read.COMPLETE
+                return ReadResult.COMPLETE
 
-    def _list(self, session: Session, scope: Scope) -> Steps[_Read]:
+    def _list(self, session: Session, scope: Scope) -> Steps[ReadResult]:
         """A full listing: the state first, then every event, a page at a time.
 
         The position is counted here, since a tested server answers every
@@ -419,7 +395,7 @@ class _JMAPFlow(_Flow):
                 change_set = ChangeSet(
                     self.scope_id, scope.token, token, changes, full_listing=True, truncated=True
                 )
-                yield _InStore(session.ingest, (change_set,))
+                yield InStore(session.ingest, (change_set,))
                 continue
             break
         state = yield from self._ask(
@@ -428,13 +404,13 @@ class _JMAPFlow(_Flow):
         if state != token:
             moved = yield from self._changed_since(token)
             if moved is None:
-                return _Read.TRUNCATED
+                return ReadResult.TRUNCATED
             changes.update(moved[0])
             state = moved[1]
         change_set = ChangeSet(self.scope_id, scope.token, token, changes, full_listing=True)
-        yield _InStore(session.ingest, (change_set,))
+        yield InStore(session.ingest, (change_set,))
         self._state = state
-        return _Read.COMPLETE
+        return ReadResult.COMPLETE
 
     def _changed_since(self, state: str) -> Steps[tuple[dict[str, Changed], str] | None]:
         """The events created or changed since ``state``, and the state they lead to.
@@ -485,29 +461,23 @@ class _JMAPFlow(_Flow):
 
 
 @check_argument_types
-class JMAPAdapter(_JMAPFlow):
-    """Syncs one JMAP account's calendar events with a :class:`~calendaring_sync.replica.Replica`.
+class JMAPAdapter(_JMAPFlow, SyncAdapter):
+    """Syncs one account's calendar events through a synchronous calendaring-jmap client.
 
-    The client is a calendaring-jmap ``JMAPClient``, and the account's
-    ``CalendarEvent`` records are one :term:`scope`. Your application calls
-    :meth:`sync` when it decides to sync, and records its edits with
-    :meth:`create` and :meth:`change`, which build an event's fingerprint,
-    calendars and logical key the same way a sync does. Deletes and
-    discards need nothing from the content, so they go to
-    :meth:`~calendaring_sync.replica.Replica.delete` and
-    :meth:`~calendaring_sync.replica.Replica.discard`.
-
-    Every write carries ``ifInState`` with the state the sync last saw, and
-    that state covers every event in the account. When the server refuses a
-    write because the state moved, the remaining edits wait, unsent, for
-    the next sync.
-
-    Every method also raises the store's errors, as
-    :class:`~calendaring_sync.replica.Replica` describes.
+    The account's events are one :term:`scope`. The content
+    :meth:`create` and :meth:`change` take is a JSCalendar event as UTF-8
+    JSON. A create's must have a ``uid`` and at least one calendar in
+    ``calendarIds``, and so must a change to a create not sent yet;
+    anything else raises :class:`ValueError`. The server picks a created
+    event's id, and :meth:`waiting` always returns an empty list. A
+    failure calendaring-jmap reports, such as a refused login, reaches you
+    as its
+    :external+calendaring_jmap:py:class:`~calendaring_jmap.error.JMAPError`,
+    unchanged.
 
     Args:
         replica: Where the sync state is kept.
-        client: The client of the JMAP server.
+        client: The server's client.
         account_id: The account whose events to sync, such as the one the
             client's ``get_account_id()`` returns, or a shared account's id.
         scope_id: The scope's id. Defaults to the client's session URL,
@@ -538,84 +508,13 @@ class JMAPAdapter(_JMAPFlow):
     ) -> None:
         super().__init__(replica, client, account_id, scope_id)
 
-    def sync(self, *, full_listing: bool = False) -> None:
-        """Sync the account's events: ingest what changed on the server, then push your edits.
-
-        Changes since the scope's token come from ``CalendarEvent/changes``,
-        a page at a time, and a scope that has no token is listed in full
-        instead. When the server refuses the token, the scope is
-        :term:`reset` and listed in full. Your edits are pushed only once
-        everything the server reported was ingested. Each step runs in a
-        store transaction of its own.
-
-        Args:
-            full_listing: List every event instead of asking for changes.
-                JMAP has no version per event, so every event is fetched.
-
-        Raises:
-            ScopeGoneError: If the server has no such account.
-            StaleChangeSetError: If another process ingested the scope first.
-            SessionError: If this replica already has a session open for the scope.
-            ScopeMismatchError: If the scope's content has another media type.
-            TransactionError: If a store transaction is open in this thread.
-            calendaring_jmap.JMAPError: For any other failure calendaring-jmap
-                reports, such as a refused login, unchanged. A push it
-                interrupted is settled by the next sync.
-        """
-        _run(self._sync(full_listing=full_listing))
-
-    def create(self, content: bytes) -> int:
-        """Record a create of an event with this JSCalendar content, and return its local key.
-
-        The server picks the event's id when the next :meth:`sync` sends it.
-        Runs in a write transaction.
-
-        Raises:
-            ValueError: If the content isn't UTF-8 JSON holding an event
-                with a ``uid`` and at least one calendar in ``calendarIds``.
-            UnknownScopeError: If the account was never synced.
-            TransactionError: If a store transaction is open in this thread.
-        """
-        return _run(self._create(content))
-
-    def change(self, local_key: int, content: bytes) -> None:
-        """Record a change of an event to this JSCalendar content; the next :meth:`sync` sends it.
-
-        Reads the record, then writes the change, each in a transaction of its own.
-
-        Raises:
-            ValueError: If the content isn't UTF-8 JSON holding an object,
-                the record is in another scope, or the record is a create
-                not sent yet and the content has no ``uid`` or no calendar.
-            UnknownRecordError: If no record has this local key.
-            EditRefusedError: If the record can't take an edit, such as one
-                with an open conflict.
-            TransactionError: If a store transaction is open in this thread.
-        """
-        _run(self._change(local_key, content))
-
-    def waiting(self) -> list[Record]:
-        """Return the pending edits the next :meth:`sync` won't send; none for JMAP.
-
-        Every pending edit goes out with the next sync, unless the server
-        rejects one and the rest wait for the sync after. Runs in a read
-        transaction.
-
-        Raises:
-            UnknownScopeError: If the account was never synced.
-            TransactionError: If a store transaction is open in this thread.
-        """
-        return _run(self._waiting())
-
 
 @check_argument_types
-class AsyncJMAPAdapter(_JMAPFlow):
+class AsyncJMAPAdapter(_JMAPFlow, AsyncAdapter):
     """:class:`JMAPAdapter` for an asynchronous client.
 
-    :meth:`sync`, :meth:`create`, :meth:`change` and :meth:`waiting` are
-    coroutines; each store call runs in a worker thread, so a long ingest
-    doesn't block the event loop. Everything else is as
-    :class:`JMAPAdapter` describes.
+    Its methods are coroutines, as :class:`~calendaring_sync.adapters.base.AsyncAdapter`
+    describes; everything else is as :class:`JMAPAdapter` describes.
 
     Raises:
         TypeError: If an argument has the wrong type, such as a synchronous client.
@@ -630,19 +529,3 @@ class AsyncJMAPAdapter(_JMAPFlow):
         scope_id: str | None = None,
     ) -> None:
         super().__init__(replica, client, account_id, scope_id)
-
-    async def sync(self, *, full_listing: bool = False) -> None:
-        """See :meth:`JMAPAdapter.sync`."""
-        await _arun(self._sync(full_listing=full_listing))
-
-    async def create(self, content: bytes) -> int:
-        """See :meth:`JMAPAdapter.create`."""
-        return await _arun(self._create(content))
-
-    async def change(self, local_key: int, content: bytes) -> None:
-        """See :meth:`JMAPAdapter.change`."""
-        await _arun(self._change(local_key, content))
-
-    async def waiting(self) -> list[Record]:
-        """See :meth:`JMAPAdapter.waiting`."""
-        return await _arun(self._waiting())

@@ -20,6 +20,8 @@ from collections.abc import Callable, Iterable, Mapping
 from functools import wraps
 from typing import Any, TypeVar
 
+from calendaring_sync.error import LoneSurrogateError
+
 _T = TypeVar("_T")
 
 #: Built-in types a value must be exactly, not a subclass of: ``True`` is
@@ -189,15 +191,25 @@ def check_types(obj: object) -> None:
 def checked_when_built(cls: type[_T]) -> type[_T]:
     """Check a value dataclass's field types every time one is built, before its own checks.
 
-    The class needs a ``__post_init__`` of its own, which runs after the check.
+    The class's own ``__post_init__``, if it has one, runs after the check.
     """
-    original = cls.__dict__["__post_init__"]
+    original = cls.__dict__.get("__post_init__")
+    if original is None:
+        # A dataclass calls __post_init__ only if it had one when built.
+        init: Callable[..., None] = cls.__init__
 
-    def __post_init__(self: object) -> None:
-        check_types(self)
-        original(self)
+        def __init__(self: object, *args: Any, **kwargs: Any) -> None:
+            init(self, *args, **kwargs)
+            check_types(self)
 
-    cls.__post_init__ = __post_init__  # type: ignore[attr-defined]
+        cls.__init__ = wraps(init)(__init__)  # type: ignore[method-assign]
+    else:
+
+        def __post_init__(self: object) -> None:
+            check_types(self)
+            original(self)
+
+        cls.__post_init__ = __post_init__  # type: ignore[attr-defined]
     _CHECKED_WHEN_BUILT.add(cls)
     return cls
 
@@ -261,15 +273,10 @@ def _checking(func: Callable[..., _T]) -> Callable[..., _T]:
 
 
 def check_text(**values: str | Iterable[str] | None) -> None:
-    """Raise ``ValueError`` if a string holds a lone surrogate.
+    """Raise :class:`~calendaring_sync.error.LoneSurrogateError` if a string holds a lone surrogate.
 
-    Every store keeps any string exactly, empty strings and whitespace
-    included, except one kind. Python allows a ``str`` to hold a lone
-    surrogate, half of the pair UTF-16 uses for characters such as emoji,
-    for example ``"\\ud800"``. It's not a character, and UTF-8 can't encode
-    it, so a store that writes UTF-8 fails on it while one that keeps
-    Python objects doesn't. Refusing it where the string comes in keeps
-    every store the same.
+    The design page's lone surrogates section says why no store can keep
+    one; refusing it where the string comes in keeps every store the same.
 
     Args:
         values: Each value by its argument's name: a string, strings, or
@@ -282,7 +289,7 @@ def check_text(**values: str | Iterable[str] | None) -> None:
             try:
                 text.encode()
             except UnicodeEncodeError as exc:
-                raise ValueError(
+                raise LoneSurrogateError(
                     f"{name} holds a lone surrogate at {exc.start}, which can't be stored"
                 ) from exc
 
@@ -296,9 +303,9 @@ def check_data(
     """Check the strings of a copy of an object with :func:`check_text`.
 
     Args:
-        fingerprint: Its fingerprint.
-        containers: Its containers.
-        logical_key: Its logical key.
-        values: Any other strings that come with it, by name.
+        fingerprint: The copy's fingerprint.
+        containers: The copy's containers.
+        logical_key: The copy's logical key.
+        values: Any other strings that come with the copy, by name.
     """
     check_text(fingerprint=fingerprint, containers=containers, logical_key=logical_key, **values)

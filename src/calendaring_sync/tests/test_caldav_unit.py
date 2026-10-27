@@ -31,6 +31,7 @@ from caldav.lib import error as dav_error
 
 from calendaring_sync import (
     ConflictKind,
+    OtherScopeError,
     RecordState,
     ScopeGoneError,
     StateStore,
@@ -38,7 +39,7 @@ from calendaring_sync import (
     UnknownScopeError,
 )
 from calendaring_sync.adapters import caldav as caldav_adapter
-from calendaring_sync.adapters._flow import Steps, _arun, _InStore
+from calendaring_sync.adapters.base import InStore, Steps, _arun
 from calendaring_sync.adapters.caldav import (
     FINGERPRINT_SCHEME,
     MEDIA_TYPE,
@@ -47,7 +48,8 @@ from calendaring_sync.adapters.caldav import (
     _fields,
     _server_fields,
 )
-from calendaring_sync.replica import Replica, Session
+from calendaring_sync.replica import Replica
+from calendaring_sync.session import Session
 from calendaring_sync.tests import _caldav_scenarios as scenarios
 from calendaring_sync.tests import record_caldav
 from calendaring_sync.tests._caldav_scenarios import (
@@ -66,6 +68,7 @@ from calendaring_sync.tests._scenarios import (
     done,
     edit_a,
     edit_answer,
+    fields_of,
     forgotten_edit,
     put_a_and_b,
     recorded,
@@ -260,16 +263,16 @@ class TestDriver:
             raise RuntimeError("the store call failed")
 
         def ends() -> Steps[None]:
-            seen.append((yield _InStore(returns, ("done",))))
+            seen.append((yield InStore(returns, ("done",))))
 
         def is_told() -> Steps[None]:
             try:
-                yield _InStore(fails)
+                yield InStore(fails)
             except RuntimeError as exc:
                 seen.append(str(exc))
 
         def goes_on() -> Steps[None]:
-            seen.append((yield _InStore(returns, ("on",))))
+            seen.append((yield InStore(returns, ("on",))))
             yield later
 
         for steps in (ends(), is_told(), goes_on()):
@@ -512,6 +515,14 @@ class TestAdapter:
                 id="create, no UID",
             ),
             pytest.param(
+                lambda a: a.edit_fields(_ical(_with("UID:event-1"))),
+                _SCOPE,
+                ValueError,
+                "with a UID",
+                True,
+                id="fields, no UID",
+            ),
+            pytest.param(
                 lambda a: a.change(1, _NOT_UTF8),
                 _SCOPE,
                 ValueError,
@@ -546,7 +557,7 @@ class TestAdapter:
             pytest.param(
                 lambda a: a.change(1, _ical(_EVENT)),
                 "nope",
-                ValueError,
+                OtherScopeError,
                 "^Record 1 is in scope 'cal', not this one$",
                 False,
                 id="other scope",
@@ -575,6 +586,7 @@ class TestAdapter:
             fields.logical_key,
             frozenset({_SCOPE}),
         )
+        assert fields_of(adapter.edit_fields(_ical(_EVENT))) == fields_of(edit)
         assert re.fullmatch(r"/cal/[0-9a-f-]{36}\.ics", record.object_id or "")
 
 

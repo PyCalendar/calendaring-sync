@@ -9,15 +9,27 @@ leaves it out.
 
 from __future__ import annotations
 
+import socket
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Any
+from urllib.parse import urlsplit
 
 import pytest
 
 from calendaring_sync.objects.conflict import ConflictKind
 from calendaring_sync.tests._scenarios import Env, Login, edit_a
 from calendaring_sync.tests._tape import Tape
+
+
+def answers(url: str) -> bool:
+    """Whether a server listens at the host and port of ``url``."""
+    parts = urlsplit(url)
+    try:
+        socket.create_connection((parts.hostname, parts.port), timeout=1).close()
+    except OSError:
+        return False
+    return True
 
 
 def identical_write(env: Env) -> None:
