@@ -22,7 +22,7 @@ class FileKeeper(MemoryKeeper):
 
     def save(self, data: MemoryData) -> None:
         # Written beside the file and moved over it, so a failure halfway keeps the last save.
-        written = self.path.with_suffix(".new")
+        written = self.path.with_name(self.path.name + ".new")
         written.write_bytes(pickle.dumps(data))
         written.replace(self.path)
 

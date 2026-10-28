@@ -2696,6 +2696,15 @@ class TestLocalCopy:
         assert (record.edit.containers, record.edit.logical_key) == (frozenset({text}), text)
         assert replica.record(created).edit.content == content
 
+    def test_a_change_set_keeps_its_own_changes(self):
+        changes: dict[str, Change] = {"a": Removed()}
+        change_set = _page("T1", "T2", changes)
+        # What's added to the caller's mapping afterwards was never checked, so it isn't ingested.
+        changes["b"] = Unchanged()
+        assert dict(change_set.changes) == {"a": Removed()}
+        with pytest.raises(TypeError):
+            change_set.changes["b"] = Unchanged()  # type: ignore[index]
+
     def test_wrong_types_and_text_are_refused(self, replica, store, db_path):
         # The values an adapter or the application builds check themselves.
         built: list[tuple[Callable[[], object], type[Exception], str]] = [
@@ -3234,7 +3243,7 @@ class _Pickled(MemoryKeeper):
     def save(self, data: MemoryData) -> None:
         # Written beside the file, then moved over it, so a failure halfway
         # leaves the last saved data.
-        written = self._path.with_suffix(".new")
+        written = self._path.with_name(self._path.name + ".new")
         written.write_bytes(pickle.dumps(data))
         written.replace(self._path)
 
