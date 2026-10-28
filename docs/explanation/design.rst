@@ -46,7 +46,7 @@ Why the parts around the core can be swapped
 
 The :term:`core` holds every sync rule and meets the rest through narrow interfaces, so each part around it can change without the core or the other parts changing:
 
-- where the state lives: a SQLite file, memory, or storage of your own, behind one store interface, as :doc:`../how-to/store` shows
+- where the state lives: a SQLite file, memory, or a :term:`storage` of your own, behind one interface, as :doc:`../how-to/store` shows
 - where changes come from: an adapter that ships with calendaring-sync, one you write, or your own code handing the core :term:`change sets <change set>`, as :doc:`../how-to/write-an-adapter` and :doc:`../how-to/without-adapter` show
 - what reads and edits the data: the core never reads inside :term:`content`, so your application uses whichever library suits the format
 - how a sync runs: with a synchronous or an asynchronous client, for one :term:`scope` or many across servers and accounts, from one thread or several, as :doc:`../how-to/async` and :doc:`../how-to/parallel` show
@@ -108,7 +108,7 @@ You can also ask for a full listing at any time, and each scope records when its
 Why local edits are recorded, not discovered
 ============================================
 
-You tell calendaring-sync about each :term:`local edit` as you make it: a change, a delete, or a create, which returns the new record's :term:`local key`. Repeated edits to one object collapse into one, an edit back to the :term:`synced content` cancels itself, and you can discard an edit. You can't edit an object with an open :term:`conflict` until you resolve it.
+You tell calendaring-sync about each :term:`local edit` as you make it: a change, a delete, or a create, which returns the new record's :term:`local key`. Repeated edits to one object collapse into one, an edit back to the :term:`synced copy` cancels itself, and you can discard an edit. You can't edit an object with an open :term:`conflict` until you resolve it.
 
 Comparing every object at every sync instead would cost a full comparison each time, and a difference can't tell whether your application edited an object or never loaded its latest version.
 
@@ -183,7 +183,7 @@ Every :term:`record` is in one of five states at a time: synced, pending, in fli
        in_flight --> removed: delete done
        in_flight --> pending: rejected
        in_flight --> conflict: gone, or UID taken
-       conflict --> synced: resolved: server's side
+       conflict --> synced: resolved: server's copy
        conflict --> pending: resolved: push it
        conflict --> removed: resolved: removal
        removed --> [*]: purged
@@ -210,7 +210,7 @@ The table lists every transition with its conditions, including these, which the
      - Local edit recorded
      - Pending
    * - pending
-     - Edit back to the synced content, or discarded
+     - Edit back to the synced copy, or discarded
      - Synced; a create the server never had is deleted from the store instead
    * - pending
      - Remote change or removal ingested
@@ -235,7 +235,7 @@ The table lists every transition with its conditions, including these, which the
      - Settled by the next complete ingest
    * - conflict
      - Remote change ingested
-     - Conflict with the new remote side; synced if it now equals your edit, pending again if the server is back at the synced content, or removed if both sides deleted the object
+     - Conflict with the new server's copy; synced if it now equals your edit, pending again if the server is back at the synced copy, or removed if both sides deleted the object
    * - conflict
      - The object holding the logical key an edit was refused for stops holding it, removed or changed on the server or by your own push
      - Pending again, unless another object in the scope still holds the key
@@ -260,9 +260,9 @@ The table lists every transition with its conditions, including these, which the
 Why conflicts are reported, not resolved
 ========================================
 
-When a :term:`conflict` comes up, calendaring-sync reports it and leaves the decision to your code. Only your application knows whether the local edit, the server's version, or a merge is right. A removal on the server against a local edit is always a conflict, never resolved automatically, because that would delete your edit without asking.
+When a :term:`conflict` comes up, calendaring-sync reports it and leaves the decision to your code. Only your application knows whether the local edit, the server's copy, or a merge is right. A removal on the server against a local edit is always a conflict, never resolved automatically, because that would delete your edit without asking.
 
-The core classifies each change by looking only at the :term:`synced content`, the server's change, and your edit. The result is one of six classes:
+The core classifies each change by looking only at the :term:`synced copy`, the server's change, and your edit. The result is one of six classes:
 
 .. list-table::
    :header-rows: 1
@@ -283,9 +283,9 @@ The core classifies each change by looking only at the :term:`synced content`, t
    * - ``CONFLICT``
      - Both sides acted; a conflict record is stored, of one :class:`~calendaring_sync.objects.conflict.ConflictKind`
 
-Later remote changes update the record's remote side. The conflict resolves itself when the server reaches your edit, goes back to the synced content, or removes an object you deleted too. An edit refused for its logical key goes back to pending once the object holding that key no longer holds it.
+Later remote changes update the record's :term:`server's copy`. The conflict resolves itself when the server reaches your edit, goes back to the synced copy, or removes an object you deleted too. An edit refused for its logical key goes back to pending once the object holding that key no longer holds it.
 
-The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. So you resolve them when you choose, outside any sync, with a :data:`~calendaring_sync.objects.resolution.Resolution`. Anything but the server's side becomes a pending edit over the server's current copy, so its push is checked against the server's current version. :meth:`~calendaring_sync.replica.Replica.resolve` refuses a record whose conflict changed since you read it, so a decision is never applied to news you haven't seen.
+The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. So you resolve them when you choose, outside any sync, each with a :data:`~calendaring_sync.objects.resolution.Resolution`: one with :meth:`~calendaring_sync.replica.Replica.resolve`, or every open one through your :term:`resolver` with :meth:`~calendaring_sync.replica.Replica.resolve_conflicts`. Anything but the server's copy becomes a pending edit over the server's current copy, so its push is checked against the server's current version. :meth:`~calendaring_sync.replica.Replica.resolve` refuses a record whose conflict changed since you read it, so a decision is never applied to news you haven't seen.
 
 .. _design-feed:
 
@@ -308,4 +308,4 @@ If a calendar or account disappears from the server, the adapter raises an error
 Why storage is synchronous
 ==========================
 
-Storage is a typed interface, :class:`~calendaring_sync.store.base.StateStore`, with an in-memory implementation for tests and a SQLite one for real use. One :term:`store` holds many scopes. A key-value interface couldn't apply a change set and advance a token in one transaction, and an asynchronous store would push synchronous callers through an event loop. Adapters come in synchronous and asynchronous variants that share their logic. The asynchronous ones run each store call in a worker thread, since ingesting a large full listing is one long transaction and would otherwise block the event loop. Reads from other threads don't wait for that transaction, at most for its commit: until then they see what the store held before it began, so your application can show its records while a sync runs.
+A :term:`store` is a :class:`~calendaring_sync.store.base.StateStore` over a :term:`storage`, a typed interface that a SQLite file, memory or storage of your own implements. The store holds every rule about transactions, threads, checks and errors once, so a storage only reads and writes. One store holds many scopes. A key-value interface couldn't apply a change set and advance a token in one transaction, and an asynchronous store would push synchronous callers through an event loop. Adapters come in synchronous and asynchronous variants that share their logic. The asynchronous ones run each store call in a worker thread, since ingesting a large full listing is one long transaction and would otherwise block the event loop. Reads from other threads don't wait for that transaction, at most for its commit: until then they see what the store held before it began, so your application can show its records while a sync runs.

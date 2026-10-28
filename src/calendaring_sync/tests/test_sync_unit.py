@@ -31,7 +31,7 @@ from functools import partial
 from pathlib import Path
 from threading import Event
 from types import SimpleNamespace
-from typing import Any, Literal
+from typing import Any, Literal, cast
 from unittest.mock import patch
 
 import pytest
@@ -58,6 +58,8 @@ from calendaring_sync import (
     LocalEdit,
     LogicalKeyTaken,
     LoneSurrogateError,
+    MemoryData,
+    MemoryKeeper,
     MemoryStore,
     Merge,
     ObjectIdAssignedError,
@@ -73,6 +75,7 @@ from calendaring_sync import (
     Removed,
     RemovedRecordError,
     Replica,
+    ResolvedConflicts,
     Scope,
     ScopeGoneError,
     ScopeMismatchError,
@@ -83,6 +86,7 @@ from calendaring_sync import (
     StaleChangeSetError,
     StaleConflictError,
     StateStore,
+    StorageTransaction,
     StoreBusyError,
     StoreError,
     StoreVersionError,
@@ -104,10 +108,20 @@ from calendaring_sync.adapters.base import Adapter, AsyncAdapter, Steps, SyncAda
 from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter, _CalDAVFlow
 from calendaring_sync.adapters.jmap import AsyncJMAPAdapter, JMAPAdapter, _JMAPFlow
 from calendaring_sync.constants import FEED_PAGE_SIZE, ISSUES_URL, SCHEMA_VERSION
-from calendaring_sync.store.memory import _Data
-from calendaring_sync.store.sqlite import _FEED, _META, _RECORDS, _reader
+from calendaring_sync.store.memory import _MemoryStorage
+from calendaring_sync.store.sqlite import (
+    _FEED,
+    _META,
+    _RECORDS,
+    _SCHEMA,
+    _reader,
+    _SQLiteStorage,
+    _SQLiteTransaction,
+    _version,
+)
 from calendaring_sync.tests import _caldav_scenarios, _examples, _jmap_scenarios, benchmark
 from calendaring_sync.tests._scenarios import done, run
+from calendaring_sync.tests._storage import OneAtATime
 from calendaring_sync.tests._tape import Tape
 
 _SCOPE = "cal"
@@ -327,7 +341,7 @@ def _local_record(state: RecordState, object_id: str | None = None, local_key: i
     )
 
 
-# The server's side of a conflict where the server removed the object.
+# The server's copy in a conflict where the server removed the object.
 _GONE = Conflict(ConflictKind.REMOVED_REMOTELY, None, None, None, frozenset(), None, _START)
 _PENDING = _local_record(RecordState.PENDING)
 _CONFLICTED = _local_record(RecordState.CONFLICT)
@@ -338,8 +352,8 @@ _BAD_RECORDS = {
     "synced with an edit": replace(_local_record(RecordState.SYNCED), edit=_EDIT),
     "conflict without its server side": replace(_CONFLICTED, conflict=None),
     "synced with a server side": replace(_local_record(RecordState.SYNCED), conflict=_CONFLICT),
-    "no synced content for a change": replace(_PENDING, content=None),
-    "synced content for a create": replace(_PENDING, edit=replace(_EDIT, kind=EditKind.CREATE)),
+    "no synced copy for a change": replace(_PENDING, content=None),
+    "synced copy for a create": replace(_PENDING, edit=replace(_EDIT, kind=EditKind.CREATE)),
     "a delete holding content": replace(_PENDING, edit=replace(_EDIT, kind=EditKind.DELETE)),
     "a change without content": replace(_PENDING, edit=replace(_EDIT, content=None)),
     "a conflict about the wrong edit": replace(
@@ -654,7 +668,7 @@ def _assert_refused(
     """
     before = _snapshot(replica, store)
     with (
-        patch.object(store, "_begin", wraps=store._begin) as begin,
+        patch.object(store._storage, "begin", wraps=store._storage.begin) as begin,
         pytest.raises(error, match=match) as raised,
     ):
         call()
@@ -664,6 +678,40 @@ def _assert_refused(
     with store.transaction(write=False):
         pass
     assert _snapshot(replica, store) == before
+
+
+def _current(store: StateStore) -> StorageTransaction:
+    """The storage's transaction this thread has open in ``store``."""
+    current = store._thread.current
+    assert current is not None
+    return current
+
+
+def _writer(store: StateStore) -> sqlite3.Connection:
+    """The connection a SQLite store writes on."""
+    return cast(sqlite3.Connection, cast(_SQLiteStorage, store._storage)._writer)
+
+
+def _break(
+    store: StateStore, monkeypatch: pytest.MonkeyPatch, step: str, error: BaseException
+) -> None:
+    """Make ``step`` raise ``error``: the storage's ``begin``, or each transaction's method."""
+    storage = store._storage
+
+    def fail(*args: object, **kwargs: object) -> None:
+        raise error
+
+    if step == "begin":
+        monkeypatch.setattr(storage, "begin", fail)
+        return
+    begin = storage.begin
+
+    def begin_broken(*, write: bool) -> StorageTransaction:
+        current = begin(write=write)
+        setattr(current, step, fail)
+        return current
+
+    monkeypatch.setattr(storage, "begin", begin_broken)
 
 
 # Examples that continue from the replica the Replica class example builds.
@@ -919,6 +967,13 @@ class TestExamples:
         with SQLiteStore(tmp_path / "sync.db") as store:
             assert [scope.id for scope in Replica(store).scopes()] == scopes
 
+    def test_keeper(self, tmp_path, monkeypatch):
+        ran = _examples.run("keeper", monkeypatch, tmp_path)
+        assert ran["meeting"].content == b"Team meeting"
+        keeper = ran["FileKeeper"](tmp_path / "sync.pickle")
+        assert isinstance(keeper.error(OSError("disk full")), StoreError)
+        assert keeper.error(ValueError("a bug")) is None
+
 
 class TestPackage:
     @pytest.mark.parametrize("test", _docstring_examples(), ids=lambda test: test.name)
@@ -1154,11 +1209,6 @@ class TestIngest:
                 ListingRequiredError,
                 "needs a full listing",
             )
-
-    def test_unchanged_outside_listing_is_refused(self, replica, store):
-        _seeded(replica)
-        page = _page("T1", "T2", {"a": Unchanged()})
-        _assert_refused(replica, store, lambda: _sync(replica, page), ValueError, "outside a full")
 
     @pytest.mark.parametrize("object_id", ["zz", "a"])
     def test_unchanged_needs_a_live_record_with_a_version(self, replica, store, object_id):
@@ -1965,7 +2015,7 @@ class TestConflicts:
     def test_a_holder_in_conflict_holds_the_key_of_the_server_side(self, replica, refused):
         _sync(_seeded(replica), _page("T1", "T2", {"b": _changed("fb", "v2", logical_key="u")}))
         key = _refused_edit(replica, refused)
-        # b's synced copy keeps u, but the server's side of its conflict moved to w.
+        # b's synced copy keeps u, but the server's copy in its conflict moved to w.
         _change(replica, _key(replica, "b"), "fl")
         head = replica.feed_head()
         _sync(replica, _page("T3", "T4", {"b": _changed("fx", "v3", logical_key="w")}))
@@ -2581,14 +2631,14 @@ class TestResolutions:
             seen.append(record.local_key)
             return None if record.local_key == a else KeepServer()
 
-        assert replica.resolve_conflicts(resolver) == 2
+        assert replica.resolve_conflicts(resolver) == ResolvedConflicts((b, other), (a,))
         assert seen == [a, b, other]
         assert [_summary(replica.record(key)) for key in (a, b, other)] == [
             _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED),
             _SYNCED,
             _SYNCED,
         ]
-        assert replica.resolve_conflicts(lambda record: None) == 0
+        assert replica.resolve_conflicts(lambda record: None) == ResolvedConflicts(left_open=(a,))
 
     def test_resolve_conflicts_skips_a_conflict_that_moved_on(self, replica):
         a, b = _two_conflicts(replica)
@@ -2599,9 +2649,9 @@ class TestResolutions:
                 _sync(replica, _page("T3", "T4", {"b": _changed("fy", "v4")}))
             return KeepServer()
 
-        assert replica.resolve_conflicts(resolver) == 1
+        assert replica.resolve_conflicts(resolver) == ResolvedConflicts((a,), changed=(b,))
         assert replica.record(b).state is RecordState.CONFLICT
-        assert replica.resolve_conflicts(lambda record: KeepServer()) == 1
+        assert replica.resolve_conflicts(lambda record: KeepServer()) == ResolvedConflicts((b,))
         assert replica.record(b).content == _content("fy")
 
     def test_an_error_from_the_resolver_keeps_earlier_resolutions(self, replica):
@@ -2646,6 +2696,15 @@ class TestLocalCopy:
         assert (record.edit.containers, record.edit.logical_key) == (frozenset({text}), text)
         assert replica.record(created).edit.content == content
 
+    def test_a_change_set_keeps_its_own_changes(self):
+        changes: dict[str, Change] = {"a": Removed()}
+        change_set = _page("T1", "T2", changes)
+        # What's added to the caller's mapping afterwards was never checked, so it isn't ingested.
+        changes["b"] = Unchanged()
+        assert dict(change_set.changes) == {"a": Removed()}
+        with pytest.raises(TypeError):
+            change_set.changes["b"] = Unchanged()  # type: ignore[index]
+
     def test_wrong_types_and_text_are_refused(self, replica, store, db_path):
         # The values an adapter or the application builds check themselves.
         built: list[tuple[Callable[[], object], type[Exception], str]] = [
@@ -2686,6 +2745,11 @@ class TestLocalCopy:
                 "^changes must be mapping of str to Changed, Removed or Unchanged, not list",
             ),
             (lambda: _page(None, "T1", {_BAD_TEXT: Removed()}), LoneSurrogateError, "^object_ids "),
+            (
+                lambda: _page("T1", "T2", {"a": Unchanged()}),
+                ValueError,
+                "^Unchanged object 'a' outside a full listing$",
+            ),
             (
                 lambda: _page(None, "T1", {"a": _wrong("removed")}),
                 TypeError,
@@ -2842,7 +2906,11 @@ class TestFeed:
 class TestStores:
     def test_every_operation_is_in_the_tables(self):
         public = {name for name in vars(StateStore) if not name.startswith("_")}
-        assert public - {"transaction", "close"} == _READS.keys() | _WRITES.keys()
+        operations = public - {"transaction", "close"}
+        assert operations == _READS.keys() | _WRITES.keys()
+        # A storage's transaction offers the same operations, plus its own ends.
+        offered = {name for name in vars(StorageTransaction) if not name.startswith("_")}
+        assert offered - {"commit", "rollback", "scope_records_in"} == operations
 
     @pytest.mark.parametrize("call", [*_READS.values(), *_WRITES.values()], ids=[*_READS, *_WRITES])
     def test_operations_outside_a_transaction_raise(self, store, call):
@@ -2873,7 +2941,7 @@ class TestStores:
         [
             (lambda path: MemoryStore(), True),
             (lambda path: SQLiteStore(path), True),
-            (lambda path: _OneAtATime(), False),
+            (lambda path: StateStore(OneAtATime()), False),
             (lambda path: SQLiteStore(":memory:"), False),
         ],
         ids=["memory", "sqlite", "memory one at a time", "sqlite in memory"],
@@ -2996,15 +3064,16 @@ class TestStores:
     )
     def test_scope_records_by_state(self, replica, store, states, expected):
         _edited(replica)
-        with (
-            store.transaction(write=False),
-            patch.object(store, "_scope_records", wraps=store._scope_records) as every,
-            patch.object(store, "_scope_records_in", wraps=store._scope_records_in) as some,
-        ):
-            records = store.scope_records(_SCOPE, states=states)
+        with store.transaction(write=False):
+            current = _current(store)
+            with (
+                patch.object(current, "scope_records", wraps=current.scope_records) as every,
+                patch.object(current, "scope_records_in", wraps=current.scope_records_in) as some,
+            ):
+                records = store.scope_records(_SCOPE, states=states)
         assert [r.object_id for r in records] == expected
         assert replica.records(_SCOPE, states=states) == records
-        # An empty set is answered by the base class, so no store sees one.
+        # An empty set is answered by the store, so no storage sees one.
         assert (every.called or some.called) == (states != frozenset())
         assert some.called == bool(states)
 
@@ -3043,16 +3112,12 @@ class TestStores:
             store.update_record(_local_record(RecordState.SYNCED, local_key=999))
 
     @pytest.mark.parametrize("write", [True, False], ids=["write", "read"])
-    @pytest.mark.parametrize("hook", ["_begin", "_commit", "_scopes"])
+    @pytest.mark.parametrize("step", ["begin", "commit", "scopes"])
     def test_a_failure_inside_the_store_is_unexpected_and_keeps_nothing(
-        self, store, monkeypatch, hook, write
+        self, store, monkeypatch, step, write
     ):
-        bug = RuntimeError(f"{hook} has a bug")
-
-        def fail(*args: object, **kwargs: object) -> None:
-            raise bug
-
-        monkeypatch.setattr(store, hook, fail)
+        bug = RuntimeError(f"{step} has a bug")
+        _break(store, monkeypatch, step, bug)
         with pytest.raises(UnexpectedStoreError, match=re.escape(ISSUES_URL)) as raised:
             with _write_with_scope(store) if write else store.transaction(write=False):
                 store.scopes()
@@ -3064,15 +3129,33 @@ class TestStores:
         with store.transaction():
             pass
 
-    def test_interrupts_pass_through_unchanged(self, store, monkeypatch):
-        def interrupt() -> None:
-            raise KeyboardInterrupt
+    def test_a_bug_in_someone_elses_storage_is_reported_to_them(self, monkeypatch):
+        storage = OneAtATime()
+        monkeypatch.setattr(type(storage), "__module__", "their_storage")
+        store = StateStore(storage)
+        _break(store, monkeypatch, "scopes", RuntimeError("a bug"))
+        with pytest.raises(UnexpectedStoreError) as raised, store.transaction(write=False):
+            store.scopes()
+        assert str(raised.value).endswith("This is a bug in their_storage.OneAtATime")
+        assert ISSUES_URL not in str(raised.value)
 
-        monkeypatch.setattr(store, "_scopes", interrupt)
+    def test_interrupts_pass_through_unchanged(self, store, monkeypatch):
+        _break(store, monkeypatch, "scopes", KeyboardInterrupt())
         with pytest.raises(KeyboardInterrupt), store.transaction(write=False):
             store.scopes()
+        monkeypatch.undo()
         with store.transaction(write=False):
             assert store.feed_bounds() == (0, 0)
+
+    @pytest.mark.parametrize("first", [KeyboardInterrupt(), RuntimeError("the block failed")])
+    def test_a_failed_rollback_keeps_what_ended_the_block(self, store, monkeypatch, first):
+        _break(store, monkeypatch, "rollback", RuntimeError("rollback broke"))
+        with pytest.raises(type(first)) as raised, store.transaction():
+            raise first
+        assert raised.value is first
+        assert "Rolling the transaction back failed too" in raised.value.__notes__[0]
+        monkeypatch.undo()
+        assert _scope_ids(store) == []
 
     def test_store_as_context_manager(self, make_store):
         with make_store() as store:
@@ -3083,65 +3166,89 @@ class TestStores:
         with ThreadPoolExecutor(1) as pool:
             # The thread stays alive, idle, after its read.
             pool.submit(_scope_ids, store).result()
-            old = weakref.ref(store._load())
+            old = weakref.ref(cast(_MemoryStorage, store._storage)._committed)
             _add_scope(store)
             gc.collect()
             assert old() is None
 
     def test_a_memory_store_can_keep_its_data_elsewhere(self, tmp_path, clock):
         path = tmp_path / "store.pickle"
-        store = _PickledStore(path)
+        keeper = _Pickled(path)
+        store = MemoryStore(keeper=keeper)
         replica = _edited(Replica(store, clock=clock))
         expected = _snapshot(replica, store)
-        # Reads never save.
-        with patch.object(store, "_save", wraps=store._save) as save:
+        # Reads never save, and never load again.
+        with (
+            patch.object(keeper, "save", wraps=keeper.save) as save,
+            patch.object(keeper, "load", wraps=keeper.load) as load,
+        ):
             replica.records(_SCOPE)
             replica.read_feed()
-        assert not save.called
+        assert not (save.called or load.called)
         # A write that fails saves nothing.
         with pytest.raises(RuntimeError), store.transaction():
             store.put_scope(replace(_new_scope(), id=_OTHER))
             raise RuntimeError
-        reopened = _PickledStore(path)
+        keeper = _Pickled(path)
+        reopened = MemoryStore(keeper=keeper)
         again = Replica(reopened, clock=clock)
         assert _snapshot(again, reopened) == expected
-        # A save that fails fails the write, keeps the last data and leaves the store usable.
-        with patch.object(reopened, "_save", side_effect=OSError("disk full")):
-            _assert_refused(
-                again,
-                reopened,
-                lambda: _sync(again, _page("T2", "T3", {"a": Removed()})),
-                UnexpectedStoreError,
-                "failed unexpectedly with OSError",
-            )
+
+        # A save that fails fails the write, keeps the last data and leaves the store
+        # usable; the keeper says which of its failures are store errors.
+        def add_scope() -> None:
+            with reopened.transaction():
+                reopened.put_scope(replace(_new_scope(), id=_OTHER))
+
+        with patch.object(keeper, "save", side_effect=OSError("disk full")):
+            _assert_refused(again, reopened, add_scope, StoreError, "^disk full$")
         _sync(again, _page("T2", "T3", {"a": Removed()}))
         expected = _snapshot(again, reopened)
-        third = _PickledStore(path)
+        third = MemoryStore(keeper=_Pickled(path))
         assert _snapshot(Replica(third, clock=clock), third) == expected
 
+    @pytest.mark.parametrize("step", ["load", "save"])
+    def test_a_keepers_failure_it_doesnt_name_is_a_bug(self, step):
+        class Failing(MemoryKeeper):
+            def load(self) -> MemoryData | None:
+                if step == "load":
+                    raise OSError("disk full")
+                return None
 
-class _OneAtATime(MemoryStore):
-    """A memory store that keeps the default: every transaction waits for the one before it."""
+            def save(self, data: MemoryData) -> None:
+                raise OSError("disk full")
 
-    _reads_beside_writes = False
+        bug = r"\.Failing failed unexpectedly with OSError"
+        if step == "load":
+            with pytest.raises(UnexpectedStoreError, match=bug):
+                MemoryStore(keeper=Failing())
+            return
+        store = MemoryStore(keeper=Failing())
+        with pytest.raises(UnexpectedStoreError, match=bug):
+            _add_scope(store)
 
 
-class _PickledStore(MemoryStore):
-    """A memory store that keeps its data in a file with :mod:`pickle`, read when it opens."""
+class _Pickled(MemoryKeeper):
+    """A keeper that saves a memory store's data in a file with :mod:`pickle`."""
 
     def __init__(self, path: Path) -> None:
-        super().__init__()
         self._path = path
-        if path.exists():
-            super()._save(pickle.loads(path.read_bytes()))
 
-    def _save(self, data: _Data) -> None:
+    def load(self) -> MemoryData | None:
+        loaded: MemoryData | None = (
+            pickle.loads(self._path.read_bytes()) if self._path.exists() else None
+        )
+        return loaded
+
+    def save(self, data: MemoryData) -> None:
         # Written beside the file, then moved over it, so a failure halfway
         # leaves the last saved data.
-        written = self._path.with_suffix(".new")
+        written = self._path.with_name(self._path.name + ".new")
         written.write_bytes(pickle.dumps(data))
         written.replace(self._path)
-        super()._save(data)
+
+    def error(self, exc: Exception) -> StoreError | None:
+        return StoreError(str(exc)) if isinstance(exc, OSError) else None
 
 
 # Dataclasses the SQLite store can't map: a column holds one type, and the
@@ -3246,20 +3353,23 @@ class TestSQLiteStore:
             replica = _seeded(Replica(store, clock=clock))
             before = _snapshot(replica, store)
             # SQLite reports a file at its page limit as a full disk.
-            pages = store._conn.execute("PRAGMA page_count").fetchone()[0]
-            store._conn.execute(f"PRAGMA max_page_count = {pages}")
+            writer = _writer(store)
+            pages = writer.execute("PRAGMA page_count").fetchone()[0]
+            writer.execute(f"PRAGMA max_page_count = {pages}")
             many = {f"o{n}": _changed(f"f{n}", content=b"x" * 10_000) for n in range(20)}
             with pytest.raises(StoreError, match="full"):
                 _sync(replica, _page("T1", "T2", many))
             assert _snapshot(replica, store) == before
 
-    def test_a_failed_close_raises_store_error_and_still_closes(self, db_path):
-        class FailingClose(SQLiteStore):
-            def _close(self) -> None:
-                super()._close()
-                raise sqlite3.OperationalError("disk I/O error")
+    def test_a_failed_close_raises_store_error_and_still_closes(self, db_path, monkeypatch):
+        store = SQLiteStore(db_path)
+        close = store._storage.close
 
-        store = FailingClose(db_path)
+        def failing_close() -> None:
+            close()
+            raise sqlite3.OperationalError("disk I/O error")
+
+        monkeypatch.setattr(store._storage, "close", failing_close)
         with pytest.raises(StoreError, match="disk I/O"):
             store.close()
         store.close()
@@ -3316,7 +3426,7 @@ class TestSQLiteStore:
         with SQLiteStore(db_path, timeout=_SHORT_TIMEOUT) as store:
             # Where a commit locks reads out, a write keeps its changes in memory:
             # the pragma gives the pages it holds before spilling, 0 for never.
-            spills = store._writer.execute("PRAGMA cache_spill").fetchone()[0]
+            spills = _writer(store).execute("PRAGMA cache_spill").fetchone()[0]
             assert bool(spills) is not locks_reads_out
             with (
                 ThreadPoolExecutor(1) as pool,
@@ -3344,17 +3454,46 @@ class TestSQLiteStore:
             assert replica.scope(_SCOPE).token == "T1"
             assert _states(replica) == {"a": RecordState.SYNCED, "b": RecordState.SYNCED}
 
+    # A statement that fails rolls the schema back; one that ends the
+    # transaction early leaves the schema, and its own COMMIT fails.
+    @pytest.mark.parametrize(
+        "last, kept", [("CREATE TABLE broken (", False), ("COMMIT", True)], ids=["fails", "ends"]
+    )
+    def test_a_schema_that_fails_halfway_leaves_none(self, db_path, monkeypatch, last, kept):
+        monkeypatch.setattr("calendaring_sync.store.sqlite._SCHEMA", (*_SCHEMA, last))
+        with pytest.raises(StoreError):
+            SQLiteStore(db_path)
+        monkeypatch.undo()
+        with closing(sqlite3.connect(db_path)) as connection:
+            tables = connection.execute("SELECT count(*) FROM sqlite_master").fetchone()[0]
+        assert bool(tables) is kept
+        with SQLiteStore(db_path) as store:
+            assert _scope_ids(store) == []
+
+    def test_a_read_that_cant_begin_gives_its_turn_back(self, db_path, monkeypatch):
+        class Refusing:
+            def execute(self, *args: object) -> None:
+                raise sqlite3.OperationalError("disk I/O error")
+
+        with SQLiteStore(db_path) as store:
+            monkeypatch.setattr(store._storage, "_reader", Refusing())
+            with pytest.raises(StoreError, match="disk I/O"):
+                _enter(store.transaction(write=False))
+            monkeypatch.undo()
+            # A turn kept by the failed read would hold every later read forever.
+            assert not cast(_SQLiteStorage, store._storage)._read_turn.locked()
+            assert _scope_ids(store) == []
+
     def test_schema_created_by_another_process_first(self, db_path, monkeypatch):
         SQLiteStore(db_path).close()
-        real = SQLiteStore._version
         looks: list[int] = []
 
-        def version(store: SQLiteStore) -> int:
+        def version(conn: sqlite3.Connection) -> int:
             # The first look sees an empty file; under the write lock the schema is there.
             looks.append(0)
-            return 0 if len(looks) == 1 else real(store)
+            return 0 if len(looks) == 1 else _version(conn)
 
-        monkeypatch.setattr(SQLiteStore, "_version", version)
+        monkeypatch.setattr("calendaring_sync.store.sqlite._version", version)
         with SQLiteStore(db_path) as store:
             assert _scope_ids(store) == []
         assert len(looks) == 3
@@ -3368,5 +3507,5 @@ class TestSQLiteStore:
     def test_rollback_after_the_transaction_already_ended(self, db_path):
         with SQLiteStore(db_path) as store:
             with pytest.raises(OSError), store.transaction():
-                store._conn.execute("COMMIT")
+                cast(_SQLiteTransaction, _current(store))._conn.execute("COMMIT")
                 raise OSError("after an implicit end")

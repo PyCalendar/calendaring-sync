@@ -130,7 +130,7 @@ class RemovedRecordError(EditRefusedError):
 class StaleConflictError(CalendaringSyncError):
     """The :term:`conflict` changed since your application read it, so a resolution isn't applied.
 
-    The record ended, or its edit or the server's side moved on. Read it
+    The record ended, or its edit or the server's copy moved on. Read it
     again and decide on what it holds now.
     """
 

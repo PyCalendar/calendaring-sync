@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 
 from calendaring_sync._checks import check_text, checked_when_built
-from calendaring_sync.objects.change import Change
+from calendaring_sync.objects.change import Change, Unchanged
 
 
 @checked_when_built
@@ -28,7 +29,8 @@ class ChangeSet:
             token, the one the listing read before it started, and the scope
             moves to it when the last page is ingested.
         changes: Each object id mapped to how the object changed. An object
-            appears once.
+            appears once. The change set keeps a read-only copy, so changing
+            the mapping it was built from afterwards changes nothing.
         full_listing: Whether it lists every object in the scope, rather
             than only what changed.
         truncated: Whether more pages follow it.
@@ -36,6 +38,8 @@ class ChangeSet:
     Raises:
         TypeError: If a field has the wrong type.
         LoneSurrogateError: If the scope id, a token or an object id holds a lone surrogate.
+        ValueError: If an incremental change set reports an object ``Unchanged``,
+            which only a full listing can.
     """
 
     scope: str
@@ -46,4 +50,10 @@ class ChangeSet:
     truncated: bool = False
 
     def __post_init__(self) -> None:
+        # Its own copy, so what's checked here is what gets ingested.
+        object.__setattr__(self, "changes", MappingProxyType(dict(self.changes)))
         check_text(scope=self.scope, since=self.since, token=self.token, object_ids=self.changes)
+        if not self.full_listing:
+            for object_id, change in self.changes.items():
+                if isinstance(change, Unchanged):
+                    raise ValueError(f"Unchanged object {object_id!r} outside a full listing")

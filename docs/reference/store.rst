@@ -5,17 +5,19 @@
 ======================================================
 
 .. meta::
-   :description: StateStore, the storage interface, and its implementations: SQLiteStore for real use and MemoryStore for tests.
+   :description: StateStore, the storage interface it keeps its data in, and the stores that ship: SQLiteStore, and MemoryStore with an optional keeper.
 
 .. automodule:: calendaring_sync.store
    :no-members:
 
 .. automodule:: calendaring_sync.store.base
    :members:
-   :private-members: _begin, _commit, _rollback, _scope_records_in, _store_error, _writing, _reads_beside_writes
 
 .. automodule:: calendaring_sync.store.memory
    :members:
+   :exclude-members: MemoryData
+
+.. autoclass:: calendaring_sync.store.memory.MemoryData()
 
 .. automodule:: calendaring_sync.store.sqlite
    :members:

@@ -3,5 +3,5 @@
 
 """Where the core keeps sync state.
 
-The interface every :term:`store` implements, and the stores that ship.
+The :term:`store`, the :term:`storage` interface it keeps its data in, and the stores that ship.
 """

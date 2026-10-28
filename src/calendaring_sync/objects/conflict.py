@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""The server's side of a :term:`conflict`, kept on its :term:`record` until it's resolved."""
+"""The :term:`server's copy` in a :term:`conflict`, kept on its :term:`record` until resolved."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from calendaring_sync.objects.change import Changed, Removed
 
 
 class ConflictKind(StrEnum):
-    """How the server's side and the :term:`local edit` disagree."""
+    """How the :term:`server's copy` and the :term:`local edit` disagree."""
 
     #: Both sides changed the object.
     BOTH_CHANGED = "both_changed"

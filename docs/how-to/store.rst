@@ -49,4 +49,13 @@ Keep sync state in memory
 Keep sync state in your own storage
 ===================================
 
-To keep sync state where your application keeps its other data, subclass :class:`~calendaring_sync.store.memory.MemoryStore` and override how it loads and saves its data, as its description shows with :mod:`pickle`. For a database that should look up records itself, implement :class:`~calendaring_sync.store.base.StateStore`: its description lists the methods a store writes, and the base class adds every check, transaction rule and error a store needs.
+To keep sync state in a file of your own, give :class:`~calendaring_sync.store.memory.MemoryStore` a :class:`~calendaring_sync.store.memory.MemoryKeeper`. The store loads its data from the keeper once, when it opens, and hands it to the keeper each time a write commits:
+
+.. literalinclude:: ../examples/keeper.py
+   :language: python
+   :start-after: # start: keeper
+   :end-before: # end: keeper
+
+Only load a file your application wrote: unpickling a file runs code from it. Every lookup scans the records in memory, so for a large store use SQLite.
+
+For a database that looks records up itself, implement :class:`~calendaring_sync.store.base.Storage` and :class:`~calendaring_sync.store.base.StorageTransaction`, and pass the storage to :class:`~calendaring_sync.store.base.StateStore`, which does everything but the reading and writing.

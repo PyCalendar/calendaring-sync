@@ -41,7 +41,7 @@ Guarantees
      - :ref:`design-feed`
    * - A scope the server no longer has is never emptied for you. Dropping it returns the edits and conflicts it discards.
      - :ref:`design-dropped-scope`
-   * - In the stores that ship, a read in another thread doesn't wait for a sync's write, at most for its commit, and sees the store as it was before the write began. A store of your own does the same where it sets ``_reads_beside_writes``.
+   * - In the stores that ship, a read in another thread doesn't wait for a sync's write, at most for its commit, and sees the store as it was before the write began. A store over a storage of your own does the same where the storage sets :attr:`~calendaring_sync.store.base.Storage.reads_beside_writes`.
      - :ref:`design-storage`
    * - Every store checks arguments and raises errors the same way, since the checks live in the base class.
      - :class:`~calendaring_sync.store.base.StateStore`

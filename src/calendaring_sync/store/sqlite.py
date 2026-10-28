@@ -13,14 +13,13 @@ from dataclasses import fields, is_dataclass
 from datetime import datetime
 from enum import StrEnum
 from operator import attrgetter
-from threading import Lock, local
+from threading import Lock
 from types import UnionType
 from typing import Any, NamedTuple, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 from calendaring_sync._checks import check_argument_types
 from calendaring_sync.constants import DEFAULT_TIMEOUT, SCHEMA_VERSION
 from calendaring_sync.error import (
-    CalendaringSyncError,
     StoreBusyError,
     StoreError,
     StoreVersionError,
@@ -28,7 +27,7 @@ from calendaring_sync.error import (
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
-from calendaring_sync.store.base import StateStore
+from calendaring_sync.store.base import StateStore, Storage, StorageTransaction
 
 _META = "store_meta"
 _SCOPES = "scopes"
@@ -314,17 +313,263 @@ def _load(reader: _Reader, row: sqlite3.Row) -> Any:
 _PRIVATE = (":memory:", "")
 
 
-class _ReadTurn(local):
-    """Whether this thread's transaction holds the read turn."""
-
-    taken: bool = False
-
-
 def _connect(path: str | os.PathLike[str], timeout: float) -> sqlite3.Connection:
     """Open a connection to the store's file the way every one of its connections is opened."""
     conn = sqlite3.connect(path, timeout=timeout, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _meta(conn: sqlite3.Connection, columns: str) -> sqlite3.Row:
+    """Read ``columns`` from the one row of the store's own data."""
+    row: sqlite3.Row | None = conn.execute(f"SELECT {columns} FROM {_META}").fetchone()
+    if row is None:
+        raise StoreError(f"The store's {_META} table has lost its row")
+    return row
+
+
+def _version(conn: sqlite3.Connection) -> int:
+    """The schema version in ``store_meta``, ``0`` for a file with no schema yet."""
+    exists = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (_META,)
+    ).fetchone()
+    if exists is None:
+        return 0
+    version: int = _meta(conn, "schema_version")[0]
+    return version
+
+
+class _SQLiteStorage(Storage):
+    """A SQLite database file: a connection for writes, and one for reads where the file allows."""
+
+    def __init__(self, path: str | os.PathLike[str], timeout: float) -> None:
+        self._path = path
+        self._timeout = timeout
+        self._writer: sqlite3.Connection | None = None
+        self._reader: sqlite3.Connection | None = None
+        self.reads_beside_writes = True
+        # Whether a write locks reads out of the file: in the default journal
+        # mode it does, in WAL mode it doesn't.
+        self._locks_reads_out = False
+        # Read transactions take turns on the reader's connection, and where a
+        # commit locks reads out, it takes a turn too, so no read in this
+        # process is open while it runs.
+        self._read_turn = Lock()
+
+    def open(self) -> None:
+        """Connect, and create the schema if the file has none."""
+        self._writer = _connect(self._path, self._timeout)
+        self._writer.execute("PRAGMA foreign_keys = ON")
+        self._ensure_schema(self._writer)
+        if os.fspath(self._path) in _PRIVATE:
+            # A second connection would open an empty database of its own.
+            self.reads_beside_writes = False
+            return
+        self._reader = _connect(self._path, self._timeout)
+        self._reader.execute("PRAGMA query_only = ON")
+        mode = self._writer.execute("PRAGMA journal_mode").fetchone()[0]
+        self._locks_reads_out = mode != "wal"
+        if self._locks_reads_out:
+            # A write that outgrows SQLite's page cache would otherwise write
+            # into the file before it commits, which locks the reads out until
+            # the commit.
+            self._writer.execute("PRAGMA cache_spill = OFF")
+
+    @staticmethod
+    def _ensure_schema(conn: sqlite3.Connection) -> None:
+        if _version(conn) == 0:
+            # Checked again under the write lock: another process may have
+            # created the schema in the meantime.
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                if _version(conn) == 0:
+                    for statement in _SCHEMA:
+                        conn.execute(statement)
+                conn.execute("COMMIT")
+            except BaseException:
+                if conn.in_transaction:
+                    conn.execute("ROLLBACK")
+                raise
+        version = _version(conn)
+        if version > SCHEMA_VERSION:
+            raise StoreVersionError(
+                f"The store has schema version {version}; "
+                f"this calendaring-sync reads up to {SCHEMA_VERSION}"
+            )
+
+    def begin(self, *, write: bool) -> StorageTransaction:
+        writer = cast(sqlite3.Connection, self._writer)
+        if write or self._reader is None:
+            writer.execute("BEGIN IMMEDIATE" if write else "BEGIN")
+            return _SQLiteTransaction(self, writer, write=write)
+        # Reads take turns on the reader's connection.
+        self._read_turn.acquire()
+        try:
+            self._reader.execute("BEGIN")
+        except BaseException:
+            self._read_turn.release()
+            raise
+        return _SQLiteTransaction(self, self._reader, write=False, read_turn=True)
+
+    def close(self) -> None:
+        try:
+            if self._reader is not None:
+                self._reader.close()
+        finally:
+            if self._writer is not None:
+                self._writer.close()
+
+    def error(self, exc: Exception) -> StoreError | None:
+        if not isinstance(exc, sqlite3.Error):
+            return None
+        # Errors from the sqlite3 module itself, such as a closed connection, carry no code.
+        if getattr(exc, "sqlite_errorcode", None) == sqlite3.SQLITE_BUSY:
+            return StoreBusyError(str(exc))
+        return StoreError(str(exc))
+
+
+class _SQLiteTransaction(StorageTransaction):
+    """A transaction on one of the storage's connections."""
+
+    def __init__(
+        self,
+        storage: _SQLiteStorage,
+        conn: sqlite3.Connection,
+        *,
+        write: bool,
+        read_turn: bool = False,
+    ) -> None:
+        super().__init__(write=write)
+        self._storage = storage
+        self._conn = conn
+        # Whether the transaction holds the storage's read turn, and so gives it back.
+        self._read_turn = read_turn
+
+    def commit(self) -> None:
+        if self.write and self._storage._locks_reads_out:
+            # The reads open in this process end first, and new ones wait, so
+            # only another process can keep the commit busy.
+            self._storage._read_turn.acquire()
+            self._read_turn = True
+        self._conn.execute("COMMIT")
+        self._end_read()
+
+    def rollback(self) -> None:
+        try:
+            if self._conn.in_transaction:
+                self._conn.execute("ROLLBACK")
+        finally:
+            self._end_read()
+
+    def _end_read(self) -> None:
+        """Give the read turn back, if the transaction holds it."""
+        if self._read_turn:
+            self._read_turn = False
+            self._storage._read_turn.release()
+
+    def _select(
+        self, cls: type[_Row], table: str, clause: str, params: tuple[Any, ...] = ()
+    ) -> list[_Row]:
+        """Load the rows of ``table`` that ``clause`` selects, as ``cls``."""
+        reader = _READERS[cls]
+        rows = self._conn.execute(f"SELECT {_SELECTS[cls]} FROM {table} {clause}", params)
+        return [_load(reader, row) for row in rows]
+
+    def _select_one(
+        self, cls: type[_Row], table: str, clause: str, params: tuple[Any, ...]
+    ) -> _Row | None:
+        found = self._select(cls, table, clause, params)
+        return found[0] if found else None
+
+    def get_scope(self, scope_id: str) -> Scope | None:
+        return self._select_one(Scope, _SCOPES, "WHERE id = ?", (scope_id,))
+
+    def put_scope(self, scope: Scope) -> None:
+        self._conn.execute(_PUT_SCOPE, _values(scope, _SCOPE_COLUMNS))
+
+    def delete_scope(self, scope_id: str) -> None:
+        self._conn.execute(f"DELETE FROM {_SCOPES} WHERE id = ?", (scope_id,))
+
+    def scopes(self) -> list[Scope]:
+        return self._select(Scope, _SCOPES, "ORDER BY id")
+
+    def insert_record(self, record: Record) -> int:
+        cursor = self._conn.execute(_INSERT_RECORD, _values(record, _RECORD_VALUES))
+        # Typed as optional, but an INSERT always sets it to the new row's id.
+        return cast(int, cursor.lastrowid)
+
+    def update_record(self, record: Record) -> None:
+        self._conn.execute(_UPDATE_RECORD, (*_values(record, _RECORD_VALUES), record.local_key))
+
+    def delete_record(self, local_key: int) -> None:
+        self._conn.execute(f"DELETE FROM {_RECORDS} WHERE local_key = ?", (local_key,))
+
+    def get_record(self, local_key: int) -> Record | None:
+        return self._select_one(Record, _RECORDS, "WHERE local_key = ?", (local_key,))
+
+    def find_record(self, scope_id: str, object_id: str) -> Record | None:
+        return self._select_one(
+            Record, _RECORDS, "WHERE scope = ? AND object_id = ?", (scope_id, object_id)
+        )
+
+    def find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
+        # A UNION, not an OR: SQLite answers each half from its own index,
+        # and would scan the table for the OR.
+        return self._select(
+            Record,
+            _RECORDS,
+            f"WHERE local_key IN (SELECT local_key FROM {_RECORDS} WHERE scope = ? "
+            f"AND logical_key = ? UNION SELECT local_key FROM {_RECORDS} WHERE scope = ? "
+            "AND edit_logical_key = ?) ORDER BY local_key",
+            (scope_id, logical_key, scope_id, logical_key),
+        )
+
+    def scope_records(self, scope_id: str) -> list[Record]:
+        return self._select(Record, _RECORDS, "WHERE scope = ? ORDER BY local_key", (scope_id,))
+
+    def scope_records_in(self, scope_id: str, states: frozenset[RecordState]) -> list[Record]:
+        marks = ", ".join("?" for _ in states)
+        return self._select(
+            Record,
+            _RECORDS,
+            f"WHERE scope = ? AND state IN ({marks}) ORDER BY local_key",
+            (scope_id, *states),
+        )
+
+    def removed_records(self, through: int) -> list[Record]:
+        return self._select(
+            Record,
+            _RECORDS,
+            "WHERE state = ? AND last_entry <= ? ORDER BY local_key",
+            (RecordState.REMOVED, through),
+        )
+
+    def append_entry(
+        self,
+        scope_id: str,
+        kind: FeedEntryKind,
+        local_key: int | None,
+        object_id: str | None,
+        at: datetime,
+    ) -> FeedEntry:
+        self._conn.execute(f"UPDATE {_META} SET feed_head = feed_head + 1")
+        number: int = _meta(self._conn, "feed_head")[0]
+        entry = FeedEntry(number, scope_id, kind, local_key, object_id, at)
+        self._conn.execute(_INSERT_ENTRY, _values(entry, _FEED_COLUMNS))
+        return entry
+
+    def entries(self, after: int, limit: int) -> list[FeedEntry]:
+        return self._select(
+            FeedEntry, _FEED, "WHERE number > ? ORDER BY number LIMIT ?", (after, limit)
+        )
+
+    def feed_bounds(self) -> tuple[int, int]:
+        trimmed, head = _meta(self._conn, "feed_trimmed, feed_head")
+        return trimmed, head
+
+    def trim_entries(self, through: int) -> None:
+        self._conn.execute(f"DELETE FROM {_FEED} WHERE number <= ?", (through,))
+        self._conn.execute(f"UPDATE {_META} SET feed_trimmed = max(feed_trimmed, ?)", (through,))
 
 
 @check_argument_types
@@ -361,233 +606,12 @@ class SQLiteStore(StateStore):
         StoreError: If the file can't be opened or isn't a store.
     """
 
-    _reads_beside_writes = True
-
     def __init__(self, path: str | os.PathLike[str], *, timeout: float = DEFAULT_TIMEOUT) -> None:
-        super().__init__()
-        self._reader: sqlite3.Connection | None = None
-        # Whether a write locks reads out of the file: in the default journal
-        # mode it does, in WAL mode it doesn't.
-        self._locks_reads_out = False
-        # Read transactions take turns on the reader's connection, and where a
-        # commit locks reads out, it takes a turn too, so no read in this
-        # process is open while it runs. Each thread notes whether it has the
-        # turn, so only the thread that took it gives it back.
-        self._read_turn = Lock()
-        self._turn_taken = _ReadTurn()
-        with self._errors():
-            self._writer = _connect(path, timeout)
+        storage = _SQLiteStorage(path, timeout)
+        super().__init__(storage)
         try:
             with self._errors():
-                self._writer.execute("PRAGMA foreign_keys = ON")
-                self._ensure_schema()
-                if os.fspath(path) in _PRIVATE:
-                    # A second connection would open an empty database of its own.
-                    self._reads_beside_writes = False
-                else:
-                    self._reader = _connect(path, timeout)
-                    self._reader.execute("PRAGMA query_only = ON")
-                    mode = self._writer.execute("PRAGMA journal_mode").fetchone()[0]
-                    self._locks_reads_out = mode != "wal"
-                    if self._locks_reads_out:
-                        # A write that outgrows SQLite's page cache would otherwise
-                        # write into the file before it commits, which locks the
-                        # reads out until the commit.
-                        self._writer.execute("PRAGMA cache_spill = OFF")
+                storage.open()
         except BaseException:
-            self._close()
+            storage.close()
             raise
-
-    @property
-    def _conn(self) -> sqlite3.Connection:
-        """The connection this thread's transaction uses: the reader's for a read."""
-        if self._in_transaction() and self._reads_apart():
-            # _reads_apart() found the reader's connection open.
-            return cast(sqlite3.Connection, self._reader)
-        return self._writer
-
-    def _store_error(self, exc: Exception) -> CalendaringSyncError:
-        if not isinstance(exc, sqlite3.Error):
-            return super()._store_error(exc)
-        # Errors from the sqlite3 module itself, such as a closed connection, carry no code.
-        if getattr(exc, "sqlite_errorcode", None) == sqlite3.SQLITE_BUSY:
-            return StoreBusyError(str(exc))
-        return StoreError(str(exc))
-
-    def _meta(self, columns: str) -> sqlite3.Row:
-        """Read ``columns`` from the one row of the store's own data."""
-        row: sqlite3.Row | None = self._conn.execute(f"SELECT {columns} FROM {_META}").fetchone()
-        if row is None:
-            raise StoreError(f"The store's {_META} table has lost its row")
-        return row
-
-    def _version(self) -> int:
-        """The schema version in ``store_meta``, ``0`` for a file with no schema yet."""
-        exists = self._conn.execute(
-            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (_META,)
-        ).fetchone()
-        if exists is None:
-            return 0
-        version: int = self._meta("schema_version")[0]
-        return version
-
-    def _ensure_schema(self) -> None:
-        if self._version() == 0:
-            # Checked again under the write lock: another process may have
-            # created the schema in the meantime.
-            with self.transaction():
-                if self._version() == 0:
-                    for statement in _SCHEMA:
-                        self._conn.execute(statement)
-        version = self._version()
-        if version > SCHEMA_VERSION:
-            raise StoreVersionError(
-                f"The store has schema version {version}; "
-                f"this calendaring-sync reads up to {SCHEMA_VERSION}"
-            )
-
-    def _close(self) -> None:
-        try:
-            if self._reader is not None:
-                self._reader.close()
-        finally:
-            self._writer.close()
-
-    def _begin(self, *, write: bool) -> None:
-        if self._reads_apart():
-            self._take_read_turn()
-        self._conn.execute("BEGIN IMMEDIATE" if write else "BEGIN")
-
-    def _commit(self) -> None:
-        if self._locks_reads_out and self._writing():
-            # The reads open in this process end first, and new ones wait, so
-            # only another process can keep the commit busy.
-            self._take_read_turn()
-        self._conn.execute("COMMIT")
-        self._end_read()
-
-    def _rollback(self) -> None:
-        try:
-            if self._conn.in_transaction:
-                self._conn.execute("ROLLBACK")
-        finally:
-            self._end_read()
-
-    def _reads_apart(self) -> bool:
-        """Whether this thread's transaction reads on the reader's connection."""
-        return self._reader is not None and not self._writing()
-
-    def _take_read_turn(self) -> None:
-        """Take the read turn for this thread's transaction, after the reads ahead of it."""
-        self._read_turn.acquire()
-        self._turn_taken.taken = True
-
-    def _end_read(self) -> None:
-        """Give the read turn back, if this thread's transaction took it."""
-        if self._turn_taken.taken:
-            self._turn_taken.taken = False
-            self._read_turn.release()
-
-    def _select(
-        self, cls: type[_Row], table: str, clause: str, params: tuple[Any, ...] = ()
-    ) -> list[_Row]:
-        """Load the rows of ``table`` that ``clause`` selects, as ``cls``."""
-        reader = _READERS[cls]
-        rows = self._conn.execute(f"SELECT {_SELECTS[cls]} FROM {table} {clause}", params)
-        return [_load(reader, row) for row in rows]
-
-    def _select_one(
-        self, cls: type[_Row], table: str, clause: str, params: tuple[Any, ...]
-    ) -> _Row | None:
-        found = self._select(cls, table, clause, params)
-        return found[0] if found else None
-
-    def _get_scope(self, scope_id: str) -> Scope | None:
-        return self._select_one(Scope, _SCOPES, "WHERE id = ?", (scope_id,))
-
-    def _put_scope(self, scope: Scope) -> None:
-        self._conn.execute(_PUT_SCOPE, _values(scope, _SCOPE_COLUMNS))
-
-    def _delete_scope(self, scope_id: str) -> None:
-        self._conn.execute(f"DELETE FROM {_SCOPES} WHERE id = ?", (scope_id,))
-
-    def _scopes(self) -> list[Scope]:
-        return self._select(Scope, _SCOPES, "ORDER BY id")
-
-    def _insert_record(self, record: Record) -> int:
-        cursor = self._conn.execute(_INSERT_RECORD, _values(record, _RECORD_VALUES))
-        # Typed as optional, but an INSERT always sets it to the new row's id.
-        return cast(int, cursor.lastrowid)
-
-    def _update_record(self, record: Record) -> None:
-        self._conn.execute(_UPDATE_RECORD, (*_values(record, _RECORD_VALUES), record.local_key))
-
-    def _delete_record(self, local_key: int) -> None:
-        self._conn.execute(f"DELETE FROM {_RECORDS} WHERE local_key = ?", (local_key,))
-
-    def _get_record(self, local_key: int) -> Record | None:
-        return self._select_one(Record, _RECORDS, "WHERE local_key = ?", (local_key,))
-
-    def _find_record(self, scope_id: str, object_id: str) -> Record | None:
-        return self._select_one(
-            Record, _RECORDS, "WHERE scope = ? AND object_id = ?", (scope_id, object_id)
-        )
-
-    def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
-        # A UNION, not an OR: SQLite answers each half from its own index,
-        # and would scan the table for the OR.
-        return self._select(
-            Record,
-            _RECORDS,
-            f"WHERE local_key IN (SELECT local_key FROM {_RECORDS} WHERE scope = ? "
-            f"AND logical_key = ? UNION SELECT local_key FROM {_RECORDS} WHERE scope = ? "
-            "AND edit_logical_key = ?) ORDER BY local_key",
-            (scope_id, logical_key, scope_id, logical_key),
-        )
-
-    def _scope_records(self, scope_id: str) -> list[Record]:
-        return self._select(Record, _RECORDS, "WHERE scope = ? ORDER BY local_key", (scope_id,))
-
-    def _scope_records_in(self, scope_id: str, states: frozenset[RecordState]) -> list[Record]:
-        marks = ", ".join("?" for _ in states)
-        return self._select(
-            Record,
-            _RECORDS,
-            f"WHERE scope = ? AND state IN ({marks}) ORDER BY local_key",
-            (scope_id, *states),
-        )
-
-    def _removed_records(self, through: int) -> list[Record]:
-        return self._select(
-            Record,
-            _RECORDS,
-            "WHERE state = ? AND last_entry <= ? ORDER BY local_key",
-            (RecordState.REMOVED, through),
-        )
-
-    def _append_entry(
-        self,
-        scope_id: str,
-        kind: FeedEntryKind,
-        local_key: int | None,
-        object_id: str | None,
-        at: datetime,
-    ) -> FeedEntry:
-        self._conn.execute(f"UPDATE {_META} SET feed_head = feed_head + 1")
-        number: int = self._meta("feed_head")[0]
-        entry = FeedEntry(number, scope_id, kind, local_key, object_id, at)
-        self._conn.execute(_INSERT_ENTRY, _values(entry, _FEED_COLUMNS))
-        return entry
-
-    def _entries(self, after: int, limit: int) -> list[FeedEntry]:
-        return self._select(
-            FeedEntry, _FEED, "WHERE number > ? ORDER BY number LIMIT ?", (after, limit)
-        )
-
-    def _feed_bounds(self) -> tuple[int, int]:
-        trimmed, head = self._meta("feed_trimmed, feed_head")
-        return trimmed, head
-
-    def _trim_entries(self, through: int) -> None:
-        self._conn.execute(f"DELETE FROM {_FEED} WHERE number <= ?", (through,))
-        self._conn.execute(f"UPDATE {_META} SET feed_trimmed = max(feed_trimmed, ?)", (through,))

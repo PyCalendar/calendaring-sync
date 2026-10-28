@@ -8,12 +8,12 @@ from __future__ import annotations
 from typing import TypeAlias
 
 #: The fields that hold an object's data, in every copy of it: a record's
-#: synced side, a change from the server, a local edit, and a conflict's
+#: synced copy, a change from the server, a local edit, and a conflict's
 #: server side. Two copies hold the same data when these match, and a record
 #: synced to a copy takes these from it.
 DATA_FIELDS = ("fingerprint", "content", "containers", "logical_key")
 
-#: What a conflict puts in front of each field name for the server's side.
+#: What a conflict puts in front of each field name for the server's copy.
 REMOTE = "remote_"
 
 #: A copy's data: its fingerprint, content, containers and logical key.

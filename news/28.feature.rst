@@ -1,1 +1,1 @@
-A :class:`~calendaring_sync.store.memory.MemoryStore` subclass can keep its data elsewhere, such as in a file with ``pickle``, by overriding ``_load()`` and ``_save()``.
+A :class:`~calendaring_sync.store.memory.MemoryStore` can keep its data elsewhere, such as in a file, through a :class:`~calendaring_sync.store.memory.MemoryKeeper` that loads it when the store opens and saves it each time a write commits.

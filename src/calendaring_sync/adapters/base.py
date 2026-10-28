@@ -235,6 +235,10 @@ class Adapter(ABC):
     - :meth:`_new_object_id` picks the :term:`object id` of a create.
     - :meth:`_edit_fields` reads an edit's fields from its content.
 
+    These names start with an underscore because your application calls
+    the adapter's public methods: a read or a send called on its own would
+    skip the session that orders them.
+
     Args:
         replica: Where the sync state is kept.
         scope_id: The scope's id.
