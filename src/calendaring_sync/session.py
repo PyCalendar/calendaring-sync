@@ -135,7 +135,6 @@ class Session:
                 scope with no token.
             UnknownVersionError: If an ``Unchanged`` entry names a record
                 with no version.
-            ValueError: If an ``Unchanged`` entry is outside a listing.
         """
         if change_set.scope != self._scope_id:
             raise OtherScopeError(

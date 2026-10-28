@@ -60,7 +60,7 @@ class Record:
         fingerprint: The :term:`fingerprint` of :attr:`content`, or ``None``
             after a :term:`fingerprint scheme` change until the object is
             listed again.
-        content: The :term:`synced content`, the bytes the server sent, in
+        content: The content of the :term:`synced copy`, the bytes the server sent, in
             the scope's media type. ``None`` for an object you created that
             the server doesn't have yet.
         containers: The :term:`containers <container>` of the synced copy.
@@ -71,7 +71,7 @@ class Record:
             the record, ``0`` if there's none.
         edit: The record's :term:`pending edit`, held while it's pending, in
             flight or in conflict, and ``None`` otherwise.
-        conflict: The server's side of an open :term:`conflict`, held while
+        conflict: The :term:`server's copy` in an open :term:`conflict`, held while
             the record is in conflict, and ``None`` otherwise.
         claims: How many times a :term:`push` of the record was
             :term:`claimed <claim>`. How a push ended only counts while no

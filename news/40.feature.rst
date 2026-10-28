@@ -1,0 +1,1 @@
+A store is a :class:`~calendaring_sync.store.base.StateStore` over a :class:`~calendaring_sync.store.base.Storage`. To keep sync state somewhere new, implement :class:`~calendaring_sync.store.base.Storage` and :class:`~calendaring_sync.store.base.StorageTransaction`; the store adds every check, transaction rule and error.

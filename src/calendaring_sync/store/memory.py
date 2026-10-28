@@ -1,25 +1,30 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""A :term:`store` that keeps everything in memory, and the base of stores that save it."""
+"""A :term:`store` that keeps everything in memory, and can hand its data to a keeper to save."""
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, replace
 from datetime import datetime
-from threading import local
-from typing import cast
 
 from calendaring_sync._checks import check_argument_types
+from calendaring_sync.error import StoreError, UnexpectedStoreError
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
-from calendaring_sync.store.base import StateStore
+from calendaring_sync.store.base import StateStore, Storage, StorageTransaction, _unexpected
 
 
 @dataclass
-class _Data:
-    """Everything a memory store holds: plain containers of the library's frozen dataclasses."""
+class MemoryData:
+    """Everything a :class:`MemoryStore` holds, as one object.
+
+    A :class:`MemoryKeeper` saves and loads it whole. It's made of plain
+    containers holding the library's frozen dataclasses, so it pickles;
+    what's inside isn't part of the API.
+    """
 
     scopes: dict[str, Scope] = field(default_factory=dict)
     records: dict[int, Record] = field(default_factory=dict)
@@ -28,7 +33,7 @@ class _Data:
     feed_head: int = 0
     feed_trimmed: int = 0
 
-    def copy(self) -> _Data:
+    def _copy(self) -> MemoryData:
         # Scopes, records and entries are frozen, so copying the containers
         # is enough for a snapshot.
         return replace(
@@ -36,146 +41,122 @@ class _Data:
         )
 
 
-class _View(local):
-    """This thread's open transaction's view of the data."""
+class MemoryKeeper(ABC):
+    """Keeps a :class:`MemoryStore`'s data somewhere else, such as in a file.
 
-    #: The view, or ``None`` when the thread has no transaction open.
-    data: _Data | None = None
+    Pass one to :class:`MemoryStore`. It loads the data once, when the
+    store opens, and saves it each time a write commits; reads come from
+    memory. If :meth:`save` raises, the write fails and the store keeps
+    the data it saved last, as long as :meth:`save` doesn't stop halfway:
+    write to a new file and then replace the old one, for example.
 
-
-@check_argument_types
-class MemoryStore(StateStore):
-    """A store held in memory and lost when the process ends.
-
-    Each transaction works on its own view of the data: a read on the data
-    the last write committed, a write on a copy of it, which becomes the
-    committed data only when the transaction ends normally. So a read in
-    one thread runs while another thread writes, and sees the data as it
-    was when the read started. Lookups scan every record, so it suits test
-    data, not large stores. Meant for tests; use
-    :class:`~calendaring_sync.store.sqlite.SQLiteStore` to keep state.
-
-    To keep the data somewhere else, such as a file written with
-    :mod:`pickle` or an object database, subclass it and override the two
-    methods that read and keep it: ``_load()`` returns the data the last
-    write committed, and ``_save(data)`` keeps the data a write commits.
-    The data is one object of plain containers holding the library's
-    frozen dataclasses, so it pickles. The checks, the transactions and
-    every lookup come from the base classes.
-
-    ``_load`` runs at the start of every transaction, reads included, and
-    can run in one thread while ``_save`` runs in another. So a store that
-    keeps its data in a file reads the file once, when it opens, and
-    leaves ``_load`` as it is: it passes what it read to
-    ``super()._save()``, and its own ``_save`` writes the file and then
-    calls ``super()._save()``, so reads come from memory. A store whose
-    ``_load`` can't run while ``_save`` does sets ``_reads_beside_writes``
-    to ``False``.
-
-    If ``_save`` fails, the transaction fails and the last saved data
-    stays, as long as ``_save`` doesn't stop halfway: write to a new file
-    and then replace the old one, for example. Turn the errors of the
-    storage underneath into :class:`~calendaring_sync.error.StoreError` by
-    overriding ``_store_error``, as
-    :class:`~calendaring_sync.store.base.StateStore` describes; anything
-    else is reported as a bug.
-
-    Examples:
-        A store that keeps its data as pickled bytes, read once when it
-        opens, and a second store opened from those bytes:
-
-        >>> import pickle
-        >>> from calendaring_sync import Changed, ChangeSet, MemoryStore, Replica
-        >>> class PickledStore(MemoryStore):
-        ...     def __init__(self, saved=None):
-        ...         super().__init__()
-        ...         self.saved = saved
-        ...         if saved:
-        ...             super()._save(pickle.loads(saved))
-        ...     def _save(self, data):
-        ...         self.saved = pickle.dumps(data)
-        ...         super()._save(data)
-        >>> first = PickledStore()
-        >>> listing = ChangeSet(
-        ...     "work", None, "t1", {"a": Changed("v1", "fp-a", b"Team meeting")}, full_listing=True
-        ... )
-        >>> with Replica(first).session(
-        ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
-        ... ) as session:
-        ...     session.ingest(listing)
-        >>> Replica(PickledStore(first.saved)).find_record("work", "a").content
-        b'Team meeting'
+    What :class:`MemoryData` holds can change between releases, so data a
+    keeper saved with one release may not load in another. Keep sync state
+    that has to outlive an upgrade in
+    :class:`~calendaring_sync.store.sqlite.SQLiteStore`, whose file a newer
+    release reads.
     """
 
-    _reads_beside_writes = True
+    @abstractmethod
+    def load(self) -> MemoryData | None:
+        """Return the data saved last, or ``None`` for a store with nothing saved yet."""
 
-    def __init__(self) -> None:
-        super().__init__()
-        self._committed = _Data()
-        self._view = _View()
+    @abstractmethod
+    def save(self, data: MemoryData) -> None:
+        """Keep the data a write commits, in place of what was saved before."""
 
-    @property
-    def _data(self) -> _Data:
-        """This thread's transaction's view of the data."""
-        # Every hook runs inside a transaction, after _begin set the view.
-        return cast(_Data, self._view.data)
+    def error(self, exc: Exception) -> StoreError | None:
+        """Return the store error for an exception :meth:`load` or :meth:`save` raised.
 
-    def _load(self) -> _Data:
-        """Return the data the last committed write saved."""
-        return self._committed
+        Turn the failures of the storage underneath, such as a full disk,
+        into :class:`~calendaring_sync.error.StoreError`; anything this
+        returns ``None`` for is reported as a bug.
+        """
+        return None
 
-    def _save(self, data: _Data) -> None:
-        """Keep the data a write transaction commits, for later transactions to load."""
+
+class _MemoryStorage(Storage):
+    """The data of a memory store, and the keeper it's saved with."""
+
+    # A read works on the data the last write committed, which nothing changes.
+    reads_beside_writes = True
+
+    def __init__(self, keeper: MemoryKeeper | None) -> None:
+        self._keeper = keeper
+        self._committed = MemoryData()
+
+    def load(self) -> None:
+        """Take the data the keeper saved last."""
+        if self._keeper is not None:
+            try:
+                self._committed = self._keeper.load() or MemoryData()
+            except Exception as exc:
+                raise self._keeper_error(self._keeper, exc) from exc
+
+    def begin(self, *, write: bool) -> StorageTransaction:
+        data = self._committed
+        return _MemoryTransaction(self, data._copy() if write else data, write=write)
+
+    def keep(self, data: MemoryData) -> None:
+        """Make a write's data the committed data, once the keeper saved it."""
+        if self._keeper is not None:
+            try:
+                self._keeper.save(data)
+            except Exception as exc:
+                raise self._keeper_error(self._keeper, exc) from exc
         self._committed = data
 
-    def _begin(self, *, write: bool) -> None:
-        data = self._load()
-        self._view.data = data.copy() if write else data
+    @staticmethod
+    def _keeper_error(keeper: MemoryKeeper, exc: Exception) -> StoreError | UnexpectedStoreError:
+        """The error for a keeper's failure: its own store error, or a bug in the keeper."""
+        return keeper.error(exc) or _unexpected(type(keeper), exc)
 
-    def _commit(self) -> None:
-        data = self._end_view()
-        if self._writing():
-            # _begin set this thread's view, and only _commit or _rollback drops it.
-            self._save(cast(_Data, data))
 
-    def _rollback(self) -> None:
-        # A write worked on a copy that's never saved, so dropping it undoes everything.
-        self._end_view()
+class _MemoryTransaction(StorageTransaction):
+    """A transaction over the committed data for a read, or over a copy of it for a write."""
 
-    def _end_view(self) -> _Data | None:
-        """Drop and return this thread's view, so an idle thread keeps no old copy of the data."""
-        data, self._view.data = self._view.data, None
-        return data
+    def __init__(self, storage: _MemoryStorage, data: MemoryData, *, write: bool) -> None:
+        super().__init__(write=write)
+        self._storage = storage
+        self._data = data
 
-    def _get_scope(self, scope_id: str) -> Scope | None:
+    def commit(self) -> None:
+        if self.write:
+            self._storage.keep(self._data)
+
+    def rollback(self) -> None:
+        # A write worked on a copy that's never kept, so dropping it undoes everything.
+        pass
+
+    def get_scope(self, scope_id: str) -> Scope | None:
         return self._data.scopes.get(scope_id)
 
-    def _put_scope(self, scope: Scope) -> None:
+    def put_scope(self, scope: Scope) -> None:
         self._data.scopes[scope.id] = scope
 
-    def _delete_scope(self, scope_id: str) -> None:
+    def delete_scope(self, scope_id: str) -> None:
         self._data.scopes.pop(scope_id, None)
         self._data.records = {k: r for k, r in self._data.records.items() if r.scope != scope_id}
 
-    def _scopes(self) -> list[Scope]:
+    def scopes(self) -> list[Scope]:
         return sorted(self._data.scopes.values(), key=lambda s: s.id)
 
-    def _insert_record(self, record: Record) -> int:
+    def insert_record(self, record: Record) -> int:
         self._data.last_key += 1
         key = self._data.last_key
         self._data.records[key] = replace(record, local_key=key)
         return key
 
-    def _update_record(self, record: Record) -> None:
+    def update_record(self, record: Record) -> None:
         self._data.records[record.local_key] = record
 
-    def _delete_record(self, local_key: int) -> None:
+    def delete_record(self, local_key: int) -> None:
         self._data.records.pop(local_key, None)
 
-    def _get_record(self, local_key: int) -> Record | None:
+    def get_record(self, local_key: int) -> Record | None:
         return self._data.records.get(local_key)
 
-    def _find_record(self, scope_id: str, object_id: str) -> Record | None:
+    def find_record(self, scope_id: str, object_id: str) -> Record | None:
         return next(
             (
                 r
@@ -185,17 +166,17 @@ class MemoryStore(StateStore):
             None,
         )
 
-    def _find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
+    def find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
         return [
             r
-            for r in self._scope_records(scope_id)
+            for r in self.scope_records(scope_id)
             if logical_key in (r.logical_key, r.edit and r.edit.logical_key)
         ]
 
-    def _scope_records(self, scope_id: str) -> list[Record]:
+    def scope_records(self, scope_id: str) -> list[Record]:
         return [r for r in self._ordered_records() if r.scope == scope_id]
 
-    def _removed_records(self, through: int) -> list[Record]:
+    def removed_records(self, through: int) -> list[Record]:
         return [
             r
             for r in self._ordered_records()
@@ -205,7 +186,7 @@ class MemoryStore(StateStore):
     def _ordered_records(self) -> list[Record]:
         return [record for _, record in sorted(self._data.records.items())]
 
-    def _append_entry(
+    def append_entry(
         self,
         scope_id: str,
         kind: FeedEntryKind,
@@ -218,12 +199,65 @@ class MemoryStore(StateStore):
         self._data.entries.append(entry)
         return entry
 
-    def _entries(self, after: int, limit: int) -> list[FeedEntry]:
+    def entries(self, after: int, limit: int) -> list[FeedEntry]:
         return [e for e in self._data.entries if e.number > after][:limit]
 
-    def _feed_bounds(self) -> tuple[int, int]:
+    def feed_bounds(self) -> tuple[int, int]:
         return self._data.feed_trimmed, self._data.feed_head
 
-    def _trim_entries(self, through: int) -> None:
+    def trim_entries(self, through: int) -> None:
         self._data.entries = [e for e in self._data.entries if e.number > through]
         self._data.feed_trimmed = max(self._data.feed_trimmed, through)
+
+
+@check_argument_types
+class MemoryStore(StateStore):
+    """A store held in memory, lost when the process ends unless a keeper saves it.
+
+    Each transaction works on its own view of the data: a read on the data
+    the last write committed, a write on a copy of it, which becomes the
+    committed data only when the transaction ends normally. So a read in
+    one thread runs while another thread writes, and sees the data as it
+    was when the read started. Lookups scan every record, so it suits test
+    data and small stores; use
+    :class:`~calendaring_sync.store.sqlite.SQLiteStore` for large ones.
+
+    Args:
+        keeper: Where to save the data, such as a file, so the next process
+            can load it. ``None`` keeps it only in memory.
+
+    Raises:
+        StoreError: If the keeper can't load the data, as its
+            :meth:`~MemoryKeeper.error` says.
+
+    Examples:
+        A keeper that saves the data as pickled bytes, and a second store
+        loaded from them:
+
+        >>> import pickle
+        >>> from calendaring_sync import Changed, ChangeSet, MemoryKeeper, MemoryStore, Replica
+        >>> class Pickled(MemoryKeeper):
+        ...     def __init__(self, saved=None):
+        ...         self.saved = saved
+        ...     def load(self):
+        ...         return pickle.loads(self.saved) if self.saved else None
+        ...     def save(self, data):
+        ...         self.saved = pickle.dumps(data)
+        >>> keeper = Pickled()
+        >>> listing = ChangeSet(
+        ...     "work", None, "t1", {"a": Changed("v1", "fp-a", b"Team meeting")}, full_listing=True
+        ... )
+        >>> with Replica(MemoryStore(keeper=keeper)).session(
+        ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
+        ... ) as session:
+        ...     session.ingest(listing)
+        >>> store = MemoryStore(keeper=Pickled(keeper.saved))
+        >>> Replica(store).find_record("work", "a").content
+        b'Team meeting'
+    """
+
+    def __init__(self, *, keeper: MemoryKeeper | None = None) -> None:
+        storage = _MemoryStorage(keeper)
+        super().__init__(storage)
+        with self._errors():
+            storage.load()

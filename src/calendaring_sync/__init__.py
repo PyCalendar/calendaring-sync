@@ -66,13 +66,14 @@ from calendaring_sync.objects.resolution import (
     KeepServer,
     Merge,
     Resolution,
+    ResolvedConflicts,
     UpdateHolder,
 )
 from calendaring_sync.objects.scope import Scope
 from calendaring_sync.replica import Replica
 from calendaring_sync.session import Session, SessionState
-from calendaring_sync.store.base import StateStore
-from calendaring_sync.store.memory import MemoryStore
+from calendaring_sync.store.base import StateStore, Storage, StorageTransaction
+from calendaring_sync.store.memory import MemoryData, MemoryKeeper, MemoryStore
 from calendaring_sync.store.sqlite import SQLiteStore
 
 __all__ = [
@@ -97,9 +98,11 @@ __all__ = [
     "KeepLocal",
     "KeepServer",
     "ListingRequiredError",
-    "LoneSurrogateError",
     "LocalEdit",
     "LogicalKeyTaken",
+    "LoneSurrogateError",
+    "MemoryData",
+    "MemoryKeeper",
     "MemoryStore",
     "Merge",
     "ObjectIdAssignedError",
@@ -116,6 +119,7 @@ __all__ = [
     "RemovedRecordError",
     "Replica",
     "Resolution",
+    "ResolvedConflicts",
     "SQLiteStore",
     "Scope",
     "ScopeGoneError",
@@ -126,6 +130,8 @@ __all__ = [
     "StaleChangeSetError",
     "StaleConflictError",
     "StateStore",
+    "Storage",
+    "StorageTransaction",
     "StoreBusyError",
     "StoreError",
     "StoreVersionError",

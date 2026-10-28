@@ -48,7 +48,7 @@ How the code is laid out
    * - ``replica.py``, ``session.py``, ``objects/``, ``_classify.py``
      - The core: the replica, sync sessions, the classifier, and the values they take and return
    * - ``store/``
-     - The store interface, and the stores that ship
+     - The store and storage interfaces, and the stores that ship
    * - ``adapters/base.py``
      - The adapter base classes
    * - ``adapters/<protocol>.py``

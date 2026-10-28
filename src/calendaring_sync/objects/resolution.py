@@ -14,7 +14,7 @@ from calendaring_sync.objects.edit import EditFields
 
 @dataclass(frozen=True)
 class KeepServer:
-    """Keep the server's side, and drop your :term:`local edit`.
+    """Keep the :term:`server's copy`, and drop your :term:`local edit`.
 
     Where the server has the object, the record takes the server's copy.
     Where it doesn't, because the server removed the object or refused your
@@ -38,10 +38,10 @@ class Merge:
     """Push content you merged from the conflict's versions, over the server's current copy.
 
     A record in conflict holds three versions of its object: the
-    :term:`synced content` both sides last agreed on, in
+    :term:`synced copy` both sides last agreed on, in
     :attr:`~calendaring_sync.objects.record.Record.content`; your
     :term:`local edit`, in :attr:`~calendaring_sync.objects.record.Record.edit`;
-    and the server's side, in
+    and the :term:`server's copy`, in
     :attr:`~calendaring_sync.objects.record.Record.conflict`. Your application
     merges them into new content, and reads its fields with the
     :term:`adapter`'s :meth:`~calendaring_sync.adapters.base.Adapter.edit_fields`,
@@ -58,7 +58,7 @@ class Merge:
 
     Examples:
         Your application keeps the room your edit set and the time the
-        server's side moved to, in one copy. An adapter would read its
+        server's copy moved to, in one copy. An adapter would read its
         fields; these are made up:
 
         >>> from calendaring_sync import EditFields, Merge
@@ -78,7 +78,7 @@ class Merge:
 
 @dataclass(frozen=True)
 class Delete:
-    """Delete the object, whatever the server's side holds.
+    """Delete the object, whatever the server's copy holds.
 
     Where the server has the object, the delete goes out over its current
     copy, and for a change the server refused for its :term:`logical key`,
@@ -95,6 +95,25 @@ class UpdateHolder:
     :term:`logical key`. A refused create then leaves nothing, and the object
     a refused change was for stays as it was synced.
     """
+
+
+@dataclass(frozen=True)
+class ResolvedConflicts:
+    """What :meth:`~calendaring_sync.replica.Replica.resolve_conflicts` did with each conflict.
+
+    Each field holds :term:`local keys <local key>`, in the order the
+    conflicts were passed to your resolver.
+
+    Attributes:
+        resolved: The conflicts resolved as your resolver answered.
+        left_open: The conflicts your resolver answered ``None`` for.
+        changed: The conflicts that changed while your resolver ran, so its
+            answer wasn't applied. The next call passes them again.
+    """
+
+    resolved: tuple[int, ...] = ()
+    left_open: tuple[int, ...] = ()
+    changed: tuple[int, ...] = ()
 
 
 #: Any one of the five.

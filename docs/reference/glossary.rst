@@ -32,7 +32,7 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
       An object where your :term:`pending edit` and the server disagree: both sides changed it, one side deleted it while the other edited it, or the server refused your create or change because another object holds its :term:`logical key`. calendaring-sync reports it and leaves the decision to you.
 
    conflict record
-      What the core stores for one :term:`conflict`: the :term:`synced content`, your edit, the server's side, and the kind of conflict. It stays open until you resolve it or it resolves itself.
+      What the core stores for one :term:`conflict`: the :term:`synced copy`, your :term:`local edit`, the :term:`server's copy`, and the kind of conflict. It stays open until you resolve it or it resolves itself.
 
    container
       A calendar, or another grouping, that an object belongs to. One object can belong to more than one.
@@ -105,6 +105,12 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
    session
       One sync of one :term:`scope`: it :term:`ingests <ingest>` every page first, then :term:`pushes <push>` your pending edits.
 
+   server's copy
+      The server's newer copy of an object you edited, which conflicts with your :term:`local edit`. A record in conflict holds it in ``Record.conflict``, in the fields whose names start with ``remote_``.
+
+   storage
+      What a :term:`store` keeps its data in, such as a SQLite file, behind the :class:`~calendaring_sync.store.base.Storage` interface. Write one to keep sync state somewhere new.
+
    store
       Where the core keeps each scope's sync token, its records, your pending edits, open conflicts, and the :term:`change feed`.
 
@@ -112,8 +118,8 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
    token
       A marker the server gives out that stands for one point in a scope's history. The adapter sends it back to ask what changed since then. The core only stores and compares it.
 
-   synced content
-      An object's content as both sides last agreed on it, at the end of the last sync.
+   synced copy
+      An object as both sides last agreed on it, at the end of the last sync. A :term:`record` holds it in its fields from ``version`` to ``logical_key``.
 
    truncated page
    page

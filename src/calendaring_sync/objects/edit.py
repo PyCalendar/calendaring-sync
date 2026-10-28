@@ -55,7 +55,7 @@ class EditFields:
     """What an edit records about an object beside its content.
 
     An :term:`adapter` reads these from content the same way for the
-    server's copy and for an edit, so an edit back to the synced content
+    server's copy and for an edit, so an edit back to the synced copy
     cancels, and the server's copy of your own edit isn't a conflict. To
     build them for content you made, such as a :class:`Merge
     <calendaring_sync.objects.resolution.Merge>`, call the adapter's

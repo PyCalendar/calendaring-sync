@@ -61,6 +61,7 @@ from calendaring_sync.objects.resolution import (
     KeepServer,
     Merge,
     Resolution,
+    ResolvedConflicts,
     UpdateHolder,
 )
 from calendaring_sync.objects.scope import Scope
@@ -116,7 +117,7 @@ def _same_decision(stored: Record | None, record: Record) -> bool:
 def _resolved(record: Record, resolution: Resolution, now: datetime) -> Record | None:
     """The record a resolution leaves, or ``None`` when it leaves nothing to keep.
 
-    The synced side becomes the server's current copy, so whatever is pushed
+    The synced copy becomes the server's current copy, so whatever is pushed
     next goes out against the server's current version.
     """
     conflict, edit = cast(Conflict, record.conflict), cast(LocalEdit, record.edit)
@@ -339,8 +340,6 @@ class Replica:
             claimed = self._claimed_creates(scope.id) if unique_logical_key else {}
             freed: set[str] = set()
             for object_id, change in change_set.changes.items():
-                if not change_set.full_listing and isinstance(change, Unchanged):
-                    raise ValueError(f"Unchanged object {object_id!r} outside a full listing")
                 self._apply(scope.id, object_id, change, now, claimed, freed)
                 if change_set.full_listing:
                     mentioned.add(object_id)
@@ -631,7 +630,7 @@ class Replica:
     def find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
         """Return the scope's records with this :term:`logical key`, ordered by local key.
 
-        A record matches if its synced side or its :term:`pending edit` has
+        A record matches if its synced copy or its :term:`local edit` has
         the key. Several records can share one, and removed records are
         included until they're :term:`purged <purge>`.
 
@@ -730,7 +729,7 @@ class Replica:
     ) -> None:
         """Record a change to an object.
 
-        A change back to the :term:`synced content` cancels the edit, a
+        A change back to the :term:`synced copy` cancels the edit, a
         change after a delete replaces it, and a change to an object you
         created is still a create. Build ``fingerprint``, ``containers`` and
         ``logical_key`` as for :meth:`create`.
@@ -751,7 +750,7 @@ class Replica:
             >>> replica.record(key).edit.content
             b'Team meeting, moved'
 
-            A change back to the synced content cancels the edit:
+            A change back to the synced copy cancels the edit:
 
             >>> replica.change(key, b"Team meeting", fingerprint="fp-a")
             >>> replica.record(key).state
@@ -995,7 +994,7 @@ class Replica:
     def known_versions(self, scope_id: str) -> dict[str, str]:
         """Return the version of the server's copy of every object the store knows one for.
 
-        For a record in :term:`conflict` that's the server's side. An
+        For a record in :term:`conflict` that's the :term:`server's copy`. An
         :term:`adapter` compares these with the server's during a
         :term:`full listing`, and reports objects whose version matches as
         ``Unchanged`` instead of fetching them. Removed records aren't included.
@@ -1074,7 +1073,7 @@ class Replica:
     def resolve(self, record: Record, resolution: Resolution) -> None:
         """Resolve one :term:`conflict`, as your application decided from ``record``.
 
-        Anything but the server's side becomes a :term:`pending edit` over the
+        Anything but the server's copy becomes a :term:`pending edit` over the
         server's current copy, so the next sync pushes it against the server's
         current version. Writes a ``CONFLICT_RESOLVED`` entry to the
         :term:`change feed`. Runs in a write transaction of its own.
@@ -1086,8 +1085,8 @@ class Replica:
         Raises:
             TransactionError: If a store transaction is already open in this thread.
             StaleConflictError: If the conflict changed since ``record`` was
-                read: it ended, or its edit or the server's side moved on. A
-                move of the server's version alone doesn't count.
+                read: it ended, or its edit or the server's copy moved on. A
+                move of that copy's version alone doesn't count.
             UnknownHolderError: For ``UpdateHolder``, if the server named no
                 record that's still there, and no single record holds the
                 refused edit's logical key, or it was sent without one.
@@ -1146,7 +1145,9 @@ class Replica:
             else:
                 self._write(resolved, FeedEntryKind.CONFLICT_RESOLVED, now)
 
-    def resolve_conflicts(self, resolver: Callable[[Record], Resolution | None]) -> int:
+    def resolve_conflicts(
+        self, resolver: Callable[[Record], Resolution | None]
+    ) -> ResolvedConflicts:
         """Pass every open :term:`conflict` to ``resolver``, and resolve each as it answers.
 
         The conflicts are read in one read transaction, then ``resolver`` runs
@@ -1162,13 +1163,13 @@ class Replica:
                 scope, and returns a resolution or ``None``.
 
         Returns:
-            How many conflicts were resolved.
+            Which conflicts were resolved, left open, or changed meanwhile.
 
         Raises:
             TransactionError: If a store transaction is already open in this thread.
 
         Examples:
-            An application that takes the server's side of every conflict,
+            An application that takes the server's copy in every conflict,
             without asking anyone, resolves them all in one call:
 
             >>> from calendaring_sync import KeepServer
@@ -1179,8 +1180,8 @@ class Replica:
             ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
             ... ) as session:
             ...     session.ingest(ChangeSet("work", "t1", "t2", theirs))
-            >>> replica.resolve_conflicts(lambda record: KeepServer())
-            1
+            >>> replica.resolve_conflicts(lambda record: KeepServer()).resolved == (key,)
+            True
             >>> replica.record(key).content
             b'Team meeting, room 3'
         """
@@ -1190,17 +1191,21 @@ class Replica:
                 for scope in self._store.scopes()
                 for record in self._store.scope_records(scope.id, states=_CONFLICT)
             ]
-        resolved = 0
+        resolved: list[int] = []
+        left_open: list[int] = []
+        changed: list[int] = []
         for record in open_conflicts:
             resolution = resolver(record)
             if resolution is None:
+                left_open.append(record.local_key)
                 continue
             try:
                 self.resolve(record, resolution)
             except StaleConflictError:
+                changed.append(record.local_key)
                 continue
-            resolved += 1
-        return resolved
+            resolved.append(record.local_key)
+        return ResolvedConflicts(tuple(resolved), tuple(left_open), tuple(changed))
 
     def _holder(self, record: Record) -> Record:
         """The one live record holding a refused create's logical key.

@@ -64,7 +64,7 @@ def same_remote(conflict: Conflict, change: Changed | Removed) -> bool:
 
 
 def same_conflict(a: Conflict, b: Conflict) -> bool:
-    """Whether two copies of a conflict say the same thing, whatever the server's version."""
+    """Whether two copies of a conflict say the same thing, whatever their versions."""
     if (a.kind, a.holder) != (b.kind, b.holder):
         return False
     return _same(data(a, REMOTE), data(b, REMOTE))
@@ -75,7 +75,7 @@ def classify(
     remote: Changed | Removed | None,
     local: LocalEdit | None,
 ) -> tuple[ChangeClass, ConflictKind | None]:
-    """Classify one object from its synced side, the server's report and the local edit.
+    """Classify one object from its synced copy, the server's report and the local edit.
 
     Each case below is one kind of local edit meeting one kind of report
     from the server. A change that holds the synced data counts as no
@@ -83,7 +83,7 @@ def classify(
     the same object.
 
     Args:
-        synced: The record's :term:`synced content`, ``None`` for an object
+        synced: The record's :term:`synced copy`, ``None`` for an object
             the store doesn't hold, one it holds as removed, or a create.
         remote: The server's new copy, ``Removed`` if the server removed it,
             or ``None`` if the server reported nothing new.
