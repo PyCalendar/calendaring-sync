@@ -158,3 +158,12 @@ autodoc_default_options = {
     "members": True,
     "show-inheritance": True,
 }
+
+
+def _public_bases(app, name, obj, options, bases):
+    """Leave private base classes, such as the one every resolution shares, out of "Bases"."""
+    bases[:] = [base for base in bases if not base.__name__.startswith("_")]
+
+
+def setup(app):
+    app.connect("autodoc-process-bases", _public_bases)

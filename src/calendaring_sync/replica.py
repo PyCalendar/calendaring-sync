@@ -43,26 +43,15 @@ from calendaring_sync.error import (
 )
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
-from calendaring_sync.objects.conflict import Conflict, ConflictKind
+from calendaring_sync.objects.conflict import Conflict
 from calendaring_sync.objects.dropped_scope import DroppedScope
 from calendaring_sync.objects.edit import EditKind, LocalEdit
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
-from calendaring_sync.objects.push import (
-    Applied,
-    Gone,
-    PushOutcome,
-    Rejected,
-    Unknown,
-)
+from calendaring_sync.objects.push import PushOutcome
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.resolution import (
-    Delete,
-    KeepLocal,
-    KeepServer,
-    Merge,
     Resolution,
     ResolvedConflicts,
-    UpdateHolder,
 )
 from calendaring_sync.objects.scope import Scope
 from calendaring_sync.store.base import StateStore
@@ -97,10 +86,7 @@ def _check_resolution(record: Record, resolution: Resolution) -> None:
     """Raise ``ValueError`` unless ``record`` is in conflict and ``resolution`` fits its kind."""
     if record.state is not RecordState.CONFLICT or record.conflict is None:
         raise ValueError("resolve() takes a record in conflict")
-    if isinstance(resolution, KeepLocal) and record.is_refused:
-        raise ValueError("An edit refused for its logical key can't be pushed again unchanged")
-    if isinstance(resolution, UpdateHolder) and not record.is_refused:
-        raise ValueError("Only an edit refused for its logical key goes to the key's holder")
+    resolution._check(record)
 
 
 def _same_decision(stored: Record | None, record: Record) -> bool:
@@ -120,35 +106,10 @@ def _resolved(record: Record, resolution: Resolution, now: datetime) -> Record |
     The synced copy becomes the server's current copy, so whatever is pushed
     next goes out against the server's current version.
     """
-    conflict, edit = cast(Conflict, record.conflict), cast(LocalEdit, record.edit)
-    on_server = conflict.remote_content is not None or record.is_refused_change
-    if not on_server and isinstance(resolution, (KeepServer, Delete)):
-        # The server doesn't have the object: a create it never had leaves nothing.
-        return None if record.is_create else record.removed_at(now)
-    if record.is_refused_change:
-        # The server kept the synced copy.
-        base = replace(record, state=RecordState.SYNCED, edit=None, conflict=None)
-    else:
-        base = record.synced_to(conflict, now)
-    # Over a copy the server has, an edit is a change; with none, a create.
-    kind = EditKind.CHANGE if on_server else EditKind.CREATE
-    match resolution:
-        case KeepServer():
-            return base
-        case KeepLocal():
-            return _edited(base, edit if edit.kind is EditKind.DELETE else replace(edit, kind=kind))
-        case Merge():
-            merged = LocalEdit(
-                kind,
-                resolution.content,
-                resolution.fields.fingerprint,
-                resolution.fields.containers,
-                resolution.fields.logical_key,
-                now,
-            )
-            return _edited(base, merged)
-    # Delete, the one resolution left.
-    return _edited(base, LocalEdit(EditKind.DELETE, None, None, frozenset(), None, now))
+    base, edit = resolution._resolve(record, now)
+    if base is None or edit is None:
+        return base
+    return _edited(base, edit)
 
 
 def _edited(record: Record, edit: LocalEdit) -> Record:
@@ -863,49 +824,16 @@ class Replica:
                 or record.state not in (RecordState.IN_FLIGHT, RecordState.PENDING)
             ):
                 return False
-            pending_again = record.state is RecordState.PENDING
             held = record.server_logical_key
-            # A record in flight or pending always holds an edit; the store checks it.
-            edit = cast(LocalEdit, record.edit)
-            match outcome:
-                case Rejected() | Unknown() if pending_again:
-                    pass
-                case Rejected():
-                    self._write(
-                        replace(record, state=RecordState.PENDING), FeedEntryKind.PUSH_FAILED, now
-                    )
-                case Unknown():
-                    pass
-                case Applied() | Gone() if edit.kind is EditKind.DELETE:
-                    self._write(record.removed_at(now), FeedEntryKind.PUSHED, now)
-                case Applied(object_id=renamed):
-                    if renamed is not None and renamed != record.object_id:
-                        self._free_object_id(record.scope, renamed, record.local_key)
-                    # The server may store the edit rewritten, so no version is kept.
-                    pushed = replace(
-                        record.synced_to(edit, now), object_id=renamed or record.object_id
-                    )
-                    self._write(pushed, FeedEntryKind.PUSHED, now)
-                case Gone():
-                    self._open_conflict(record, ConflictKind.REMOVED_REMOTELY, None, now)
-                case _:
-                    # LogicalKeyTaken, the one outcome left.
-                    self._open_conflict(record, ConflictKind.LOGICAL_KEY_TAKEN, outcome.holder, now)
-            settled = self._store.get_record(record.local_key)
-            if held is not None and (settled is None or settled.server_logical_key != held):
+            settled = outcome._settled(record, now)
+            if settled is not None:
+                if settled.takes is not None:
+                    self._free_object_id(record.scope, settled.takes, record.local_key)
+                self._write(settled.record, settled.kind, now)
+            after = self._store.get_record(record.local_key)
+            if held is not None and (after is None or after.server_logical_key != held):
                 self._lift_refusals(record.scope, {held}, now)
         return True
-
-    def _open_conflict(
-        self, record: Record, kind: ConflictKind, holder: str | None, now: datetime
-    ) -> None:
-        """Store a conflict whose server has no copy of the object, from a push's outcome."""
-        conflict = replace(Conflict.from_change(kind, Removed(), now), holder=holder)
-        self._write(
-            replace(record, state=RecordState.CONFLICT, conflict=conflict),
-            FeedEntryKind.CONFLICT_OPENED,
-            now,
-        )
 
     def _free_object_id(self, scope_id: str, object_id: str, owner: int) -> None:
         """Make ``object_id`` free for record ``owner``.
@@ -1121,18 +1049,17 @@ class Replica:
             if not _same_decision(stored, record):
                 raise StaleConflictError(f"Record {record.local_key}'s conflict changed")
             stored = cast(Record, stored)
-            if isinstance(resolution, UpdateHolder):
+            holder_edit = resolution._holder_edit(stored)
+            if holder_edit is not None:
                 holder = self._editable(self._holder(stored).local_key)
                 if holder.edit is not None:
                     raise PendingEditError(
                         f"Record {holder.local_key} holds a pending edit of its own"
                     )
-                edit = cast(LocalEdit, stored.edit)
-                self._store.update_record(_changed_to(holder, replace(edit, recorded_at=now)))
-                # A refused create leaves nothing; a refused change, the synced copy.
-                resolved = None if stored.is_create else _resolved(stored, KeepServer(), now)
-            else:
-                resolved = _resolved(stored, resolution, now)
+                self._store.update_record(
+                    _changed_to(holder, replace(holder_edit, recorded_at=now))
+                )
+            resolved = _resolved(stored, resolution, now)
             if resolved is None:
                 self._store.append_entry(
                     stored.scope,

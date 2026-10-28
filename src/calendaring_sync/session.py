@@ -10,8 +10,7 @@ from enum import StrEnum
 from calendaring_sync._checks import check_argument_types, check_text
 from calendaring_sync.error import OtherScopeError, SessionError, StaleChangeSetError
 from calendaring_sync.objects.change_set import ChangeSet
-from calendaring_sync.objects.edit import EditKind
-from calendaring_sync.objects.push import Applied, Gone, LogicalKeyTaken, PushOutcome
+from calendaring_sync.objects.push import PushOutcome
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.replica import Replica
 
@@ -24,16 +23,7 @@ def _check_outcome(claimed_keys: set[int], claimed: Record, outcome: PushOutcome
         or claimed.edit is None
     ):
         raise ValueError("settle() takes a record this session's claim() returned")
-    kind = claimed.edit.kind
-    match outcome:
-        case Gone() if kind is EditKind.CREATE:
-            raise ValueError("A create can't be gone: the server never had the object")
-        case LogicalKeyTaken() if kind is EditKind.DELETE:
-            raise ValueError("A delete can't be refused for its logical key")
-        case Applied(object_id=str()) if kind is EditKind.DELETE:
-            raise ValueError("An applied delete has no object id to report")
-        case Applied(object_id=None) if kind is EditKind.CREATE and claimed.object_id is None:
-            raise ValueError("An applied create needs the object id the server gave it")
+    outcome._check(claimed.edit.kind, claimed.object_id is not None)
 
 
 class SessionState(StrEnum):
