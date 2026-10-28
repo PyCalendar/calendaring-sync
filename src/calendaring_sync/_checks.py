@@ -13,6 +13,7 @@ call.
 from __future__ import annotations
 
 import dataclasses
+import enum
 import inspect
 import types
 import typing
@@ -36,7 +37,23 @@ _CHECKED_WHEN_BUILT: set[type] = set()
 _MISSING = object()
 
 
-def _kind(hint: Any) -> tuple[str, tuple[Any, ...]]:
+class _Kind(enum.Enum):
+    """The kinds of type hint the checks can read."""
+
+    NONE = enum.auto()
+    UNION = enum.auto()
+    EXACT = enum.auto()
+    NUMBER = enum.auto()
+    FROZENSET = enum.auto()
+    MAPPING = enum.auto()
+    CALLABLE = enum.auto()
+    #: A dataclass whose fields are checked one by one.
+    FIELDS = enum.auto()
+    #: Any other class, checked with ``isinstance``.
+    INSTANCE = enum.auto()
+
+
+def _kind(hint: Any) -> tuple[_Kind, tuple[Any, ...]]:
     """What kind of type a hint asks for, and the hints or class inside it.
 
     Raises:
@@ -44,43 +61,43 @@ def _kind(hint: Any) -> tuple[str, tuple[Any, ...]]:
     """
     origin = typing.get_origin(hint)
     if hint is type(None):
-        return "none", ()
+        return _Kind.NONE, ()
     if origin in (typing.Union, types.UnionType):
-        return "union", typing.get_args(hint)
+        return _Kind.UNION, typing.get_args(hint)
     if hint in _EXACT:
-        return "exact", (hint,)
+        return _Kind.EXACT, (hint,)
     if hint is float:
-        return "number", ()
+        return _Kind.NUMBER, ()
     if origin is frozenset:
-        return "frozenset", typing.get_args(hint)
+        return _Kind.FROZENSET, typing.get_args(hint)
     if isinstance(origin, type) and issubclass(origin, Mapping):
-        return "mapping", typing.get_args(hint)
+        return _Kind.MAPPING, typing.get_args(hint)
     if origin is not None and getattr(origin, "__name__", "") == "Callable":
-        return "callable", ()
+        return _Kind.CALLABLE, ()
     cls = origin if isinstance(origin, type) else hint
     if not isinstance(cls, type):
         raise TypeError(f"Can't check a value against {hint!r}")
     if dataclasses.is_dataclass(cls) and cls not in _CHECKED_WHEN_BUILT:
-        return "fields", (cls,)
-    return "instance", (cls,)
+        return _Kind.FIELDS, (cls,)
+    return _Kind.INSTANCE, (cls,)
 
 
 def _describe(hint: Any) -> str:
     """The type a hint asks for, as an error message names it."""
     kind, inner = _kind(hint)
     match kind:
-        case "none":
+        case _Kind.NONE:
             return "None"
-        case "union":
+        case _Kind.UNION:
             names = [_describe(part) for part in inner]
             return ", ".join(names[:-1]) + " or " + names[-1]
-        case "number":
+        case _Kind.NUMBER:
             return "float or int"
-        case "frozenset":
+        case _Kind.FROZENSET:
             return f"frozenset of {_describe(inner[0])}"
-        case "mapping":
+        case _Kind.MAPPING:
             return f"mapping of {_describe(inner[0])} to {_describe(inner[1])}"
-        case "callable":
+        case _Kind.CALLABLE:
             return "callable"
     # A class, exact or not.
     return str(inner[0].__name__)
@@ -93,27 +110,27 @@ def _test(hint: Any, value: str, env: dict[str, object]) -> str:
     """
     kind, inner = _kind(hint)
     match kind:
-        case "none":
+        case _Kind.NONE:
             return f"{value} is None"
-        case "union":
+        case _Kind.UNION:
             return "(" + " or ".join(_test(part, value, env) for part in inner) + ")"
-        case "exact":
+        case _Kind.EXACT:
             return f"type({value}) is {inner[0].__name__}"
-        case "number":
+        case _Kind.NUMBER:
             return f"type({value}) in (float, int)"
-        case "frozenset":
+        case _Kind.FROZENSET:
             items = f"all({_test(inner[0], '_i', env)} for _i in {value})"
             return f"(type({value}) is frozenset and {items})"
-        case "mapping":
+        case _Kind.MAPPING:
             env["Mapping"] = Mapping
             pairs = f"{_test(inner[0], '_k', env)} and {_test(inner[1], '_v', env)}"
             return f"(isinstance({value}, Mapping) and all({pairs} for _k, _v in {value}.items()))"
-        case "callable":
+        case _Kind.CALLABLE:
             return f"callable({value})"
     cls = inner[0]
     name = f"_{cls.__module__.replace('.', '_')}_{cls.__qualname__.replace('.', '_')}"
     env[name] = cls
-    if kind == "fields":
+    if kind is _Kind.FIELDS:
         env[f"{name}_fields"] = _fields(cls)
         return f"(isinstance({value}, {name}) and {name}_fields({value}))"
     return f"isinstance({value}, {name})"
@@ -151,12 +168,12 @@ def _field_mismatch(cls: type, value: object, prefix: str) -> str | None:
 def _inner_mismatch(name: str, hint: Any, value: object) -> str | None:
     """For a value of the kind ``hint`` holds, the message naming what inside it is wrong."""
     kind, inner = _kind(hint)
-    if kind == "fields" and isinstance(value, inner[0]):
+    if kind is _Kind.FIELDS and isinstance(value, inner[0]):
         return _field_mismatch(inner[0], value, f"{name}.")
-    if kind == "frozenset" and type(value) is frozenset:
+    if kind is _Kind.FROZENSET and type(value) is frozenset:
         bad = next((each for each in value if _mismatch("item", inner[0], each) is not None), None)
         return f"{name} must be {_describe(hint)}, but holds {type(bad).__name__}"
-    if kind == "mapping" and isinstance(value, Mapping):
+    if kind is _Kind.MAPPING and isinstance(value, Mapping):
         key, item = inner
         found = (
             _mismatch(f"{name}[{k!r}]", item, v) or _mismatch(f"{name} key", key, k)
@@ -172,7 +189,7 @@ def _mismatch(name: str, hint: Any, value: object) -> str | None:
     if _compile(f"def check(v):\n    return {_test(hint, 'v', env)}", env)(value):
         return None
     kind, inner_hints = _kind(hint)
-    parts = inner_hints if kind == "union" else (hint,)
+    parts = inner_hints if kind is _Kind.UNION else (hint,)
     inner = (_inner_mismatch(name, part, value) for part in parts)
     found = next((message for message in inner if message is not None), None)
     return found or f"{name} must be {_describe(hint)}, not {type(value).__name__}"

@@ -24,7 +24,6 @@ from calendaring_sync import (
     Removed,
     Replica,
     Scope,
-    ScopeGoneError,
     Session,
 )
 from calendaring_sync.adapters.base import (
@@ -40,19 +39,19 @@ from calendaring_sync.adapters.base import (
 Stored = tuple[str, bytes]
 
 
-class VersionMismatch(Exception):
+class VersionMismatchError(Exception):
     """The object doesn't have the version the write was based on."""
 
 
-class NotFound(Exception):
+class NotFoundError(Exception):
     """The server has no object with that id."""
 
 
-class ExpiredToken(Exception):
+class ExpiredTokenError(Exception):
     """The server no longer knows what changed since that token."""
 
 
-class NoSuchScope(Exception):
+class NoSuchScopeError(Exception):
     """The server no longer holds the objects at all."""
 
 
@@ -72,15 +71,15 @@ class MemoryServer:
 
     def listing(self) -> tuple[dict[str, Stored], str]:
         if self.removed:
-            raise NoSuchScope()
+            raise NoSuchScopeError()
         return dict(self.objects), self.token()
 
     def changes(self, since: str) -> tuple[dict[str, Stored | None], str]:
         """Every object written since the token, ``None`` for one deleted since."""
         if self.removed:
-            raise NoSuchScope()
+            raise NoSuchScopeError()
         if int(since) < self.oldest:
-            raise ExpiredToken(since)
+            raise ExpiredTokenError(since)
         written = set(self.log[int(since) :])
         return {object_id: self.objects.get(object_id) for object_id in written}, self.token()
 
@@ -99,9 +98,9 @@ class MemoryServer:
     def _check(self, object_id: str, if_version: str | None) -> None:
         current = self.objects.get(object_id)
         if current is None and if_version is not None:
-            raise NotFound(object_id)
+            raise NotFoundError(object_id)
         if (None if current is None else current[0]) != if_version:
-            raise VersionMismatch(object_id)
+            raise VersionMismatchError(object_id)
 
 
 class AsyncMemoryServer:
@@ -155,13 +154,11 @@ class _MemoryAdapter(Adapter):
         since = None if full_listing else scope.token
         try:
             if since is None:
-                objects, token = yield self._server.listing()
+                objects, token = yield from self._ask(self._server.listing)
             else:
-                objects, token = yield self._server.changes(since)
-        except ExpiredToken:
+                objects, token = yield from self._ask(lambda: self._server.changes(since))
+        except ExpiredTokenError:
             return ReadResult.INVALID_TOKEN
-        except NoSuchScope as exc:
-            raise ScopeGoneError(f"The server no longer holds {self.scope_id!r}") from exc
         changes = {object_id: change(stored) for object_id, stored in objects.items()}
         listing = since is None
         change_set = ChangeSet(self.scope_id, scope.token, token, changes, full_listing=listing)
@@ -180,11 +177,16 @@ class _MemoryAdapter(Adapter):
                 yield self._server.put(
                     object_id, cast(bytes, edit.content), if_version=claimed.version
                 )
-        except VersionMismatch:
+        except VersionMismatchError:
             return Rejected()
-        except NotFound:
+        except NotFoundError:
             return Gone()
         return Applied()
+
+    def _gone(self, error: Exception) -> str | None:
+        if isinstance(error, NoSuchScopeError):
+            return f"The server no longer holds {self.scope_id!r}"
+        return None
 
     def _waits(self, record: Record) -> bool:
         return False

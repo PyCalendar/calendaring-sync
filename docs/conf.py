@@ -156,6 +156,8 @@ napoleon_use_ivar = False
 
 autodoc_default_options = {
     "members": True,
+    # Each module's source is grouped by area, so its page reads the same way.
+    "member-order": "bysource",
     "show-inheritance": True,
 }
 

@@ -17,10 +17,11 @@ from calendaring_sync import (
     MemoryStore,
     Replica,
 )
-from calendaring_sync.adapters.base import InStore, Steps, _arun
-from calendaring_sync.tests import _caldav_scenarios, _jmap_scenarios
+from calendaring_sync.adapters.base import Adapter, InStore, Steps, _arun, _run
+from calendaring_sync.tests import _caldav_scenarios, _examples, _jmap_scenarios
 from calendaring_sync.tests._helpers import (
     _WAIT,
+    _needs_examples,
 )
 from calendaring_sync.tests._scenarios import run
 from calendaring_sync.tests._tape import Tape
@@ -113,6 +114,25 @@ class TestDriver:
         assert seen == ["done", "the store call failed", "on"]
         # The request it yielded after the store call is closed, never left unawaited.
         assert inspect.getcoroutinestate(later) == inspect.CORO_CLOSED
+
+
+@_needs_examples
+class TestAsk:
+    """A request about the scope, made through the base's ``_ask``."""
+
+    def test_an_error_that_isnt_a_gone_scope_is_raised_unchanged(self):
+        adapters = _examples.load("memory_adapter")
+        adapter = adapters.MemoryAdapter(Replica(MemoryStore()), adapters.MemoryServer(), "cal")
+        error = RuntimeError("refused")
+
+        def request() -> None:
+            raise error
+
+        with pytest.raises(RuntimeError) as raised:
+            _run(adapter._ask(request))
+        assert raised.value is error
+        # An adapter that names no error as a gone scope gets every one back unchanged.
+        assert Adapter._gone(adapter, error) is None
 
 
 class TestRecordings:

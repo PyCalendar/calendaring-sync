@@ -19,12 +19,12 @@ Write the protocol once
 
 ``_MemoryAdapter`` subclasses :class:`~calendaring_sync.adapters.base.Adapter`, sets the class attributes that describe what the server checks, and writes the methods its docstring lists. ``MemoryAdapter`` and ``AsyncMemoryAdapter`` add :class:`~calendaring_sync.adapters.base.SyncAdapter` or :class:`~calendaring_sync.adapters.base.AsyncAdapter`, which supply the public methods. The two differ only in the client they're given.
 
-Each method that talks to the server yields every client call, as :mod:`calendaring_sync.adapters.base` describes, so ``objects, token = yield self._server.listing()`` works with either client.
+Each method that talks to the server yields every client call, as :mod:`calendaring_sync.adapters.base` describes, so ``yield from self._ask(self._server.listing)`` works with either client.
 
 Read changes
 ============
 
-:meth:`~calendaring_sync.adapters.base.Adapter._read` turns each answer into a :class:`~calendaring_sync.objects.change_set.ChangeSet`. Here an expired token ends the read with ``ReadResult.INVALID_TOKEN``, and a server that lost the scope raises :class:`~calendaring_sync.error.ScopeGoneError`. Compute the fingerprint so it ignores what your server rewrites on its own, as :doc:`../explanation/design` explains.
+:meth:`~calendaring_sync.adapters.base.Adapter._read` turns each answer into a :class:`~calendaring_sync.objects.change_set.ChangeSet`. Here an expired token ends the read with ``ReadResult.INVALID_TOKEN``. Requests about the scope go through :meth:`~calendaring_sync.adapters.base.Adapter._ask`, which raises :class:`~calendaring_sync.error.ScopeGoneError` for the error :meth:`~calendaring_sync.adapters.base.Adapter._gone` names: here, a server that lost the scope. Compute the fingerprint so it ignores what your server rewrites on its own, as :doc:`../explanation/design` explains.
 
 Send edits
 ==========

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, cast
@@ -34,7 +34,6 @@ from calendaring_sync.adapters.base import (
     SyncAdapter,
     _url_id,
 )
-from calendaring_sync.error import ScopeGoneError
 from calendaring_sync.objects.change import Change, Changed, Removed
 from calendaring_sync.objects.change_set import ChangeSet
 from calendaring_sync.objects.edit import EditFields, EditKind, LocalEdit
@@ -303,18 +302,10 @@ class _JMAPFlow(Adapter):
             raise ValueError("A created event must be in a calendar")
         return fields
 
-    def _ask(self, request: Callable[[], Any]) -> Steps[Any]:
-        """Make one call about the account; an account that's gone raises.
-
-        ``request`` is a function making the call, so a synchronous client's
-        error is raised here too.
-        """
-        try:
-            return (yield request())
-        except JMAPMethodError as exc:
-            if exc.error_type == _ACCOUNT_NOT_FOUND:
-                raise ScopeGoneError(f"The server has no account {self._account_id!r}") from exc
-            raise
+    def _gone(self, error: Exception) -> str | None:
+        if isinstance(error, JMAPMethodError) and error.error_type == _ACCOUNT_NOT_FOUND:
+            return f"The server has no account {self._account_id!r}"
+        return None
 
     def _changed(self, objects: Iterable[Any]) -> dict[str, Changed]:
         """Changes for the events a server returned."""

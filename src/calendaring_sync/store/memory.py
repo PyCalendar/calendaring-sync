@@ -17,28 +17,57 @@ from calendaring_sync.objects.scope import Scope
 from calendaring_sync.store.base import StateStore, Storage, StorageTransaction, _unexpected
 
 
-@dataclass
-class MemoryData:
-    """Everything a :class:`MemoryStore` holds, as one object.
+@check_argument_types
+class MemoryStore(StateStore):
+    """A store held in memory, lost when the process ends unless a keeper saves it.
 
-    A :class:`MemoryKeeper` saves and loads it whole. It's made of plain
-    containers holding the library's frozen dataclasses, so it pickles;
-    what's inside isn't part of the API.
+    Each transaction works on its own view of the data: a read on the data
+    the last write committed, a write on a copy of it, which becomes the
+    committed data only when the transaction ends normally. So a read in
+    one thread runs while another thread writes, and sees the data as it
+    was when the read started. Lookups scan every record, so it suits test
+    data and small stores; use
+    :class:`~calendaring_sync.store.sqlite.SQLiteStore` for large ones.
+
+    Args:
+        keeper: Where to save the data, such as a file, so the next process
+            can load it. ``None`` keeps it only in memory.
+
+    Raises:
+        StoreError: If the keeper can't load the data, as its
+            :meth:`~MemoryKeeper.error` says.
+
+    Examples:
+        A keeper that saves the data as pickled bytes, and a second store
+        loaded from them:
+
+        >>> import pickle
+        >>> from calendaring_sync import Changed, ChangeSet, MemoryKeeper, MemoryStore, Replica
+        >>> class Pickled(MemoryKeeper):
+        ...     def __init__(self, saved=None):
+        ...         self.saved = saved
+        ...     def load(self):
+        ...         return pickle.loads(self.saved) if self.saved else None
+        ...     def save(self, data):
+        ...         self.saved = pickle.dumps(data)
+        >>> keeper = Pickled()
+        >>> listing = ChangeSet(
+        ...     "work", None, "t1", {"a": Changed("v1", "fp-a", b"Team meeting")}, full_listing=True
+        ... )
+        >>> with Replica(MemoryStore(keeper=keeper)).session(
+        ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
+        ... ) as session:
+        ...     session.ingest(listing)
+        >>> store = MemoryStore(keeper=Pickled(keeper.saved))
+        >>> Replica(store).find_record("work", "a").content
+        b'Team meeting'
     """
 
-    scopes: dict[str, Scope] = field(default_factory=dict)
-    records: dict[int, Record] = field(default_factory=dict)
-    entries: list[FeedEntry] = field(default_factory=list)
-    last_key: int = 0
-    feed_head: int = 0
-    feed_trimmed: int = 0
-
-    def _copy(self) -> MemoryData:
-        # Scopes, records and entries are frozen, so copying the containers
-        # is enough for a snapshot.
-        return replace(
-            self, scopes=dict(self.scopes), records=dict(self.records), entries=list(self.entries)
-        )
+    def __init__(self, *, keeper: MemoryKeeper | None = None) -> None:
+        storage = _MemoryStorage(keeper)
+        super().__init__(storage)
+        with self._errors():
+            storage.load()
 
 
 class MemoryKeeper(ABC):
@@ -73,6 +102,30 @@ class MemoryKeeper(ABC):
         returns ``None`` for is reported as a bug.
         """
         return None
+
+
+@dataclass
+class MemoryData:
+    """Everything a :class:`MemoryStore` holds, as one object.
+
+    A :class:`MemoryKeeper` saves and loads it whole. It's made of plain
+    containers holding the library's frozen dataclasses, so it pickles;
+    what's inside isn't part of the API.
+    """
+
+    scopes: dict[str, Scope] = field(default_factory=dict)
+    records: dict[int, Record] = field(default_factory=dict)
+    entries: list[FeedEntry] = field(default_factory=list)
+    last_key: int = 0
+    feed_head: int = 0
+    feed_trimmed: int = 0
+
+    def _copy(self) -> MemoryData:
+        # Scopes, records and entries are frozen, so copying the containers
+        # is enough for a snapshot.
+        return replace(
+            self, scopes=dict(self.scopes), records=dict(self.records), entries=list(self.entries)
+        )
 
 
 class _MemoryStorage(Storage):
@@ -208,56 +261,3 @@ class _MemoryTransaction(StorageTransaction):
     def trim_entries(self, through: int) -> None:
         self._data.entries = [e for e in self._data.entries if e.number > through]
         self._data.feed_trimmed = max(self._data.feed_trimmed, through)
-
-
-@check_argument_types
-class MemoryStore(StateStore):
-    """A store held in memory, lost when the process ends unless a keeper saves it.
-
-    Each transaction works on its own view of the data: a read on the data
-    the last write committed, a write on a copy of it, which becomes the
-    committed data only when the transaction ends normally. So a read in
-    one thread runs while another thread writes, and sees the data as it
-    was when the read started. Lookups scan every record, so it suits test
-    data and small stores; use
-    :class:`~calendaring_sync.store.sqlite.SQLiteStore` for large ones.
-
-    Args:
-        keeper: Where to save the data, such as a file, so the next process
-            can load it. ``None`` keeps it only in memory.
-
-    Raises:
-        StoreError: If the keeper can't load the data, as its
-            :meth:`~MemoryKeeper.error` says.
-
-    Examples:
-        A keeper that saves the data as pickled bytes, and a second store
-        loaded from them:
-
-        >>> import pickle
-        >>> from calendaring_sync import Changed, ChangeSet, MemoryKeeper, MemoryStore, Replica
-        >>> class Pickled(MemoryKeeper):
-        ...     def __init__(self, saved=None):
-        ...         self.saved = saved
-        ...     def load(self):
-        ...         return pickle.loads(self.saved) if self.saved else None
-        ...     def save(self, data):
-        ...         self.saved = pickle.dumps(data)
-        >>> keeper = Pickled()
-        >>> listing = ChangeSet(
-        ...     "work", None, "t1", {"a": Changed("v1", "fp-a", b"Team meeting")}, full_listing=True
-        ... )
-        >>> with Replica(MemoryStore(keeper=keeper)).session(
-        ...     "work", fingerprint_scheme="sha256", media_type="text/plain"
-        ... ) as session:
-        ...     session.ingest(listing)
-        >>> store = MemoryStore(keeper=Pickled(keeper.saved))
-        >>> Replica(store).find_record("work", "a").content
-        b'Team meeting'
-    """
-
-    def __init__(self, *, keeper: MemoryKeeper | None = None) -> None:
-        storage = _MemoryStorage(keeper)
-        super().__init__(storage)
-        with self._errors():
-            storage.load()

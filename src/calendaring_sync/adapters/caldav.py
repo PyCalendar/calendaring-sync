@@ -41,7 +41,7 @@ from calendaring_sync.adapters.base import (
     SyncAdapter,
     _url_id,
 )
-from calendaring_sync.error import IncompleteListingError, ScopeGoneError
+from calendaring_sync.error import IncompleteListingError
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
 from calendaring_sync.objects.edit import EditFields, EditKind, LocalEdit
@@ -230,16 +230,10 @@ class _CalDAVFlow(Adapter):
             raise ValueError("Calendar data must hold an object with a UID")
         return EditFields(fields.fingerprint, self._containers, fields.logical_key)
 
-    def _ask(self, request: Any) -> Steps[Any]:
-        """Send one request about the collection; a collection that's gone raises.
-
-        ``request`` is a function making the call, so a synchronous client's
-        error is raised here too.
-        """
-        try:
-            return (yield request())
-        except dav_error.NotFoundError as exc:
-            raise ScopeGoneError(f"The server has no calendar at {self._url}") from exc
+    def _gone(self, error: Exception) -> str | None:
+        if isinstance(error, dav_error.NotFoundError):
+            return f"The server has no calendar at {self._url}"
+        return None
 
     def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[ReadResult]:
         # A collection that names no token (one that supports the report

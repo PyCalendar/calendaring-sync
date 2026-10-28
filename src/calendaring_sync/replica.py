@@ -43,7 +43,7 @@ from calendaring_sync.error import (
 )
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
-from calendaring_sync.objects.conflict import Conflict
+from calendaring_sync.objects.conflict import Conflict, ConflictKind
 from calendaring_sync.objects.dropped_scope import DroppedScope
 from calendaring_sync.objects.edit import EditKind, LocalEdit
 from calendaring_sync.objects.feed import FeedEntry, FeedEntryKind
@@ -82,6 +82,71 @@ def _without_fingerprints(record: Record) -> Record:
     )
 
 
+def _freed_key(record: Record | None, change: Change) -> str | None:
+    """The logical key the server's copy held before ``change`` and no longer holds after it."""
+    held = None if record is None else record.server_logical_key
+    if held is None:
+        return None
+    if isinstance(change, Removed) or (isinstance(change, Changed) and change.logical_key != held):
+        return held
+    return None
+
+
+def _check_known_version(record: Record | None, object_id: str) -> None:
+    """Refuse an object reported unchanged that the store holds no version of."""
+    if record is None or record.server_version is None:
+        raise UnknownVersionError(
+            f"Object {object_id!r} is reported unchanged, but the store has no version for it"
+        )
+
+
+def _live(record: Record | None) -> Record | None:
+    """The record, unless the store keeps it only as removed."""
+    return None if record is None or record.state is RecordState.REMOVED else record
+
+
+def _claimed_create(change: Change, claimed: dict[str, Record]) -> Record | None:
+    """The create in flight a new object is, taken out of ``claimed``, or ``None``.
+
+    A new object with a create's key is that create only if it holds what
+    was sent; anything else is someone else's object, and the create goes
+    out again.
+    """
+    if not isinstance(change, Changed) or change.logical_key is None:
+        return None
+    create = claimed.get(change.logical_key)
+    if create is None or create.edit is None or not same_data(change, create.edit):
+        return None
+    return claimed.pop(change.logical_key)
+
+
+def _settled_kind(*, was_conflict: bool, in_flight: bool) -> FeedEntryKind | None:
+    """The feed entry for a record leaving a conflict, or a push in flight that landed."""
+    if was_conflict:
+        return FeedEntryKind.CONFLICT_RESOLVED
+    if in_flight:
+        return FeedEntryKind.PUSHED
+    return None
+
+
+def _waits_for_version(record: Record, *, guarded: bool) -> bool:
+    """Whether a pending edit waits for an ingest, because its push would go out unguarded."""
+    return guarded and record.version is None and not record.is_create
+
+
+def _edited(record: Record, edit: LocalEdit) -> Record:
+    """The record holding ``edit``, or synced if the edit brings it back to its synced copy."""
+    if edit.kind is EditKind.CHANGE and record.content is not None and same_data(edit, record):
+        return replace(record, state=RecordState.SYNCED, edit=None)
+    return replace(record, state=RecordState.PENDING, edit=edit)
+
+
+def _changed_to(record: Record, edit: LocalEdit) -> Record:
+    """The record after a change to ``edit``'s data; a create stays a create."""
+    kind = EditKind.CREATE if record.is_create else EditKind.CHANGE
+    return _edited(record, replace(edit, kind=kind))
+
+
 def _check_resolution(record: Record, resolution: Resolution) -> None:
     """Raise ``ValueError`` unless ``record`` is in conflict and ``resolution`` fits its kind."""
     if record.state is not RecordState.CONFLICT or record.conflict is None:
@@ -110,24 +175,6 @@ def _resolved(record: Record, resolution: Resolution, now: datetime) -> Record |
     if base is None or edit is None:
         return base
     return _edited(base, edit)
-
-
-def _edited(record: Record, edit: LocalEdit) -> Record:
-    """The record holding ``edit``, or synced if the edit brings it back to its synced copy."""
-    if edit.kind is EditKind.CHANGE and record.content is not None and same_data(edit, record):
-        return replace(record, state=RecordState.SYNCED, edit=None)
-    return replace(record, state=RecordState.PENDING, edit=edit)
-
-
-def _changed_to(record: Record, edit: LocalEdit) -> Record:
-    """The record after a change to ``edit``'s data; a create stays a create."""
-    kind = EditKind.CREATE if record.is_create else EditKind.CHANGE
-    return _edited(record, replace(edit, kind=kind))
-
-
-def _waits_for_version(record: Record, *, guarded: bool) -> bool:
-    """Whether a pending edit waits for an ingest, because its push would go out unguarded."""
-    return guarded and record.version is None and not record.is_create
 
 
 @check_argument_types
@@ -185,6 +232,8 @@ class Replica:
         self._clock = clock or _utc_now
         self._sessions: dict[str, Session] = {}
         self._sessions_lock = Lock()
+
+    # Sessions: ingesting and pushing, which a Session drives.
 
     @contextmanager
     def session(
@@ -297,7 +346,7 @@ class Replica:
                     f"Scope {scope.id!r} has no token, so it needs a full listing"
                 )
             if change_set.full_listing:
-                scope = self._check_listing_page(scope, change_set, first_page)
+                scope = self._check_listing_page(scope, change_set, first_page=first_page)
             claimed = self._claimed_creates(scope.id) if unique_logical_key else {}
             freed: set[str] = set()
             for object_id, change in change_set.changes.items():
@@ -322,7 +371,9 @@ class Replica:
             self._store.put_scope(scope)
         return mentioned
 
-    def _check_listing_page(self, scope: Scope, change_set: ChangeSet, first_page: bool) -> Scope:
+    def _check_listing_page(
+        self, scope: Scope, change_set: ChangeSet, *, first_page: bool
+    ) -> Scope:
         """Mark a listing as started, or check a later page belongs to the listing in progress."""
         if first_page:
             return replace(scope, listing_token=change_set.token)
@@ -350,65 +401,26 @@ class Replica:
         before the change and doesn't after it goes into ``freed``.
         """
         record = self._store.find_record(scope_id, object_id)
-        held = None if record is None else record.server_logical_key
-        if held is not None and (
-            isinstance(change, Removed)
-            or (isinstance(change, Changed) and change.logical_key != held)
-        ):
-            freed.add(held)
+        key = _freed_key(record, change)
+        if key is not None:
+            freed.add(key)
         if isinstance(change, Unchanged):
-            if record is None or record.server_version is None:
-                raise UnknownVersionError(
-                    f"Object {object_id!r} is reported unchanged, "
-                    "but the store has no version for it"
-                )
+            _check_known_version(record, object_id)
             return
-        if record is None and isinstance(change, Changed) and change.logical_key is not None:
-            # A new object with the key is the create only if it holds what was sent;
-            # anything else is someone else's object, and the create goes out again.
-            create = claimed.get(change.logical_key)
-            if create is not None and create.edit is not None and same_data(change, create.edit):
-                record = claimed.pop(change.logical_key)
+        if record is None:
+            record = _claimed_create(change, claimed)
         in_flight = record is not None and record.state is RecordState.IN_FLIGHT
-        live = None if record is None or record.state is RecordState.REMOVED else record
-        # A refused change holds no copy of the server's object, so whatever the
-        # server reports about it is news, a removal included.
-        if (
-            live is not None
-            and live.conflict is not None
-            and not live.is_refused_change
-            and same_remote(live.conflict, change)
-        ):
-            if isinstance(change, Changed):
-                conflict = Conflict.from_change(live.conflict.kind, change, live.conflict.opened_at)
-                self._store.update_record(replace(live, conflict=conflict))
+        live = _live(record)
+        if live is not None and self._refresh_conflict(live, change):
             return
         edit = None if live is None else live.edit
         synced = live if live is not None and live.content is not None else None
         change_class, kind = classify(synced, change, edit)
         was_conflict = live is not None and live.conflict is not None
-        # A record leaving a conflict is reported as the conflict ending, and
-        # one whose push was in flight as the push reaching the server.
-        if was_conflict:
-            settled: FeedEntryKind | None = FeedEntryKind.CONFLICT_RESOLVED
-        elif in_flight:
-            settled = FeedEntryKind.PUSHED
-        else:
-            settled = None
+        settled = _settled_kind(was_conflict=was_conflict, in_flight=in_flight)
         match change_class:
             case ChangeClass.CONFLICT if kind is not None and live is not None:
-                opened_at = now if live.conflict is None else live.conflict.opened_at
-                self._write(
-                    replace(
-                        live,
-                        state=RecordState.CONFLICT,
-                        conflict=Conflict.from_change(kind, change, opened_at),
-                    ),
-                    FeedEntryKind.CONFLICT_UPDATED
-                    if was_conflict
-                    else FeedEntryKind.CONFLICT_OPENED,
-                    now,
-                )
+                self._store_conflict(live, change, kind, now, was_conflict=was_conflict)
             case ChangeClass.REMOTE_ONLY if isinstance(change, Changed):
                 self._store_server_copy(record, scope_id, object_id, change, now, settled)
             case ChangeClass.UNCHANGED if isinstance(change, Changed) and edit is not None:
@@ -417,23 +429,75 @@ class Replica:
             case ChangeClass.DELETED_REMOTE if live is not None:
                 self._write(live.removed_at(now), settled or FeedEntryKind.REMOVED, now)
             case ChangeClass.UNCHANGED | ChangeClass.LOCAL_ONLY | ChangeClass.DELETED_LOCAL if (
-                live is not None and (isinstance(change, Changed) or was_conflict or in_flight)
+                live is not None
             ):
-                # The server's copy holds the synced data, so only its version and
-                # content move; a conflict this settles leaves the edit to be pushed,
-                # and so does a push in flight that hasn't landed.
-                if isinstance(change, Changed):
-                    live = live.with_copy(change, now)
-                if was_conflict or in_flight:
-                    self._write(
-                        replace(live, state=RecordState.PENDING, conflict=None),
-                        FeedEntryKind.CONFLICT_RESOLVED
-                        if was_conflict
-                        else FeedEntryKind.PUSH_FAILED,
-                        now,
-                    )
-                else:
-                    self._store.update_record(live)
+                self._keep_edit(live, change, now, was_conflict=was_conflict, in_flight=in_flight)
+
+    def _refresh_conflict(self, live: Record, change: Changed | Removed) -> bool:
+        """Keep a conflict open when the server reports nothing new; say whether it did.
+
+        A refused change holds no copy of the server's object, so whatever
+        the server reports about it is news, a removal included. A report
+        of the same data only moves the server copy's version.
+        """
+        if live.conflict is None or live.is_refused_change:
+            return False
+        if not same_remote(live.conflict, change):
+            return False
+        if isinstance(change, Changed):
+            conflict = Conflict.from_change(live.conflict.kind, change, live.conflict.opened_at)
+            self._store.update_record(replace(live, conflict=conflict))
+        return True
+
+    def _store_conflict(
+        self,
+        live: Record,
+        change: Changed | Removed,
+        kind: ConflictKind,
+        now: datetime,
+        *,
+        was_conflict: bool,
+    ) -> None:
+        """Open a conflict on the record, or update the one it holds."""
+        opened_at = now if live.conflict is None else live.conflict.opened_at
+        self._write(
+            replace(
+                live,
+                state=RecordState.CONFLICT,
+                conflict=Conflict.from_change(kind, change, opened_at),
+            ),
+            FeedEntryKind.CONFLICT_UPDATED if was_conflict else FeedEntryKind.CONFLICT_OPENED,
+            now,
+        )
+
+    def _keep_edit(
+        self,
+        live: Record,
+        change: Changed | Removed,
+        now: datetime,
+        *,
+        was_conflict: bool,
+        in_flight: bool,
+    ) -> None:
+        """Store what the server reported while the record keeps its edit.
+
+        The server's copy holds the synced data, so only its version and
+        content move; a conflict this settles leaves the edit to be pushed,
+        and so does a push in flight that hasn't landed. A removal, of a
+        record with no conflict and no push in flight, changes nothing.
+        """
+        if not (isinstance(change, Changed) or was_conflict or in_flight):
+            return
+        if isinstance(change, Changed):
+            live = live.with_copy(change, now)
+        if was_conflict or in_flight:
+            self._write(
+                replace(live, state=RecordState.PENDING, conflict=None),
+                FeedEntryKind.CONFLICT_RESOLVED if was_conflict else FeedEntryKind.PUSH_FAILED,
+                now,
+            )
+        else:
+            self._store.update_record(live)
 
     def _store_server_copy(
         self,
@@ -497,30 +561,92 @@ class Replica:
                     now,
                 )
 
-    def _write(self, record: Record, kind: FeedEntryKind, at: datetime) -> None:
-        """Store a record together with the feed entry about it."""
-        entry = self._store.append_entry(record.scope, kind, record.local_key, record.object_id, at)
-        self._store.update_record(replace(record, last_entry=entry.number))
-
-    def _existing_scope(self, scope_id: str) -> Scope:
-        scope = self._store.get_scope(scope_id)
-        if scope is None:
-            raise UnknownScopeError(f"No scope {scope_id!r}")
-        return scope
-
-    def _read_in_scope(self, scope_id: str, read: Callable[[], _T]) -> _T:
-        """Run ``read`` in a read transaction, once the scope is known to exist."""
+    def _to_push(self, scope_id: str, *, guarded: bool) -> list[Record]:
         with self._store.transaction(write=False):
-            self._existing_scope(scope_id)
-            return read()
+            pending = self._store.scope_records(scope_id, states=_PENDING)
+        return [r for r in pending if not _waits_for_version(r, guarded=guarded)]
 
-    @contextmanager
-    def _without_session(self, scope_id: str) -> Iterator[None]:
-        """Hold off new sessions for a scope that has none open, for the ``with`` block."""
-        with self._sessions_lock:
-            if scope_id in self._sessions:
-                raise SessionError(f"A session for {scope_id!r} is open")
-            yield
+    def _claim(
+        self, scope_id: str, local_key: int, object_id: str | None, *, guarded: bool
+    ) -> Record | None:
+        with self._store.transaction():
+            record = self._store.get_record(local_key)
+            if record is None:
+                return None
+            if record.scope != scope_id:
+                raise OtherScopeError(f"Record {local_key} belongs to scope {record.scope!r}")
+            if object_id is not None and record.object_id is not None:
+                raise ObjectIdAssignedError(
+                    f"Record {local_key} already has object id {record.object_id!r}"
+                )
+            if record.state is not RecordState.PENDING or _waits_for_version(
+                record, guarded=guarded
+            ):
+                return None
+            if object_id is not None:
+                self._free_object_id(scope_id, object_id, record.local_key)
+            claimed = replace(
+                record,
+                state=RecordState.IN_FLIGHT,
+                object_id=object_id or record.object_id,
+                claims=record.claims + 1,
+            )
+            self._store.update_record(claimed)
+            return claimed
+
+    def _settle(self, claimed: Record, outcome: PushOutcome) -> bool:
+        now = self._clock()
+        with self._store.transaction():
+            record = self._store.get_record(claimed.local_key)
+            # Only the latest claim of the same edit counts: another process may
+            # have settled this push, and claimed the edit again since.
+            if (
+                record is None
+                or record.edit != claimed.edit
+                or record.claims != claimed.claims
+                or record.state not in (RecordState.IN_FLIGHT, RecordState.PENDING)
+            ):
+                return False
+            held = record.server_logical_key
+            settled = outcome._settled(record, now)
+            if settled is not None:
+                if settled.takes is not None:
+                    self._free_object_id(record.scope, settled.takes, record.local_key)
+                self._write(settled.record, settled.kind, now)
+            after = self._store.get_record(record.local_key)
+            if held is not None and (after is None or after.server_logical_key != held):
+                self._lift_refusals(record.scope, {held}, now)
+        return True
+
+    def _free_object_id(self, scope_id: str, object_id: str, owner: int) -> None:
+        """Make ``object_id`` free for record ``owner``.
+
+        A removed record holding it gives the id up but stays, as a
+        :term:`change feed` reader may still read it, until it's purged.
+
+        Raises:
+            DuplicateObjectError: If a record that isn't removed holds it.
+        """
+        removed = self._removed_holder(scope_id, object_id, owner)
+        if removed is not None:
+            self._store.update_record(replace(removed, object_id=None))
+
+    def _removed_holder(
+        self, scope_id: str, object_id: str, owner: int | None = None
+    ) -> Record | None:
+        """The removed record that hands ``object_id`` over, or ``None`` if no other holds it.
+
+        Raises:
+            DuplicateObjectError: If a record that isn't removed holds it.
+        """
+        holder = self._store.find_record(scope_id, object_id)
+        if holder is None or holder.local_key == owner:
+            return None
+        if holder.state is not RecordState.REMOVED:
+            raise DuplicateObjectError(f"Scope {scope_id!r} already has object {object_id!r}")
+        return holder
+
+    # Scopes.
 
     def scope(self, scope_id: str) -> Scope:
         """Return one scope.
@@ -552,6 +678,63 @@ class Replica:
         """
         with self._store.transaction(write=False):
             return self._store.scopes()
+
+    def reset(self, scope_id: str) -> None:
+        """:term:`Reset <reset>` a scope, so its next sync is a :term:`full listing`.
+
+        Records keep their state.
+
+        Runs in a write transaction of its own.
+
+        Raises:
+            TransactionError: If a store transaction is already open in this thread.
+            UnknownScopeError: If there's no scope with this id.
+            SessionError: If a session for the scope is open.
+
+        Examples:
+            >>> replica.reset("work")
+            >>> replica.scope("work").token is None
+            True
+        """
+        with self._without_session(scope_id), self._store.transaction():
+            scope = self._existing_scope(scope_id)
+            self._store.put_scope(replace(scope, token=None, listing_token=None))
+
+    def drop_scope(self, scope_id: str) -> DroppedScope:
+        """:term:`Drop <drop>` a scope and every record in it.
+
+        Runs in a write transaction of its own.
+
+        Returns:
+            The records holding local work that the drop discarded.
+
+        Raises:
+            TransactionError: If a store transaction is already open in this thread.
+            UnknownScopeError: If there's no scope with this id.
+            SessionError: If a session for the scope is open.
+
+        Examples:
+            >>> dropped = replica.drop_scope("work")
+            >>> dropped.pending, dropped.conflicts
+            ((), ())
+            >>> replica.scopes()
+            []
+        """
+        with self._without_session(scope_id), self._store.transaction():
+            self._existing_scope(scope_id)
+            records = self._store.scope_records(scope_id)
+            self._store.delete_scope(scope_id)
+            self._store.append_entry(
+                scope_id, FeedEntryKind.SCOPE_DROPPED, None, None, self._clock()
+            )
+        pending = (RecordState.PENDING, RecordState.IN_FLIGHT)
+        return DroppedScope(
+            scope=scope_id,
+            pending=tuple(r for r in records if r.state in pending),
+            conflicts=tuple(r for r in records if r.state is RecordState.CONFLICT),
+        )
+
+    # Records.
 
     def record(self, local_key: int) -> Record | None:
         """Return the record with this :term:`local key`, or ``None``.
@@ -610,6 +793,57 @@ class Replica:
         return self._read_in_scope(
             scope_id, lambda: self._store.find_by_logical_key(scope_id, logical_key)
         )
+
+    def records(
+        self, scope_id: str, *, states: frozenset[RecordState] | None = None
+    ) -> list[Record]:
+        """Return the records in a scope, removed ones included, ordered by local key.
+
+        Runs in a read transaction of its own.
+
+        Args:
+            scope_id: The scope to read.
+            states: Only the records in one of these states; ``None`` for every record.
+
+        Raises:
+            TransactionError: If a store transaction is already open in this thread.
+            UnknownScopeError: If there's no scope with this id.
+
+        Examples:
+            >>> [record.object_id for record in replica.records("work")]
+            ['a']
+            >>> replica.records("work", states=frozenset({RecordState.PENDING}))
+            []
+        """
+        return self._read_in_scope(
+            scope_id, lambda: self._store.scope_records(scope_id, states=states)
+        )
+
+    def known_versions(self, scope_id: str) -> dict[str, str]:
+        """Return the version of the server's copy of every object the store knows one for.
+
+        For a record in :term:`conflict` that's the :term:`server's copy`. An
+        :term:`adapter` compares these with the server's during a
+        :term:`full listing`, and reports objects whose version matches as
+        ``Unchanged`` instead of fetching them. Removed records aren't included.
+
+        Runs in a read transaction of its own.
+
+        Raises:
+            TransactionError: If a store transaction is already open in this thread.
+            UnknownScopeError: If there's no scope with this id.
+
+        Examples:
+            >>> replica.known_versions("work")
+            {'a': 'v1'}
+        """
+        return {
+            record.object_id: version
+            for record in self.records(scope_id)
+            if record.object_id is not None and (version := record.server_version) is not None
+        }
+
+    # Local edits.
 
     def create(
         self,
@@ -778,98 +1012,6 @@ class Replica:
             if record.edit is not None:
                 self._drop_edit(record)
 
-    def _to_push(self, scope_id: str, *, guarded: bool) -> list[Record]:
-        with self._store.transaction(write=False):
-            pending = self._store.scope_records(scope_id, states=_PENDING)
-        return [r for r in pending if not _waits_for_version(r, guarded=guarded)]
-
-    def _claim(
-        self, scope_id: str, local_key: int, object_id: str | None, *, guarded: bool
-    ) -> Record | None:
-        with self._store.transaction():
-            record = self._store.get_record(local_key)
-            if record is None:
-                return None
-            if record.scope != scope_id:
-                raise OtherScopeError(f"Record {local_key} belongs to scope {record.scope!r}")
-            if object_id is not None and record.object_id is not None:
-                raise ObjectIdAssignedError(
-                    f"Record {local_key} already has object id {record.object_id!r}"
-                )
-            if record.state is not RecordState.PENDING or _waits_for_version(
-                record, guarded=guarded
-            ):
-                return None
-            if object_id is not None:
-                self._free_object_id(scope_id, object_id, record.local_key)
-            claimed = replace(
-                record,
-                state=RecordState.IN_FLIGHT,
-                object_id=object_id or record.object_id,
-                claims=record.claims + 1,
-            )
-            self._store.update_record(claimed)
-            return claimed
-
-    def _settle(self, claimed: Record, outcome: PushOutcome) -> bool:
-        now = self._clock()
-        with self._store.transaction():
-            record = self._store.get_record(claimed.local_key)
-            # Only the latest claim of the same edit counts: another process may
-            # have settled this push, and claimed the edit again since.
-            if (
-                record is None
-                or record.edit != claimed.edit
-                or record.claims != claimed.claims
-                or record.state not in (RecordState.IN_FLIGHT, RecordState.PENDING)
-            ):
-                return False
-            held = record.server_logical_key
-            settled = outcome._settled(record, now)
-            if settled is not None:
-                if settled.takes is not None:
-                    self._free_object_id(record.scope, settled.takes, record.local_key)
-                self._write(settled.record, settled.kind, now)
-            after = self._store.get_record(record.local_key)
-            if held is not None and (after is None or after.server_logical_key != held):
-                self._lift_refusals(record.scope, {held}, now)
-        return True
-
-    def _free_object_id(self, scope_id: str, object_id: str, owner: int) -> None:
-        """Make ``object_id`` free for record ``owner``.
-
-        A removed record holding it gives the id up but stays, as a
-        :term:`change feed` reader may still read it, until it's purged.
-
-        Raises:
-            DuplicateObjectError: If a record that isn't removed holds it.
-        """
-        removed = self._removed_holder(scope_id, object_id, owner)
-        if removed is not None:
-            self._store.update_record(replace(removed, object_id=None))
-
-    def _removed_holder(
-        self, scope_id: str, object_id: str, owner: int | None = None
-    ) -> Record | None:
-        """The removed record that hands ``object_id`` over, or ``None`` if no other holds it.
-
-        Raises:
-            DuplicateObjectError: If a record that isn't removed holds it.
-        """
-        holder = self._store.find_record(scope_id, object_id)
-        if holder is None or holder.local_key == owner:
-            return None
-        if holder.state is not RecordState.REMOVED:
-            raise DuplicateObjectError(f"Scope {scope_id!r} already has object {object_id!r}")
-        return holder
-
-    def _drop_edit(self, record: Record) -> None:
-        """Leave the record as the server has it: synced, or gone if the server never had it."""
-        if record.is_create:
-            self._store.delete_record(record.local_key)
-        else:
-            self._store.update_record(replace(record, state=RecordState.SYNCED, edit=None))
-
     @contextmanager
     def _editing(self, local_key: int) -> Iterator[Record]:
         """Open the write transaction an edit runs in, and yield the record it edits.
@@ -894,109 +1036,14 @@ class Replica:
             raise PushInFlightError(f"Record {local_key} has a push in flight")
         return record
 
-    def records(
-        self, scope_id: str, *, states: frozenset[RecordState] | None = None
-    ) -> list[Record]:
-        """Return the records in a scope, removed ones included, ordered by local key.
+    def _drop_edit(self, record: Record) -> None:
+        """Leave the record as the server has it: synced, or gone if the server never had it."""
+        if record.is_create:
+            self._store.delete_record(record.local_key)
+        else:
+            self._store.update_record(replace(record, state=RecordState.SYNCED, edit=None))
 
-        Runs in a read transaction of its own.
-
-        Args:
-            scope_id: The scope to read.
-            states: Only the records in one of these states; ``None`` for every record.
-
-        Raises:
-            TransactionError: If a store transaction is already open in this thread.
-            UnknownScopeError: If there's no scope with this id.
-
-        Examples:
-            >>> [record.object_id for record in replica.records("work")]
-            ['a']
-            >>> replica.records("work", states=frozenset({RecordState.PENDING}))
-            []
-        """
-        return self._read_in_scope(
-            scope_id, lambda: self._store.scope_records(scope_id, states=states)
-        )
-
-    def known_versions(self, scope_id: str) -> dict[str, str]:
-        """Return the version of the server's copy of every object the store knows one for.
-
-        For a record in :term:`conflict` that's the :term:`server's copy`. An
-        :term:`adapter` compares these with the server's during a
-        :term:`full listing`, and reports objects whose version matches as
-        ``Unchanged`` instead of fetching them. Removed records aren't included.
-
-        Runs in a read transaction of its own.
-
-        Raises:
-            TransactionError: If a store transaction is already open in this thread.
-            UnknownScopeError: If there's no scope with this id.
-
-        Examples:
-            >>> replica.known_versions("work")
-            {'a': 'v1'}
-        """
-        return {
-            record.object_id: version
-            for record in self.records(scope_id)
-            if record.object_id is not None and (version := record.server_version) is not None
-        }
-
-    def reset(self, scope_id: str) -> None:
-        """:term:`Reset <reset>` a scope, so its next sync is a :term:`full listing`.
-
-        Records keep their state.
-
-        Runs in a write transaction of its own.
-
-        Raises:
-            TransactionError: If a store transaction is already open in this thread.
-            UnknownScopeError: If there's no scope with this id.
-            SessionError: If a session for the scope is open.
-
-        Examples:
-            >>> replica.reset("work")
-            >>> replica.scope("work").token is None
-            True
-        """
-        with self._without_session(scope_id), self._store.transaction():
-            scope = self._existing_scope(scope_id)
-            self._store.put_scope(replace(scope, token=None, listing_token=None))
-
-    def drop_scope(self, scope_id: str) -> DroppedScope:
-        """:term:`Drop <drop>` a scope and every record in it.
-
-        Runs in a write transaction of its own.
-
-        Returns:
-            The records holding local work that the drop discarded.
-
-        Raises:
-            TransactionError: If a store transaction is already open in this thread.
-            UnknownScopeError: If there's no scope with this id.
-            SessionError: If a session for the scope is open.
-
-        Examples:
-            >>> dropped = replica.drop_scope("work")
-            >>> dropped.pending, dropped.conflicts
-            ((), ())
-            >>> replica.scopes()
-            []
-        """
-        with self._without_session(scope_id), self._store.transaction():
-            self._existing_scope(scope_id)
-            records = self._store.scope_records(scope_id)
-            self._store.delete_scope(scope_id)
-            self._store.append_entry(
-                scope_id, FeedEntryKind.SCOPE_DROPPED, None, None, self._clock()
-            )
-        pending = (RecordState.PENDING, RecordState.IN_FLIGHT)
-        return DroppedScope(
-            scope=scope_id,
-            pending=tuple(r for r in records if r.state in pending),
-            conflicts=tuple(r for r in records if r.state is RecordState.CONFLICT),
-        )
+    # Conflicts.
 
     def resolve(self, record: Record, resolution: Resolution) -> None:
         """Resolve one :term:`conflict`, as your application decided from ``record``.
@@ -1166,6 +1213,8 @@ class Replica:
             )
         return holders[0]
 
+    # The change feed.
+
     def feed_head(self) -> int:
         """Return the number of the last :term:`change feed` entry written, ``0`` for none.
 
@@ -1281,6 +1330,33 @@ class Replica:
                 f"{name} must be between 0 and the last entry, {head}, not {number}"
             )
         return trimmed
+
+    # Steps every area shares.
+
+    def _write(self, record: Record, kind: FeedEntryKind, at: datetime) -> None:
+        """Store a record together with the feed entry about it."""
+        entry = self._store.append_entry(record.scope, kind, record.local_key, record.object_id, at)
+        self._store.update_record(replace(record, last_entry=entry.number))
+
+    def _existing_scope(self, scope_id: str) -> Scope:
+        scope = self._store.get_scope(scope_id)
+        if scope is None:
+            raise UnknownScopeError(f"No scope {scope_id!r}")
+        return scope
+
+    def _read_in_scope(self, scope_id: str, read: Callable[[], _T]) -> _T:
+        """Run ``read`` in a read transaction, once the scope is known to exist."""
+        with self._store.transaction(write=False):
+            self._existing_scope(scope_id)
+            return read()
+
+    @contextmanager
+    def _without_session(self, scope_id: str) -> Iterator[None]:
+        """Hold off new sessions for a scope that has none open, for the ``with`` block."""
+        with self._sessions_lock:
+            if scope_id in self._sessions:
+                raise SessionError(f"A session for {scope_id!r} is open")
+            yield
 
 
 # Last, since session.py imports Replica from this module.
