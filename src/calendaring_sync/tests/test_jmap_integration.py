@@ -5,10 +5,11 @@
 Integration tests for the JMAP adapter, against running servers.
 
 Cyrus and Stalwart are tested when their Docker fixtures answer, and skipped
-otherwise; ``record_jmap`` says how to start them. Every test runs the
-synchronous and the asynchronous adapter, and each row of the server
-compatibility page's JMAP table has a test here or a scenario run against
-both servers. Every scenario deletes the account's events first.
+otherwise; ``record_jmap`` says how to start them. A test that syncs runs
+the synchronous and the asynchronous adapter, except the docs example, which
+runs as its page shows it. Each row of the server compatibility page's JMAP
+table has a test here or a scenario run against both servers. Every scenario
+deletes the account's events first.
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ from calendaring_sync.adapters import jmap as adapter_module
 from calendaring_sync.adapters.jmap import PAGE_SIZE
 from calendaring_sync.tests import _examples
 from calendaring_sync.tests import _jmap_scenarios as scenarios
+from calendaring_sync.tests._content import event
 from calendaring_sync.tests._jmap_scenarios import (
     SCENARIOS,
     SERVERS,
@@ -43,7 +45,7 @@ from calendaring_sync.tests._jmap_scenarios import (
     jmap_client,
 )
 from calendaring_sync.tests._live import (
-    CHECKS,
+    EveryProtocol,
     answers,
     created_and_removed,
     live_environment,
@@ -60,8 +62,12 @@ from calendaring_sync.tests._tape import Exchange
 # turns every later incremental sync on that server into a full listing
 # until the setting is back; the test puts it back when it ends.
 _EXPIRING_STALWART = "CALENDARING_SYNC_STALWART_EXPIRY"
+
+
 # This repo's Stalwart fixture setup, whose admin calls the expiry test reuses.
 _STALWART_SETUP = Path(__file__).parents[3] / "tests/docker/stalwart/setup_stalwart.py"
+
+
 # How long Stalwart's purge task takes to truncate the change log.
 _PURGE_SECONDS = 10
 
@@ -78,39 +84,6 @@ def live(request: pytest.FixtureRequest) -> tuple[Server, Login]:
 _env = partial(live_environment, scenarios)
 
 
-@pytest.mark.parametrize("scenario", list(SCENARIOS))
-def test_every_scenario(live, asynchronous, scenario):
-    with _env(live, scenario, asynchronous) as env:
-        SCENARIOS[scenario](env)
-
-
-@pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.__name__)
-def test_what_every_protocol_shows(live, asynchronous, check):
-    with _env(live, check.__name__, asynchronous) as env:
-        check(env)
-
-
-def test_a_changed_uid_stays_the_servers(live, asynchronous):
-    # Both servers keep an event's uid when an update sends another one.
-    with _env(live, "uid_kept", asynchronous) as env:
-        key = env.synced("a")
-        env.change(key, env.content("b", "renamed"))
-        env.sync()
-        env.sync()
-        assert env.at(key).logical_key == env.uid("a")
-
-
-def test_a_refused_login_is_raised_and_keeps_the_token(live, asynchronous):
-    def wrong_login(env: Env, url: str, username: str | None) -> tuple[Any, Any]:
-        client = jmap_client(asynchronous, url=url, username=username, password="not it")
-        adapter = adapter_class(asynchronous)(
-            env.replica, client, account_id=env.account, scope_id=env.adapter.scope_id
-        )
-        return adapter, client.aclose if asynchronous else client.close
-
-    refused_login(scenarios, live, asynchronous, wrong_login, JMAPAuthError)
-
-
 @contextmanager
 def _refused_if(refused: bool, error_type: str) -> Iterator[None]:
     """Expect the block to raise the server's ``error_type`` when ``refused``, and nothing else."""
@@ -125,84 +98,6 @@ def _refused_if(refused: bool, error_type: str) -> Iterator[None]:
 def _calls(env: Env, method: str, after: int = 0) -> list[Exchange]:
     """The exchanges from the ``after``-th on whose request calls ``method``."""
     return [e for e in env.tape.exchanges[after:] if f'"{method}"' in e.request]
-
-
-def test_an_event_created_and_removed_while_paging_never_arrives(live, asynchronous):
-    # Paged, Cyrus lists it as destroyed: the removal of an unknown id does nothing.
-    with (
-        _env(live, "created_and_removed_paged", asynchronous) as env,
-        mock.patch.object(adapter_module, "PAGE_SIZE", 1),
-    ):
-        created_and_removed(env)
-
-
-def test_an_event_removed_and_created_again_is_a_record_of_its_own(live, asynchronous):
-    # The new event gets a new id, so its uid comes back on a new record.
-    with _env(live, "removed_and_created", asynchronous) as env:
-        key = removed_and_created(env)
-        records = env.replica.find_by_logical_key(env.adapter.scope_id, env.uid("a"))
-        assert [(r.local_key == key, r.state) for r in records] == [
-            (True, RecordState.REMOVED),
-            (False, RecordState.SYNCED),
-        ]
-
-
-def test_a_state_past_the_newest_resets_where_the_server_tells(live, asynchronous):
-    # Cyrus echoes it and reports no changes, which looks like a real
-    # answer, so nothing tells the adapter to list again.
-    server, _ = live
-    with _env(live, "unissued_state", asynchronous) as env:
-        key = edit_a(env)
-        env.forget_token(f"{env.replica.scope(env.adapter.scope_id).token}0")
-        sent = len(env.tape.exchanges)
-        env.sync()
-        listed = bool(_calls(env, "CalendarEvent/query", sent))
-        assert listed is not server.answers_unissued_state
-        assert env.at(key).state is RecordState.SYNCED
-
-
-def test_a_create_without_a_version(live, asynchronous):
-    server, _ = live
-    with _env(live, "no_version", asynchronous) as env:
-        env.sync()
-        data = scenarios.event(env.uid("a"), "one", env.calendar)
-        del data["version"]
-        key = env.create(json.dumps(data).encode())
-        with _refused_if(server.needs_version, "invalidProperties"):
-            env.sync()
-        expected = RecordState.IN_FLIGHT if server.needs_version else RecordState.SYNCED
-        assert env.at(key).state is expected
-
-
-def test_an_event_in_two_calendars(live, asynchronous):
-    server, _ = live
-    with _env(live, "two_calendars", asynchronous) as env:
-        second = env.other.create_calendar(f"calendaring-sync-{env.scenario}")
-        try:
-            env.sync()
-            both = {env.calendar: True, second: True}
-            key = env.create(env.content("a", "one", calendarIds=both))
-            with _refused_if(not server.keeps_two_calendars, "invalidProperties"):
-                env.sync()
-            if server.keeps_two_calendars:
-                # The next sync stores the server's copy, which keeps both.
-                env.sync()
-                record = env.at(key)
-                assert (record.state, record.containers) == (RecordState.SYNCED, frozenset(both))
-            else:
-                assert env.at(key).state is RecordState.IN_FLIGHT
-        finally:
-            env.other.delete_calendar(second, on_destroy_remove_events=True, account_id=env.account)
-
-
-def test_a_page_fits_in_one_get(live):
-    _, (url, username, password) = live
-    client = JMAPClient(url=url, username=username, password=password)
-    try:
-        core = client._get_session().server_capabilities["urn:ietf:params:jmap:core"]
-    finally:
-        client.close()
-    assert core["maxObjectsInGet"] >= PAGE_SIZE
 
 
 def _expire_cyrus() -> None:
@@ -254,34 +149,147 @@ def _expiring_stalwart() -> Iterator[None]:
         _stalwart_retention(setup, kept["maxChangesHistory"])
 
 
-def test_an_expired_state_lists_the_account_again(live, asynchronous):
-    server, _ = live
-    if server.name == "stalwart" and not os.environ.get(_EXPIRING_STALWART):
-        pytest.skip(
-            f"Changes Stalwart's change history for the whole server; set {_EXPIRING_STALWART}"
-        )
-    with _env(live, "state_expired", asynchronous) as env:
-        expiring = _expiring_stalwart() if server.name == "stalwart" else nullcontext()
-        with expiring:
+class TestScenarios(EveryProtocol):
+    """Every scenario, and what every protocol shows, on every server."""
+
+    scenarios = scenarios
+
+    @pytest.mark.parametrize("scenario", list(SCENARIOS))
+    def test_every_scenario_runs(self, live, asynchronous, scenario):
+        with _env(live, scenario, asynchronous) as env:
+            SCENARIOS[scenario](env)
+
+
+class TestServers:
+    """What a server does that a scenario can't show on every server."""
+
+    def test_a_changed_uid_stays_the_servers(self, live, asynchronous):
+        # Both servers keep an event's uid when an update sends another one.
+        with _env(live, "uid_kept", asynchronous) as env:
+            key = env.synced("a")
+            env.change(key, env.content("b", "renamed"))
+            env.sync()
+            env.sync()
+            assert env.at(key).logical_key == env.uid("a")
+
+    def test_a_page_fits_in_one_get(self, live):
+        _, (url, username, password) = live
+        client = JMAPClient(url=url, username=username, password=password)
+        try:
+            core = client._get_session().server_capabilities["urn:ietf:params:jmap:core"]
+        finally:
+            client.close()
+        assert core["maxObjectsInGet"] >= PAGE_SIZE
+
+    def test_an_event_created_and_removed_while_paging_never_arrives(self, live, asynchronous):
+        # Paged, Cyrus lists it as destroyed: the removal of an unknown id does nothing.
+        with (
+            _env(live, "created_and_removed_paged", asynchronous) as env,
+            mock.patch.object(adapter_module, "PAGE_SIZE", 1),
+        ):
+            created_and_removed(env)
+
+    def test_an_event_removed_and_created_again_is_a_record_of_its_own(self, live, asynchronous):
+        # The new event gets a new id, so its uid comes back on a new record.
+        with _env(live, "removed_and_created", asynchronous) as env:
+            key = removed_and_created(env)
+            records = env.replica.find_by_logical_key(env.adapter.scope_id, env.uid("a"))
+            assert [(r.local_key == key, r.state) for r in records] == [
+                (True, RecordState.REMOVED),
+                (False, RecordState.SYNCED),
+            ]
+
+    def test_an_event_in_two_calendars_keeps_both_where_allowed(self, live, asynchronous):
+        server, _ = live
+        with _env(live, "two_calendars", asynchronous) as env:
+            second = env.other.create_calendar(f"calendaring-sync-{env.scenario}")
+            try:
+                env.sync()
+                both = {env.calendar: True, second: True}
+                key = env.create(env.content("a", "one", calendarIds=both))
+                with _refused_if(not server.keeps_two_calendars, "invalidProperties"):
+                    env.sync()
+                if server.keeps_two_calendars:
+                    # The next sync stores the server's copy, which keeps both.
+                    env.sync()
+                    record = env.at(key)
+                    assert (record.state, record.containers) == (
+                        RecordState.SYNCED,
+                        frozenset(both),
+                    )
+                else:
+                    assert env.at(key).state is RecordState.IN_FLIGHT
+            finally:
+                env.other.delete_calendar(
+                    second, on_destroy_remove_events=True, account_id=env.account
+                )
+
+    def test_a_create_without_a_version_is_refused_where_needed(self, live, asynchronous):
+        server, _ = live
+        with _env(live, "no_version", asynchronous) as env:
+            env.sync()
+            data = event(env.uid("a"), "one", env.calendar)
+            del data["version"]
+            key = env.create(json.dumps(data).encode())
+            with _refused_if(server.needs_version, "invalidProperties"):
+                env.sync()
+            expected = RecordState.IN_FLIGHT if server.needs_version else RecordState.SYNCED
+            assert env.at(key).state is expected
+
+    def test_a_refused_login_is_raised_and_keeps_the_token(self, live, asynchronous):
+        def wrong_login(env: Env, url: str, username: str | None) -> tuple[Any, Any]:
+            client = jmap_client(asynchronous, url=url, username=username, password="not it")
+            adapter = adapter_class(asynchronous)(
+                env.replica, client, account_id=env.account, scope_id=env.adapter.scope_id
+            )
+            return adapter, client.aclose if asynchronous else client.close
+
+        refused_login(scenarios, live, asynchronous, wrong_login, JMAPAuthError)
+
+    def test_a_state_past_the_newest_resets_where_the_server_tells(self, live, asynchronous):
+        # Cyrus echoes it and reports no changes, which looks like a real
+        # answer, so nothing tells the adapter to list again.
+        server, _ = live
+        with _env(live, "unissued_state", asynchronous) as env:
             key = edit_a(env)
-            # A server forgets the history of what was destroyed, so one event is.
-            env.put("b", "one")
-            env.put("c", "one")
-            env.remove("c")
-        if server.name == "cyrus":
-            _expire_cyrus()
-        env.sync()
-        refused = _calls(env, "CalendarEvent/changes")
-        assert any(
-            "cannotCalculateChanges" in e.body or "invalidArguments" in e.body for e in refused
+            env.forget_token(f"{env.replica.scope(env.adapter.scope_id).token}0")
+            sent = len(env.tape.exchanges)
+            env.sync()
+            listed = bool(_calls(env, "CalendarEvent/query", sent))
+            assert listed is not server.answers_unissued_state
+            assert env.at(key).state is RecordState.SYNCED
+
+    def test_an_expired_state_lists_the_account_again(self, live, asynchronous):
+        server, _ = live
+        if server.name == "stalwart" and not os.environ.get(_EXPIRING_STALWART):
+            pytest.skip(
+                f"Changes Stalwart's change history for the whole server; set {_EXPIRING_STALWART}"
+            )
+        with _env(live, "state_expired", asynchronous) as env:
+            expiring = _expiring_stalwart() if server.name == "stalwart" else nullcontext()
+            with expiring:
+                key = edit_a(env)
+                # A server forgets the history of what was destroyed, so one event is.
+                env.put("b", "one")
+                env.put("c", "one")
+                env.remove("c")
+            if server.name == "cyrus":
+                _expire_cyrus()
+            env.sync()
+            refused = _calls(env, "CalendarEvent/changes")
+            assert any(
+                "cannotCalculateChanges" in e.body or "invalidArguments" in e.body for e in refused
+            )
+            assert env.at(key).state is RecordState.SYNCED
+            assert env.record("b").state is RecordState.SYNCED
+
+
+class TestDocsExamples:
+    """The docs example that needs a JMAP server."""
+
+    def test_the_docs_example_runs(self, live, tmp_path, monkeypatch):
+        _, (url, username, password) = live
+        ran = _examples.run(
+            "jmap_sync", monkeypatch, tmp_path, URL=url, USERNAME=username, PASSWORD=password
         )
-        assert env.at(key).state is RecordState.SYNCED
-        assert env.record("b").state is RecordState.SYNCED
-
-
-def test_the_docs_example(live, tmp_path, monkeypatch):
-    _, (url, username, password) = live
-    ran = _examples.run(
-        "jmap_sync", monkeypatch, tmp_path, URL=url, USERNAME=username, PASSWORD=password
-    )
-    assert ran["replica"].scope(ran["adapter"].scope_id).last_sync_at is not None
+        assert ran["replica"].scope(ran["adapter"].scope_id).last_sync_at is not None

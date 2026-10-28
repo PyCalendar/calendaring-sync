@@ -213,7 +213,7 @@ class _Session:
 class _AsyncSession(_Session):
     """An asynchronous client's HTTP session, through a tape."""
 
-    async def request(self, *args: Any, **kwargs: Any) -> Any:  # type: ignore[override]
+    async def request(self, *args: Any, **kwargs: Any) -> Any:
         method, url, request = self._start(args, kwargs)
         if not self._tape.recording:
             return self._tape._play(method, url, request)
@@ -221,7 +221,7 @@ class _AsyncSession(_Session):
         self._tape._keep(method, url, request, response)
         return response
 
-    async def post(self, url: str, **kwargs: Any) -> Any:  # type: ignore[override]
+    async def post(self, url: str, **kwargs: Any) -> Any:
         return await self.request("POST", url, **kwargs)
 
     async def close(self) -> None:  # type: ignore[override]

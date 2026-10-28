@@ -65,13 +65,13 @@ A new adapter can live in its own package, built on :mod:`calendaring_sync.adapt
 Run the tests
 =============
 
-Unit tests need no server, network, or Docker. CI runs these four files on every supported Python version:
+Unit tests need no server, network, or Docker. CI runs every test file except the integration ones, on every supported Python version:
 
 .. code-block:: bash
 
-    pytest src/calendaring_sync/tests/test_sync_unit.py src/calendaring_sync/tests/test_classify_unit.py src/calendaring_sync/tests/test_caldav_unit.py src/calendaring_sync/tests/test_jmap_unit.py
+    pytest src/calendaring_sync/tests --ignore-glob="*_integration.py"
 
-``test_sync_unit.py`` covers the core, the stores, and every docs example that needs no server. ``test_classify_unit.py`` covers the classifier over every combination of its inputs. The two adapter files replay HTTP exchanges recorded from real servers, kept in ``src/calendaring_sync/tests/data/``.
+``test_caldav.py`` and ``test_jmap.py`` replay HTTP exchanges recorded from real servers, kept in ``src/calendaring_sync/tests/data/``.
 
 Integration tests run each adapter, and the docs examples that need a server, against real servers:
 
@@ -81,6 +81,26 @@ Integration tests run each adapter, and the docs examples that need a server, ag
     pytest src/calendaring_sync/tests/test_caldav_integration.py src/calendaring_sync/tests/test_jmap_integration.py
 
 Radicale and Xandikos run embedded. Each other server is tested when it answers and skipped when it doesn't; the recorder each integration module's docstring names says how to start it. CI runs them only on a release tag or when a maintainer starts them, not on each pull request, so run them yourself when you change an adapter, against every server you can start.
+
+Write a test
+------------
+
+Put a test in the file for its area:
+
+- ``test_store.py``: the stores
+- ``test_ingest.py``: change sets, sessions and resets
+- ``test_replica.py``: scopes, lookups, the values the replica takes, and the change feed
+- ``test_edits.py``: local edits and conflicts
+- ``test_pushes.py``: pushes and resolutions
+- ``test_classify.py``: the classifier, over every combination of its inputs
+- ``test_adapters.py``, ``test_caldav.py`` and ``test_jmap.py``: the adapter base and each adapter
+- ``test_examples.py``: the docs examples, each test named after its example's file
+- ``test_package.py``: the package as a whole
+- ``test_caldav_integration.py`` and ``test_jmap_integration.py``: each adapter against real servers, with what every protocol must show written once in ``EveryProtocol``, in ``_live.py``
+
+In a file, each class covers one behavior, named in its docstring, and the classes follow the order the docs present things. In a class, the normal case comes first, then variations, then refusals, then threads, other processes and recovery. A test's name states what it checks, such as ``test_one_open_session_per_scope``, and variations of one behavior are rows of a ``pytest.mark.parametrize`` table beside it.
+
+Fixtures are in ``conftest.py``: a test that takes ``store`` or ``replica`` runs on every store, and one that takes ``asynchronous`` runs with both kinds of adapter. Helpers more than one file uses are in ``_helpers.py``, and events in ``_content.py``. Test each refusal with ``_assert_refused``, which also checks that nothing changed.
 
 Record server exchanges
 -----------------------
@@ -207,7 +227,7 @@ Cross-references
     Link between pages with ``:doc:`` and a relative path, such as ``:doc:`../explanation/design```, and to a class or method with ``:class:`` or ``:meth:`` and a leading ``~`` for the short name. Link a sync term to :doc:`reference/glossary` with ``:term:`` the first time a section uses it, and define a new term there, not inline.
 
 Code examples
-    Each Python example on a page is a file in ``docs/examples/``, included with ``literalinclude`` and its ``:start-after:`` and ``:end-before:`` markers, so the code a page shows is the code a test runs. An example that needs no server gets a test in ``TestExamples``, and starts from ``start.py`` when it needs a replica that synced. One that needs a server is listed in ``LIVE`` in ``_examples.py``, keeps its server details in top-level assignments, and gets an integration test, which replaces those details. Readers copy these files, so they pass the type check too. A shell command goes in a ``.. code-block:: bash``, and a tutorial ends with a "Next steps" section.
+    Each Python example on a page is a file in ``docs/examples/``, included with ``literalinclude`` and its ``:start-after:`` and ``:end-before:`` markers, so the code a page shows is the code a test runs. An example that needs no server gets a test in ``test_examples.py``, and starts from ``start.py`` when it needs a replica that synced. One that needs a server is listed in ``LIVE`` in ``_examples.py``, keeps its server details in top-level assignments, and gets an integration test, which replaces those details. Readers copy these files, so they pass the type check too. A shell command goes in a ``.. code-block:: bash``, and a tutorial ends with a "Next steps" section.
 
 Diagrams and headings
     Sphinx doesn't check the syntax inside a ``.. mermaid::`` diagram, so render a changed diagram before you open a pull request. Make each heading's underline exactly as long as the heading: Sphinx warns only about a page title's.

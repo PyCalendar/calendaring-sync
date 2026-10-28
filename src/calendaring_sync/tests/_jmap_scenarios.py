@@ -32,6 +32,7 @@ from calendaring_sync.adapters.jmap import AsyncJMAPAdapter, JMAPAdapter
 from calendaring_sync.error import ScopeGoneError
 from calendaring_sync.objects.conflict import ConflictKind
 from calendaring_sync.tests import _scenarios
+from calendaring_sync.tests._content import event
 from calendaring_sync.tests._scenarios import (
     REPLAY_LOGIN,
     REPLAY_URL,
@@ -107,21 +108,6 @@ SERVERS = by_name(
 def started(server: Server) -> nullcontext[Login]:
     """The login of ``server``'s Docker fixture, which has to be running."""
     return nullcontext(server.login)
-
-
-def event(uid: str, summary: str, calendar: str, **members: Any) -> dict[str, Any]:
-    """A small event in JSCalendar form."""
-    return {
-        "@type": "Event",
-        "version": "2.0",
-        "uid": uid,
-        "title": summary,
-        "start": "2026-11-02T10:00:00",
-        "timeZone": "Etc/UTC",
-        "duration": "PT1H",
-        "calendarIds": {calendar: True},
-        **members,
-    }
 
 
 #: Members of an event that tested servers rewrite when they store it.

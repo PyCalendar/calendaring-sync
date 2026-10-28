@@ -35,6 +35,7 @@ from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter
 from calendaring_sync.error import IncompleteListingError, ScopeGoneError
 from calendaring_sync.objects.conflict import ConflictKind
 from calendaring_sync.tests import _scenarios
+from calendaring_sync.tests._content import ics
 from calendaring_sync.tests._scenarios import (
     REPLAY,
     Login,
@@ -119,15 +120,6 @@ def started(server: Server, config: dict[str, Any] | None = None) -> Iterator[Lo
         yield f"{parts.scheme}://{parts.netloc}", embedded.username, embedded.password
     finally:
         embedded.stop()
-
-
-def ics(uid: str, summary: str) -> bytes:
-    """A small event in iCalendar form."""
-    return (
-        "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\n"
-        f"BEGIN:VEVENT\r\nUID:{uid}\r\nDTSTAMP:20261001T000000Z\r\n"
-        f"DTSTART:20261101T100000Z\r\nSUMMARY:{summary}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
-    ).encode()
 
 
 @dataclass

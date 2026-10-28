@@ -1,11 +1,7 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""
-Unit tests for the classifier, over every combination of its three inputs.
-
-Rule: zero network calls, zero Docker dependency, all tests are fast.
-"""
+"""Unit tests for the classifier, over every combination of its three inputs."""
 
 from __future__ import annotations
 
@@ -27,6 +23,7 @@ from calendaring_sync._classify import ChangeClass, classify
 
 _AT = datetime(2026, 10, 1, tzinfo=UTC)
 
+
 # The inputs, by name. The synced copy holds "fa", the edit "fl" (none for
 # a delete), and the server reports nothing, a removal, or one of those.
 _SYNCED = {
@@ -35,6 +32,8 @@ _SYNCED = {
         1, "cal", "a", RecordState.SYNCED, "v1", "fa", b"text fa", frozenset(), None, _AT, 0
     ),
 }
+
+
 _REMOTES = {
     "none": None,
     "removed": Removed(),
@@ -42,6 +41,8 @@ _REMOTES = {
     "fl": Changed("v2", "fl", b"text fl"),
     "fx": Changed("v2", "fx", b"text fx"),
 }
+
+
 _LOCALS = {
     "none": None,
     "change": LocalEdit(EditKind.CHANGE, b"text fl", "fl", frozenset(), None, _AT),
@@ -49,7 +50,9 @@ _LOCALS = {
     "create": LocalEdit(EditKind.CREATE, b"text fl", "fl", frozenset(), None, _AT),
 }
 
+
 _CONFLICT = ChangeClass.CONFLICT
+
 
 # What each combination classifies as, keyed by (synced, remote, local).
 # Combinations missing here have no object, so they raise.
@@ -84,7 +87,10 @@ _EXPECTED: dict[tuple[str, str, str], tuple[ChangeClass, ConflictKind | None]] =
     ("none", "fx", "create"): (_CONFLICT, ConflictKind.BOTH_CREATED),
 }
 
+
 _EVERY = list(product(_SYNCED, _REMOTES, _LOCALS))
+
+
 _IMPOSSIBLE = [sides for sides in _EVERY if sides not in _EXPECTED]
 
 
@@ -92,21 +98,22 @@ def _classify(synced: str, remote: str, local: str) -> tuple[ChangeClass, Confli
     return classify(_SYNCED[synced], _REMOTES[remote], _LOCALS[local])
 
 
-@pytest.mark.parametrize("sides", _EXPECTED, ids="-".join)
-def test_every_possible_combination(sides):
-    assert _classify(*sides) == _EXPECTED[sides]
+class TestClassify:
+    """Classifying a change against the synced copy and the local edit."""
 
+    @pytest.mark.parametrize("sides", _EXPECTED, ids="-".join)
+    def test_every_combination_classifies_as_the_table_says(self, sides):
+        assert _classify(*sides) == _EXPECTED[sides]
 
-@pytest.mark.parametrize("sides", _IMPOSSIBLE, ids="-".join)
-def test_combinations_no_object_can_have_raise(sides):
-    synced, _, local = sides
-    with pytest.raises(ValueError):
-        _classify(*sides)
-    # Only these: nothing at all, a create of an object with a synced copy,
-    # or a change or delete of one without.
-    assert sides == ("none", "none", "none") or (local == "create") == (synced != "none")
+    @pytest.mark.parametrize("sides", _IMPOSSIBLE, ids="-".join)
+    def test_combinations_no_object_can_have_raise(self, sides):
+        synced, _, local = sides
+        with pytest.raises(ValueError):
+            _classify(*sides)
+        # Only these: nothing at all, a create of an object with a synced copy,
+        # or a change or delete of one without.
+        assert sides == ("none", "none", "none") or (local == "create") == (synced != "none")
 
-
-def test_every_combination_is_covered():
-    assert len(_EXPECTED) + len(_IMPOSSIBLE) == len(_EVERY) == 40
-    assert len(_IMPOSSIBLE) == 16
+    def test_every_combination_is_covered(self):
+        assert len(_EXPECTED) + len(_IMPOSSIBLE) == len(_EVERY) == 40
+        assert len(_IMPOSSIBLE) == 16
