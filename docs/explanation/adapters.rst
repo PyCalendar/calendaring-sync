@@ -8,12 +8,12 @@ Adapters
 .. meta::
    :description: What every calendaring-sync adapter provides, and how each adapter maps its protocol onto the sync model.
 
-An adapter maps one protocol onto the model in :doc:`design`. Adding an adapter doesn't change the core. The adapters in this package each sit behind their own optional extra, so the core never imports a protocol's client library, and an adapter can also live in another package. Each adapter's section cites the specifications behind its rules, and :doc:`../reference/server-compatibility` records where tested servers depart from them. The :doc:`../reference/glossary` defines the sync terms this page uses.
+An adapter maps one protocol onto the model in :doc:`design`. The adapters in this package each sit behind their own optional extra, so the core never imports a protocol's client library, and an adapter can also live in another package. Each adapter's section cites the specifications behind its rules, and :doc:`../reference/server-compatibility` records where tested servers depart from them. The :doc:`../reference/glossary` defines the sync terms this page uses.
 
 Why every adapter provides the same things
 ==========================================
 
-The core never branches on protocol, so every adapter answers the same questions, which :class:`~calendaring_sync.adapters.base.Adapter` lists: what a :term:`scope` and an :term:`object id` are, how to read changes and send an edit, and what the server checks before it applies one. A protocol without a :term:`version` per object has every reported object fetched and compared by :term:`fingerprint`, and one without changes since a :term:`sync token` gets a :term:`full listing` on every sync. An adapter's synchronous and asynchronous variants share all of its translation and parsing, and differ only in the client they're given.
+The core never branches on protocol, so every adapter answers the same questions, which :class:`~calendaring_sync.adapters.base.Adapter` lists: what a :term:`scope` and an :term:`object id` are, how to read changes and send an edit, and what the server checks before it applies one. A protocol without a :term:`version` per object has every reported object fetched and compared by :term:`fingerprint`, and one without changes since a :term:`sync token` gets a :term:`full listing` on every sync.
 
 CalDAV
 ======

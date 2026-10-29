@@ -34,4 +34,4 @@ Send edits
 Test it
 =======
 
-Run the same steps through both variants, and compare the stores they leave. This project's tests do that for every adapter. :doc:`../explanation/adapters` describes how each adapter that ships with calendaring-sync maps its protocol, with the reason for each rule.
+Run the same steps through both variants, and compare the stores they leave. :doc:`../explanation/adapters` describes how each adapter that ships with calendaring-sync maps its protocol, with the reason for each rule.

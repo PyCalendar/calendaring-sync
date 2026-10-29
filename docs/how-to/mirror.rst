@@ -8,7 +8,7 @@ Mirror synced data in your database
 .. meta::
    :description: A complete script that keeps a table in your application's own database up to date with every sync, from the change feed.
 
-Your application often keeps its own table of events, in the shape its screens and queries need. This script keeps such a table up to date after every sync, from the :term:`change feed`. It works the same with any adapter.
+This script keeps a table in your application's own database up to date after every sync, from the :term:`change feed`. It works the same with any adapter.
 
 .. literalinclude:: ../examples/mirror.py
    :language: python

@@ -8,7 +8,7 @@ Choose and set up a store
 .. meta::
    :description: Keep sync state in a SQLite file with WAL, back it up and restore it, keep it in memory for tests, or in storage of your own.
 
-A :term:`store` keeps every scope your application syncs. Use a SQLite file to keep sync state between runs, memory in tests, or your own storage where your application keeps everything else.
+Use a SQLite file to keep sync state between runs, memory in tests, or your own storage where your application keeps everything else.
 
 Keep sync state in SQLite
 =========================

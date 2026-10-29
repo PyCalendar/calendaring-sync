@@ -18,7 +18,7 @@ Resolve one conflict
    :start-after: # start: one
    :end-before: # end: one
 
-:meth:`~calendaring_sync.replica.Replica.resolve` takes the record you read and a :data:`~calendaring_sync.objects.resolution.Resolution`. If the conflict changed since you read it, it raises :class:`~calendaring_sync.error.StaleConflictError`, so you never decide on news you haven't seen. Each class in :mod:`calendaring_sync.objects.resolution` says what it does.
+:meth:`~calendaring_sync.replica.Replica.resolve` takes the record you read and a :data:`~calendaring_sync.objects.resolution.Resolution`. If the conflict changed since you read it, it raises :class:`~calendaring_sync.error.StaleConflictError`. Each class in :mod:`calendaring_sync.objects.resolution` says what it does.
 
 Resolve every conflict with a function
 ======================================

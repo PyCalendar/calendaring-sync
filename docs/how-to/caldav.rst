@@ -8,7 +8,7 @@ Sync a CalDAV calendar
 .. meta::
    :description: Connect CalDAVAdapter to a CalDAV calendar with the server's profile, and schedule full listings where the server needs them.
 
-:class:`~calendaring_sync.adapters.caldav.CalDAVAdapter` syncs one calendar through a python-caldav client: every object in it, tasks and journal entries as well as events. :doc:`../tutorials/quickstart` shows a whole sync. This page covers what's particular to CalDAV.
+:class:`~calendaring_sync.adapters.caldav.CalDAVAdapter` syncs one calendar through a python-caldav client: every object in it, tasks and journal entries as well as events. :doc:`../tutorials/quickstart` shows a whole sync.
 
 Connect with your server's profile
 ==================================

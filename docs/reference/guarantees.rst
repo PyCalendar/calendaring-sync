@@ -8,7 +8,7 @@ Guarantees and limits
 .. meta::
    :description: What calendaring-sync guarantees about your data, edits and changes, and the limits it has, each linked to the reason behind it.
 
-What the :term:`core` guarantees, whichever :term:`adapter` and :term:`store` you use, and the limits it has. Each row links to the reason behind it.
+What the :term:`core` guarantees, whichever :term:`adapter` and :term:`store` you use, and the limits it has.
 
 Guarantees
 ==========

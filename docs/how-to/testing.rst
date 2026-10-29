@@ -15,7 +15,7 @@ The parts of your application that read records and the :term:`change feed` don'
    :start-after: # start: server
    :end-before: # end: server
 
-Each :class:`~calendaring_sync.objects.change_set.ChangeSet` is the :term:`change set` an adapter would hand the core, so the replica ends up exactly as a real sync would leave it. A new :class:`~calendaring_sync.store.memory.MemoryStore` starts empty, so each test begins from nothing. Your test then checks what your code made of it:
+Each :class:`~calendaring_sync.objects.change_set.ChangeSet` is the :term:`change set` an adapter would hand the core. Your test then checks what your code made of it:
 
 .. literalinclude:: ../examples/testing.py
    :language: python

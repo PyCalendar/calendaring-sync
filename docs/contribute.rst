@@ -8,7 +8,7 @@ Contribute
 .. meta::
    :description: Set up calendaring-sync for development, find your way around the code, run the checks CI runs, and send a pull request the way the project reviews it.
 
-calendaring-sync takes bug reports, fixes, documentation, and new adapters. This page covers what you need to send one: the setup, how the code is laid out, the checks a pull request must pass, and the conventions reviewers hold it to.
+calendaring-sync takes bug reports, fixes, documentation, and new adapters.
 
 Before you start
 ================
@@ -128,7 +128,7 @@ It prints the best time of each scenario, each on a fresh store. ``--size`` and 
 Check your change
 =================
 
-CI runs every check below on each pull request. Run them first, and fix what they report before you ask for review.
+CI runs every check below on each pull request; run them before you ask for review.
 
 .. list-table::
    :header-rows: 1
@@ -153,7 +153,7 @@ CI runs every check below on each pull request. Run them first, and fix what the
    * - Change log
      - ``towncrier check --compare-with origin/main``
 
-``pre-commit`` runs the lint, format, and licensing checks on each commit. The docs build fails on any warning, including a cross-reference that doesn't resolve, so a renamed class or a mistyped ``:rfc:`` role fails the build instead of shipping a broken link.
+``pre-commit`` runs the lint, format, and licensing checks on each commit. The docs build fails on any warning, including a cross-reference that doesn't resolve.
 
 .. _code-style:
 
@@ -240,8 +240,6 @@ Preview the docs
     pip install -e ".[docs]"
     sphinx-autobuild docs docs/_build/html
 
-This serves the docs locally and rebuilds them as you edit.
-
 .. _vale-check:
 
 Check prose with Vale
@@ -254,7 +252,7 @@ Check prose with Vale
     vale sync
     vale docs/
 
-It runs the Microsoft style package and `signs-of-ai-writing <https://github.com/ammil-industries/vale-signs-of-ai-writing>`_, which catch many of the rules above. CI runs it as a check that warns without failing. The choice of Diátaxis category, and whether a fact is stated in one place, still need your own read of the diff.
+It runs the Microsoft style package and `signs-of-ai-writing <https://github.com/ammil-industries/vale-signs-of-ai-writing>`_, which catch many of the rules above. CI runs it as a check that warns without failing.
 
 .. _commits-and-prs:
 
