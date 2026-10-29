@@ -72,7 +72,8 @@ class Server:
     organizer: str
     #: A state the server never issued, which it refuses.
     unknown_token: str = "never-issued"
-    #: Whether it keeps two events with one uid and different recurrence ids.
+    #: Whether it keeps two events with one uid and different recurrence ids
+    #: in one calendar.
     instances_share_uid: bool = True
     #: Whether it refuses a wrong password; Cyrus' fixture lets anyone in.
     checks_passwords: bool = False
@@ -280,7 +281,7 @@ def uid_taken(env: Env) -> None:
 
 
 def instances(env: Env) -> None:
-    """Two instances of one uid are two events where the server keeps both."""
+    """Two instances of one uid in one calendar are two events where the server keeps both."""
     env.sync()
     keys = [
         env.create(env.content("series", "one instance", recurrenceId=rid))

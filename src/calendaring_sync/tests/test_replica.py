@@ -46,6 +46,7 @@ from calendaring_sync.tests._helpers import (
     _edited,
     _enter,
     _feed,
+    _insert,
     _key,
     _local_record,
     _new_scope,
@@ -101,8 +102,7 @@ class TestScopes:
     def test_dropping_a_scope_returns_what_it_held(self, replica, store):
         _edited(replica)
         created = _create(replica, "fn")
-        with store.transaction():
-            in_flight = store.insert_record(_local_record(RecordState.IN_FLIGHT, object_id="f"))
+        in_flight = _insert(store, _local_record(RecordState.IN_FLIGHT, object_id="f"))
         pending, head = [_key(replica), created, in_flight], replica.feed_head()
         dropped = replica.drop_scope(_SCOPE)
         assert dropped.scope == _SCOPE

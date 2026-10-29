@@ -384,6 +384,12 @@ def _local_record(state: RecordState, object_id: str | None = None, local_key: i
     )
 
 
+def _insert(store: StateStore, record: Record) -> int:
+    """Write ``record`` straight to ``store`` in a transaction of its own; return its local key."""
+    with store.transaction():
+        return store.insert_record(record)
+
+
 # Checking what a call left behind.
 
 

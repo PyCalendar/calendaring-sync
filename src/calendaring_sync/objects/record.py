@@ -5,10 +5,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import StrEnum
-from typing import Self, TypeAlias, cast
+from typing import Self, TypeAlias, TypeVar
 
 from calendaring_sync.objects._data import REMOTE, data
 from calendaring_sync.objects.change import Changed
@@ -17,6 +18,8 @@ from calendaring_sync.objects.edit import EditKind, LocalEdit
 
 #: A copy of an object that a record can be synced to.
 SyncedCopy: TypeAlias = Changed | LocalEdit | Conflict
+
+_T = TypeVar("_T")
 
 
 class RecordState(StrEnum):
@@ -209,27 +212,34 @@ class Record:
         one for a change the server refused, and ``None`` once the server
         removed the object.
         """
-        if self.state is RecordState.REMOVED:
-            return None
-        if self._conflict_holds_server_copy:
-            return cast(Conflict, self.conflict).remote_version
-        return self.version
+        return self._on_server(self.version, lambda conflict: conflict.remote_version, None)
 
     @property
     def server_logical_key(self) -> str | None:
         """The :term:`logical key` of the server's copy, ``None`` if the server holds none.
 
-        As with :attr:`server_version`, that's the conflict's while the
-        record is in conflict, and the synced one for a change the server
-        refused. A create the server doesn't have has none.
+        It comes from the same copy as :attr:`server_version`, and a create
+        the server doesn't have has none.
         """
-        if self.state is RecordState.REMOVED:
-            return None
-        if self._conflict_holds_server_copy:
-            return cast(Conflict, self.conflict).remote_logical_key
-        return self.logical_key
+        return self._on_server(self.logical_key, lambda conflict: conflict.remote_logical_key, None)
 
     @property
-    def _conflict_holds_server_copy(self) -> bool:
-        """Whether the conflict, not the synced copy, holds what the server has."""
-        return self.conflict is not None and not self.is_refused_change
+    def server_containers(self) -> frozenset[str]:
+        """The :term:`containers <container>` of the server's copy, empty if the server holds none.
+
+        They come from the same copy as :attr:`server_version`.
+        """
+        return self._on_server(
+            self.containers, lambda conflict: conflict.remote_containers, frozenset()
+        )
+
+    def _on_server(self, synced: _T, in_conflict: Callable[[Conflict], _T], gone: _T) -> _T:
+        """A value of the server's copy, the conflict's while the conflict holds that copy.
+
+        ``gone`` once the server removed the object, and ``synced`` otherwise.
+        """
+        if self.state is RecordState.REMOVED:
+            return gone
+        if self.conflict is not None and not self.is_refused_change:
+            return in_conflict(self.conflict)
+        return synced

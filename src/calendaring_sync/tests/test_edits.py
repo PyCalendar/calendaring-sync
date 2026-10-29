@@ -5,12 +5,14 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from functools import partial
 
 import pytest
 
 from calendaring_sync import (
     Applied,
+    Conflict,
     ConflictKind,
     DuplicateObjectError,
     EditKind,
@@ -31,6 +33,7 @@ from calendaring_sync.tests._helpers import (
     _FIELDS,
     _REMOVED,
     _SCOPE,
+    _START,
     _SYNCED,
     _a_removed,
     _assert_ended,
@@ -42,6 +45,7 @@ from calendaring_sync.tests._helpers import (
     _create,
     _feed,
     _in_conflict,
+    _insert,
     _key,
     _local_record,
     _page,
@@ -118,6 +122,17 @@ _EDITED = [
 ]
 
 
+# The server's copy a record names: version, logical key and containers.
+_SYNCED_COPY = ("v1", "k1", frozenset({"c1"}))
+_CONFLICTS_COPY = ("v2", "k2", frozenset({"c2"}))
+_NO_COPY: tuple[None, None, frozenset[str]] = (None, None, frozenset())
+
+
+def _conflict(kind: ConflictKind, copy: tuple[str | None, str | None, frozenset[str]]) -> Conflict:
+    version, logical_key, containers = copy
+    return Conflict(kind, version, None, None, containers, logical_key, _START)
+
+
 class TestLocalEdits:
     """Recording, collapsing and refusing local edits."""
 
@@ -170,8 +185,7 @@ class TestLocalEdits:
     def test_a_record_that_cant_take_an_edit_refuses_it(self, replica, store, step):
         _a_removed(replica)
         _in_conflict(replica, "b", "T2", "T3")
-        with store.transaction():
-            in_flight = store.insert_record(_local_record(RecordState.IN_FLIGHT, object_id="f"))
+        in_flight = _insert(store, _local_record(RecordState.IN_FLIGHT, object_id="f"))
         refused = {
             _key(replica, "a"): RemovedRecordError,
             _key(replica, "b"): OpenConflictError,
@@ -375,3 +389,57 @@ class TestRefusedEdits:
             _pending(refused),
             [FeedEntryKind.CONFLICT_OPENED, FeedEntryKind.CONFLICT_RESOLVED],
         )
+
+
+class TestServerCopy:
+    """What a record says the server holds, whatever its edit and conflict."""
+
+    @pytest.mark.parametrize(
+        "state, edit, conflict, expected",
+        [
+            pytest.param(RecordState.SYNCED, None, None, _SYNCED_COPY, id="synced"),
+            pytest.param(RecordState.PENDING, EditKind.CHANGE, None, _SYNCED_COPY, id="pending"),
+            pytest.param(
+                RecordState.CONFLICT,
+                EditKind.CHANGE,
+                _conflict(ConflictKind.BOTH_CHANGED, _CONFLICTS_COPY),
+                _CONFLICTS_COPY,
+                id="both changed",
+            ),
+            pytest.param(
+                RecordState.CONFLICT,
+                EditKind.CHANGE,
+                _conflict(ConflictKind.REMOVED_REMOTELY, _NO_COPY),
+                _NO_COPY,
+                id="removed remotely",
+            ),
+            pytest.param(
+                RecordState.CONFLICT,
+                EditKind.CHANGE,
+                _conflict(ConflictKind.LOGICAL_KEY_TAKEN, _NO_COPY),
+                _SYNCED_COPY,
+                id="change refused",
+            ),
+            pytest.param(
+                RecordState.CONFLICT,
+                EditKind.CREATE,
+                _conflict(ConflictKind.LOGICAL_KEY_TAKEN, _NO_COPY),
+                _NO_COPY,
+                id="create refused",
+            ),
+            pytest.param(RecordState.REMOVED, None, None, _NO_COPY, id="removed"),
+        ],
+    )
+    def test_the_servers_copy_follows_the_record(self, state, edit, conflict, expected):
+        version, logical_key, containers = _SYNCED_COPY
+        record = replace(
+            _local_record(RecordState.SYNCED, "x"),
+            state=state,
+            version=version,
+            logical_key=logical_key,
+            containers=containers,
+            edit=None if edit is None else LocalEdit(edit, b"c", "f", frozenset(), None, _START),
+            conflict=conflict,
+        )
+        held = (record.server_version, record.server_logical_key, record.server_containers)
+        assert held == expected

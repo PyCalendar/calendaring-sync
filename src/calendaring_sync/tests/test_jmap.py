@@ -16,7 +16,7 @@ import json
 from contextlib import nullcontext
 from dataclasses import replace
 from functools import partial
-from typing import Any
+from typing import Any, cast
 from unittest import mock
 
 import pytest
@@ -25,12 +25,15 @@ from calendaring_jmap import JMAPMethodError
 from calendaring_sync import (
     Changed,
     ChangeSet,
+    Conflict,
     ConflictKind,
     EditKind,
     Gone,
+    LocalEdit,
     LogicalKeyTaken,
     OtherScopeError,
     PushOutcome,
+    Record,
     RecordState,
     Rejected,
     Replica,
@@ -39,6 +42,8 @@ from calendaring_sync import (
     UnknownScopeError,
 )
 from calendaring_sync.adapters import jmap as adapter_module
+from calendaring_sync.adapters.base import Steps
+from calendaring_sync.adapters.base import _run as _drive
 from calendaring_sync.adapters.jmap import (
     FINGERPRINT_SCHEME,
     MEDIA_TYPE,
@@ -47,7 +52,13 @@ from calendaring_sync.adapters.jmap import (
 )
 from calendaring_sync.tests import _jmap_scenarios as scenarios
 from calendaring_sync.tests._content import event
-from calendaring_sync.tests._helpers import _SCOPE, _assert_adapter_refuses
+from calendaring_sync.tests._helpers import (
+    _SCOPE,
+    _START,
+    _assert_adapter_refuses,
+    _insert,
+    _local_record,
+)
 from calendaring_sync.tests._jmap_scenarios import (
     GUEST,
     PROTOCOL,
@@ -235,6 +246,45 @@ def _make_edit(env: Env, kind: str) -> int:
     return key
 
 
+def _refused_push(
+    store: StateStore,
+    asynchronous: bool,
+    kind: str,
+    refusal: str | tuple[str, list[str] | None],
+    raised: type[Exception] | None,
+) -> Record:
+    """Replay ``cyrus-pushing`` with its push of ``kind`` refused, and return the edit's record.
+
+    ``refusal`` is a method error's type, or a set error's type and properties.
+    """
+    tape = _recording("cyrus-pushing")
+    # The adapter's own writes are the ones carrying ifInState.
+    index = _index(tape, "CalendarEvent/set", _SENT[kind], "ifInState")
+    del tape.exchanges[index + 1 :]
+    with _replaying(tape, store, asynchronous) as env:
+        key = _make_edit(env, kind)
+        refused_id = env.at(key).object_id or "new-0"
+        body = _error(refusal) if isinstance(refusal, str) else _refused(kind, refused_id, *refusal)
+        edit_answer(tape, index, body=body)
+        with pytest.raises(raised) if raised else nullcontext():
+            env.sync()
+    return env.at(key)
+
+
+def _uid_held(
+    store: StateStore, record: Record, *, uid: object = "u", itself: bool = False
+) -> bool:
+    """Whether a create of an event with ``uid`` finds ``record``, written to the store, holding it.
+
+    With ``itself``, the create is ``record``'s own edit.
+    """
+    adapter = _adapter(store, False)
+    key = _insert(store, record)
+    content = json.dumps({**event("u", "Planning", _CALENDAR), "uid": uid}).encode()
+    edit = LocalEdit(EditKind.CREATE, content, "f", frozenset({_CALENDAR}), None, _START)
+    return bool(_drive(adapter._uid_held(edit, key if itself else key + 1)))
+
+
 # What each refusal of a push means, by edit kind: Rejected, Gone,
 # LogicalKeyTaken, or None for an error that isn't one and is raised.
 _REFUSALS: dict[tuple[str, tuple[str, ...] | None], dict[str, type[PushOutcome] | None]] = {
@@ -246,6 +296,7 @@ _REFUSALS: dict[tuple[str, tuple[str, ...] | None], dict[str, type[PushOutcome] 
         "delete": None,
     },
     ("invalidProperties", ("title",)): {"create": None, "change": None, "delete": None},
+    ("invalidPatch", ("uid",)): {"create": None, "change": None, "delete": None},
     ("invalidProperties", None): {"create": None, "change": None, "delete": None},
     ("serverFail", None): {"create": None, "change": None, "delete": None},
 }
@@ -719,28 +770,92 @@ class TestPushing:
                 JMAPMethodError,
                 id="delete, uid named",
             ),
+            pytest.param(
+                "create",
+                ("invalidProperties", ["calendarIds"]),
+                RecordState.IN_FLIGHT,
+                None,
+                JMAPMethodError,
+                id="create, calendar named, no event holds its uid",
+            ),
+            pytest.param(
+                "delete",
+                ("invalidProperties", ["calendarIds"]),
+                RecordState.IN_FLIGHT,
+                None,
+                JMAPMethodError,
+                id="delete, calendar named",
+            ),
         ],
     )
     def test_how_a_refused_push_ends(
         self, store, asynchronous, kind, refusal, state, conflict, raised
     ):
-        tape = _recording("cyrus-pushing")
-        # The adapter's own writes are the ones carrying ifInState.
-        index = _index(tape, "CalendarEvent/set", _SENT[kind], "ifInState")
-        del tape.exchanges[index + 1 :]
-        with _replaying(tape, store, asynchronous) as env:
-            key = _make_edit(env, kind)
-            refused_id = env.at(key).object_id or "new-0"
-            body = (
-                _error(refusal)
-                if isinstance(refusal, str)
-                else _refused(kind, refused_id, *refusal)
-            )
-            edit_answer(tape, index, body=body)
-            with pytest.raises(raised) if raised else nullcontext():
-                env.sync()
-        record = env.at(key)
+        record = _refused_push(store, asynchronous, kind, refusal, raised)
         assert (record.state, record.conflict and record.conflict.kind) == (state, conflict)
+
+    def test_a_refusal_naming_the_calendar_is_a_taken_uid_where_an_event_holds_it(
+        self, store, asynchronous
+    ):
+        def held(*_: Any) -> Steps[bool]:
+            return True
+            # Never reached; it makes this a generator, as the method it stands in for is.
+            yield
+
+        refusal = ("invalidProperties", ["calendarIds"])
+        with mock.patch.object(adapter_class(asynchronous), "_uid_held", held):
+            record = _refused_push(store, asynchronous, "create", refusal, None)
+        assert record.conflict is not None
+        assert record.conflict.kind is ConflictKind.LOGICAL_KEY_TAKEN
+
+    @pytest.mark.parametrize(
+        "logical_key, containers, state, itself, held",
+        [
+            pytest.param("u", _CALENDAR, RecordState.SYNCED, False, True, id="same uid"),
+            pytest.param(
+                "u 2026-11-02T10:00:00", _CALENDAR, RecordState.SYNCED, False, True, id="instance"
+            ),
+            pytest.param("u", "other", RecordState.SYNCED, False, False, id="another calendar"),
+            pytest.param("u2", _CALENDAR, RecordState.SYNCED, False, False, id="a uid it starts"),
+            pytest.param("u", _CALENDAR, RecordState.REMOVED, False, False, id="removed"),
+            pytest.param("u", _CALENDAR, RecordState.SYNCED, True, False, id="the record itself"),
+        ],
+    )
+    def test_which_event_holds_a_uid(self, store, logical_key, containers, state, itself, held):
+        record = replace(
+            _local_record(state, "x"), logical_key=logical_key, containers=frozenset({containers})
+        )
+        assert _uid_held(store, record, itself=itself) is held
+
+    @pytest.mark.parametrize(
+        "remote_key, remote_calendar, held",
+        [
+            pytest.param("u", _CALENDAR, True, id="the server's copy has the uid"),
+            pytest.param("u", "other", False, id="the server's copy moved calendar"),
+            pytest.param(None, _CALENDAR, False, id="the server removed it"),
+        ],
+    )
+    def test_an_event_in_conflict_holds_what_the_servers_copy_holds(
+        self, store, remote_key, remote_calendar, held
+    ):
+        record = _local_record(RecordState.CONFLICT, "x")
+        conflict = replace(
+            cast(Conflict, record.conflict),
+            remote_logical_key=remote_key,
+            remote_containers=frozenset({remote_calendar}),
+        )
+        synced = frozenset({_CALENDAR})
+        record = replace(record, logical_key="v", containers=synced, conflict=conflict)
+        assert _uid_held(store, record) is held
+
+    def test_an_edit_whose_uid_isnt_text_matches_no_event(self, store):
+        # The key a uid of 5 would match if it were taken as the text "5".
+        record = replace(
+            _local_record(RecordState.SYNCED, "x"),
+            logical_key="5 2026-11-02T10:00:00",
+            containers=frozenset({_CALENDAR}),
+        )
+        assert _uid_held(store, record, uid=5) is False
 
     @pytest.mark.parametrize(
         "error, kind",
