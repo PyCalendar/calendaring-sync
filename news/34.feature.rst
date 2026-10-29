@@ -1,0 +1,1 @@
+:attr:`Record.server_containers <calendaring_sync.objects.record.Record.server_containers>` gives the containers of the server's copy of a record, read from the same copy as :attr:`~calendaring_sync.objects.record.Record.server_version`.

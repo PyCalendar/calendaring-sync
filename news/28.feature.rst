@@ -1,1 +1,1 @@
-A :class:`~calendaring_sync.store.memory.MemoryStore` can keep its data elsewhere, such as in a file, through a :class:`~calendaring_sync.store.memory.MemoryKeeper` that loads it when the store opens and saves it each time a write commits.
+A :class:`~calendaring_sync.store.memory.MemoryStore` takes a :class:`~calendaring_sync.store.memory.MemoryKeeper`, which loads its data when the store opens and saves it each time a write commits, so the data can live in a file or anywhere else.
