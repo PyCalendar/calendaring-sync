@@ -76,7 +76,6 @@ from calendaring_sync.tests._helpers import (
     _feed,
     _in_conflict,
     _key,
-    _needs_examples,
     _open_session,
     _page,
     _pending,
@@ -334,7 +333,6 @@ class TestPushes:
         declared = (flow._guarded_by_version, flow._unique_logical_key, flow._guard_covers_scope)
         assert declared == (guarded_by_version, unique_logical_key, guard_covers_scope)
 
-    @_needs_examples
     @pytest.mark.parametrize("covers_scope", [True, False], ids=["scope", "object"])
     def test_a_rejected_push_stops_the_rest_where_the_check_covers_the_scope(
         self, replica, covers_scope

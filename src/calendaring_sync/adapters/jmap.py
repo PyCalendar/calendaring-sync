@@ -452,9 +452,13 @@ class _JMAPFlow(Adapter):
                 outcome = Applied()
         except JMAPMethodError as exc:
             refused = _refusal(edit.kind, exc)
-            if refused is None and edit.kind is not EditKind.DELETE and _names(exc, _CALENDAR_IDS):
-                if (yield from self._uid_held(edit, claimed.local_key)):
-                    refused = LogicalKeyTaken()
+            if (
+                refused is None
+                and edit.kind is not EditKind.DELETE
+                and _names(exc, _CALENDAR_IDS)
+                and (yield from self._uid_held(edit, claimed.local_key))
+            ):
+                refused = LogicalKeyTaken()
             if refused is None:
                 raise
             # A refused write changes nothing, so the state stays where it was.

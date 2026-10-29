@@ -103,8 +103,13 @@ def _calls(env: Env, method: str, after: int = 0) -> list[Exchange]:
 def _expire_cyrus() -> None:
     """Make Cyrus forget the user's change history, as its own expiry job does."""
     subprocess.run(
-        ["docker", "exec", _setup("cyrus").CONTAINER, "/usr/cyrus/sbin/cyr_expire"]
-        + ["-X", "0", "-D", "0", "-E", "0", "-u", "user1"],
+        [
+            "docker",
+            "exec",
+            _setup("cyrus").CONTAINER,
+            "/usr/cyrus/sbin/cyr_expire",
+            *("-X", "0", "-D", "0", "-E", "0", "-u", "user1"),
+        ],
         check=True,
         capture_output=True,
     )

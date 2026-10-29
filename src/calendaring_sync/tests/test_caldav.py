@@ -973,7 +973,8 @@ class TestReplay:
         class Server:
             """A client's own HTTP session, answering every request the same."""
 
-            closed: list[str] = []
+            def __init__(self) -> None:
+                self.closed: list[str] = []
 
             def request(self, *args: Any, **kwargs: Any) -> _Reply:
                 return _Reply(answer)
@@ -1023,10 +1024,12 @@ class TestReplay:
 
     def test_a_request_that_must_never_go_out_fails(self, store):
         tape = _tape("radicale-reading", keep=3)
-        with pytest.raises(AssertionError, match="^No listing$"):
-            with _replaying(tape, store, asynchronous=False) as env:
-                env.never("PROPFIND", "", "No listing")
-                env.sync()
+        with (
+            pytest.raises(AssertionError, match=r"^No listing$"),
+            _replaying(tape, store, asynchronous=False) as env,
+        ):
+            env.never("PROPFIND", "", "No listing")
+            env.sync()
 
 
 class TestRecorder:

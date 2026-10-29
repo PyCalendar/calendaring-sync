@@ -139,7 +139,7 @@ CI runs every check below on each pull request. Run them first, and fix what the
    * - Lint and format
      - ``ruff check .`` and ``ruff format --check .``
    * - Types
-     - ``mypy src/calendaring_sync docs/examples --ignore-missing-imports``
+     - ``mypy src/calendaring_sync docs/examples tests/docker``, with its settings in ``pyproject.toml``
    * - Unit tests
      - The command in :ref:`running-tests`
    * - Docs build

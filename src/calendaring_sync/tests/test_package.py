@@ -108,14 +108,14 @@ class TestPackage:
             if isinstance(cls, type) and dataclasses.is_dataclass(cls):
                 _fields(cls)
         # The values an adapter or application builds check themselves.
-        assert _CHECKED_WHEN_BUILT == {
+        assert {
             Changed,
             ChangeSet,
             Applied,
             LogicalKeyTaken,
             Merge,
             EditFields,
-        }
+        } == _CHECKED_WHEN_BUILT
 
     def test_a_check_refuses_what_it_cant_read(self):
         def takes_many(*values: str) -> None: ...

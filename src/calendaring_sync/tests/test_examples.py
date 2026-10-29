@@ -109,7 +109,7 @@ class TestExamples:
         monkeypatch.setattr(_examples, "EXAMPLES", tmp_path)
         monkeypatch.setattr(_examples, "load", lambda name: None)
         assert _examples.run("setting", monkeypatch, tmp_path, answer=21)["doubled"] == 42
-        with pytest.raises(AssertionError, match="^setting has no missing to replace$"):
+        with pytest.raises(AssertionError, match=r"^setting has no missing to replace$"):
             _examples.run("setting", monkeypatch, tmp_path, missing=1)
 
     def test_start(self, tmp_path, monkeypatch):

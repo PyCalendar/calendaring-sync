@@ -77,6 +77,7 @@ from calendaring_sync.tests._scenarios import (
     edit_answer,
     fields_of,
     forgotten_edit,
+    listing,
     recorded,
     replaying,
     run,
@@ -646,7 +647,7 @@ class TestListing:
         )
         tape.exchanges.insert(index + 1, page)
         with _replaying(tape, store, asynchronous) as env:
-            scenarios.listing(env)
+            listing(env)
 
     def test_events_created_during_a_listing_join_its_last_page(self, store, asynchronous):
         # The first listing's pages miss d and e, as when the server sorts them

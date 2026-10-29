@@ -36,7 +36,6 @@ from calendaring_sync.tests._caldav_scenarios import (
     SCENARIOS,
     SERVERS,
     Env,
-    Login,
     Server,
     adapter_class,
     caldav_client,
@@ -52,6 +51,7 @@ from calendaring_sync.tests._live import (
     removed_and_created,
 )
 from calendaring_sync.tests._scenarios import (
+    Login,
     edit_a,
     put_a_and_b,
 )

@@ -304,14 +304,11 @@ class TestFullListing:
     def test_an_interrupted_listing_is_started_over(self, replica):
         _seeded(replica)
         replica.reset(_SCOPE)
-        with pytest.raises(RuntimeError):
-            with _open_session(replica) as session:
-                session.ingest(
-                    _page(
-                        None, "L1", {"a": Unchanged(), "b": Unchanged()}, full=True, truncated=True
-                    )
-                )
-                raise RuntimeError("connection lost")
+        with pytest.raises(RuntimeError), _open_session(replica) as session:
+            session.ingest(
+                _page(None, "L1", {"a": Unchanged(), "b": Unchanged()}, full=True, truncated=True)
+            )
+            raise RuntimeError("connection lost")
         assert replica.scope(_SCOPE).token is None
         _sync(replica, _page(None, "L2", {"a": Unchanged()}, full=True))
         assert _states(replica) == {"a": RecordState.SYNCED, "b": RecordState.REMOVED}

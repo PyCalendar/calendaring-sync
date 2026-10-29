@@ -30,7 +30,6 @@ from caldav.davclient import DAVClient
 from caldav.testing import RadicaleServer, XandikosServer
 
 from calendaring_sync import MemoryStore, RecordState, Replica, StateStore
-from calendaring_sync.adapters import caldav as adapter_module
 from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter
 from calendaring_sync.error import IncompleteListingError, ScopeGoneError
 from calendaring_sync.objects.conflict import ConflictKind
@@ -265,7 +264,8 @@ RECORDINGS = [
 def _fixed_hrefs() -> Iterator[None]:
     """Give creates the same hrefs in a recording and its replays."""
     numbers = itertools.count(1)
-    with mock.patch.object(adapter_module.uuid, "uuid4", lambda: uuid.UUID(int=next(numbers))):
+    # The adapter picks a create's href with uuid.uuid4, patched for the block.
+    with mock.patch.object(uuid, "uuid4", lambda: uuid.UUID(int=next(numbers))):
         yield
 
 

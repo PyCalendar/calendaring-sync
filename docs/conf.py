@@ -3,11 +3,11 @@
 
 """Sphinx configuration for calendaring-sync documentation."""
 
-import datetime
+import datetime as dt
 import os
 
 project = "calendaring-sync"
-this_year = datetime.date.today().year  # noqa: DTZ011
+this_year = dt.date.today().year  # noqa: DTZ011
 copyright = f"{this_year}, calendaring-sync contributors"  # noqa: A001
 author = "calendaring-sync contributors"
 

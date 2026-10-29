@@ -140,7 +140,8 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Type check
-        run: python -m mypy src/calendaring_sync docs/examples --ignore-missing-imports
+        # Its settings are in pyproject.toml.
+        run: python -m mypy src/calendaring_sync docs/examples tests/docker
 
   test:
     name: Test on Python ${{ matrix.python-version }}

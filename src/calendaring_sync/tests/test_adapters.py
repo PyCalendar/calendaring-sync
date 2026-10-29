@@ -21,7 +21,6 @@ from calendaring_sync.adapters.base import Adapter, InStore, Steps, _arun, _run
 from calendaring_sync.tests import _caldav_scenarios, _examples, _jmap_scenarios
 from calendaring_sync.tests._helpers import (
     _WAIT,
-    _needs_examples,
 )
 from calendaring_sync.tests._scenarios import run
 from calendaring_sync.tests._tape import Tape
@@ -116,7 +115,6 @@ class TestDriver:
         assert inspect.getcoroutinestate(later) == inspect.CORO_CLOSED
 
 
-@_needs_examples
 class TestAsk:
     """A request about the scope, made through the base's ``_ask``."""
 

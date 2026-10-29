@@ -407,7 +407,7 @@ class TestRecords:
 
     def test_object_ids_are_unique_per_scope(self, replica, store):
         _seeded(replica)
-        a, b = replica.records(_SCOPE)
+        _, b = replica.records(_SCOPE)
         with store.transaction(), pytest.raises(DuplicateObjectError):
             store.insert_record(_local_record(RecordState.SYNCED, object_id="a"))
         with store.transaction(), pytest.raises(DuplicateObjectError):
@@ -432,9 +432,11 @@ class TestFailures:
     ):
         bug = RuntimeError(f"{step} has a bug")
         _break(store, monkeypatch, step, bug)
-        with pytest.raises(UnexpectedStoreError, match=re.escape(ISSUES_URL)) as raised:
-            with _write_with_scope(store) if write else store.transaction(write=False):
-                store.scopes()
+        with (
+            pytest.raises(UnexpectedStoreError, match=re.escape(ISSUES_URL)) as raised,
+            _write_with_scope(store) if write else store.transaction(write=False),
+        ):
+            store.scopes()
         assert raised.value.__cause__ is bug
         assert not isinstance(raised.value, StoreError)
         monkeypatch.undo()
@@ -515,7 +517,7 @@ class TestThreads:
         "open_store, beside",
         [
             (lambda path: MemoryStore(), True),
-            (lambda path: SQLiteStore(path), True),
+            (SQLiteStore, True),
             (lambda path: StateStore(OneAtATime()), False),
             (lambda path: SQLiteStore(":memory:"), False),
         ],
@@ -577,9 +579,11 @@ class TestClosing:
             _enter(store.transaction(write=False))
 
     def test_closing_inside_a_transaction_is_refused(self, store):
-        with _write_with_scope(store):
-            with pytest.raises(TransactionError, match="after its transaction"):
-                store.close()
+        with (
+            _write_with_scope(store),
+            pytest.raises(TransactionError, match="after its transaction"),
+        ):
+            store.close()
         assert _scope_ids(store) == [_SCOPE]
 
     def test_close_waits_for_open_transactions(self, store):
@@ -697,10 +701,9 @@ class TestSQLiteFile:
     def test_interrupted_ingest_leaves_the_token_after_reopening(self, db_path, clock):
         with SQLiteStore(db_path) as store:
             replica = _seeded(Replica(store, clock=clock))
-            with pytest.raises(RuntimeError):
-                with _open_session(replica) as session:
-                    session.ingest(_page("T1", "L", {"a": Unchanged()}, full=True, truncated=True))
-                    raise RuntimeError("process stops")
+            with pytest.raises(RuntimeError), _open_session(replica) as session:
+                session.ingest(_page("T1", "L", {"a": Unchanged()}, full=True, truncated=True))
+                raise RuntimeError("process stops")
         with SQLiteStore(db_path) as store:
             replica = Replica(store, clock=clock)
             assert replica.scope(_SCOPE).token == "T1"
@@ -882,10 +885,9 @@ class TestSQLiteDamage:
             assert _snapshot(replica, store) == before
 
     def test_a_transaction_sqlite_already_ended_rolls_back_quietly(self, db_path):
-        with SQLiteStore(db_path) as store:
-            with pytest.raises(OSError), store.transaction():
-                cast(_SQLiteTransaction, _current(store))._conn.execute("COMMIT")
-                raise OSError("after an implicit end")
+        with SQLiteStore(db_path) as store, pytest.raises(OSError), store.transaction():
+            cast(_SQLiteTransaction, _current(store))._conn.execute("COMMIT")
+            raise OSError("after an implicit end")
 
     def test_a_failed_close_raises_store_error_and_still_closes(self, db_path, monkeypatch):
         store = SQLiteStore(db_path)

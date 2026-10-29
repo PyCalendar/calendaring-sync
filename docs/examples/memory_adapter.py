@@ -71,13 +71,13 @@ class MemoryServer:
 
     def listing(self) -> tuple[dict[str, Stored], str]:
         if self.removed:
-            raise NoSuchScopeError()
+            raise NoSuchScopeError
         return dict(self.objects), self.token()
 
     def changes(self, since: str) -> tuple[dict[str, Stored | None], str]:
         """Every object written since the token, ``None`` for one deleted since."""
         if self.removed:
-            raise NoSuchScopeError()
+            raise NoSuchScopeError
         if int(since) < self.oldest:
             raise ExpiredTokenError(since)
         written = set(self.log[int(since) :])

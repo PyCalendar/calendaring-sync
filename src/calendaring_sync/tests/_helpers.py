@@ -33,7 +33,6 @@ from calendaring_sync import (
     SessionState,
     StateStore,
 )
-from calendaring_sync.tests import _examples
 from calendaring_sync.tests._scenarios import done
 
 # Values the tests share.
@@ -50,12 +49,6 @@ _WAIT = 5.0
 _FIELDS: dict[str, Any] = {"containers": frozenset({"x", "y"}), "logical_key": "u"}
 # A string no store can keep: a lone surrogate.
 _BAD_TEXT = "a\ud800b"
-
-
-# The tests that run the docs' examples, which an installed wheel doesn't hold.
-_needs_examples = pytest.mark.skipif(
-    not _examples.EXAMPLES.is_dir(), reason="The docs examples aren't installed"
-)
 
 
 # Building change sets and syncing them.
