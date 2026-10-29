@@ -64,6 +64,11 @@ fixture() {  # fixture cyrus|stalwart start|stop
     (cd "$CALENDARING_JMAP/tests/docker/$1" && bash "$2.sh" > /dev/null 2>&1)
 }
 
+own_fixture() {  # own_fixture start|stop NAME: calendaring-sync's own fixture, the server its tests use
+    : "${CALENDARING_SYNC:?set CALENDARING_SYNC to a calendaring-sync checkout}"
+    (cd "$CALENDARING_SYNC/tests/docker" && bash "$1.sh" "$2" > /dev/null 2>&1)
+}
+
 radicale() {
     rm -rf "$DATA/radicale"
     "$PY" -m radicale --config "" --auth-type none --rights-type authenticated \
@@ -118,6 +123,7 @@ cyrus() {
     probe caldav-client-cyrus.log caldav_client.py Cyrus http://localhost:8802/ http://localhost:8802/dav/calendars/user/user1/client/ user1 x
     probe jmap-sync-cyrus.log jmap_sync.py Cyrus http://localhost:8802 user1 x yes
     probe jmap-client-cyrus.log jmap_client.py Cyrus http://localhost:8802/.well-known/jmap user1 x
+    probe jmap-instances-cyrus.log jmap_instances.py Cyrus http://localhost:8802 user1 x yes
     probe fingerprint-cyrus.log fingerprint.py caldav Cyrus http://localhost:8802 /dav/calendars/user/user1/fp/ user1 x
     probe fingerprint-jmap-cyrus.log fingerprint.py jmap Cyrus http://localhost:8802 user1 x yes
     probe expiry-caldav-cyrus.log expiry.py caldav Cyrus http://localhost:8802 /dav/calendars/user/user1/expiry/ user1 x before "$DATA/cyrus-token"
@@ -129,13 +135,18 @@ cyrus() {
 }
 
 stalwart() {
+    # The version calendaring-sync's fixture runs; the 0.16.21 logs in logs/ came from
+    # calendaring-jmap's fixture, and earlier links point at their lines.
+    local LOGS="$LOGS/stalwart-1.0.1"
+    mkdir -p "$LOGS"
     user="testuser@example.org"; home="/dav/cal/testuser%40example.org"
-    fixture stalwart start
+    own_fixture start stalwart
     curl -s -o /dev/null -u "$user:testcaldav" -X MKCALENDAR "http://localhost:8809$home/client/"
     probe caldav-sync-stalwart.log caldav_sync.py Stalwart http://localhost:8809 "$home/probe/" "$user" testcaldav
     probe caldav-client-stalwart.log caldav_client.py Stalwart http://localhost:8809/ "http://localhost:8809$home/client/" "$user" testcaldav
     probe jmap-sync-stalwart.log jmap_sync.py Stalwart http://localhost:8809 "$user" testcaldav no
     probe jmap-client-stalwart.log jmap_client.py Stalwart http://localhost:8809/.well-known/jmap "$user" testcaldav
+    probe jmap-instances-stalwart.log jmap_instances.py Stalwart http://localhost:8809 "$user" testcaldav no
     probe fingerprint-stalwart.log fingerprint.py caldav Stalwart http://localhost:8809 "$home/fp/" "$user" testcaldav
     probe fingerprint-jmap-stalwart.log fingerprint.py jmap Stalwart http://localhost:8809 "$user" testcaldav no
     "$PY" -B -E -s "$SERVERS/stalwart_admin.py" expire-setup > "$LOGS/server-stalwart-expire-setup.log" 2>&1
@@ -147,7 +158,7 @@ stalwart() {
     # Last, since it lowers the result limit for the whole server.
     "$PY" -B -E -s "$SERVERS/stalwart_admin.py" max-results 5 > "$LOGS/server-stalwart-max-results.log" 2>&1
     probe listing-cap-stalwart.log listing_cap.py Stalwart http://localhost:8809 "$home/cap/" "$user" testcaldav 5
-    fixture stalwart stop
+    own_fixture stop stalwart
 }
 
 stalwart_latest() {

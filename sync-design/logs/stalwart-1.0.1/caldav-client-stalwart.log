@@ -1,0 +1,16 @@
+
+RESULT [Stalwart] python-caldav version: 3.6.0
+RESULT [Stalwart] unknown token, get_objects_by_sync_token(disable_fallback=True): returned ('urn:stalwart:davsync:136', 0, False)
+RESULT [Stalwart] unknown 40-hex-digit token, get_objects_by_sync_token(disable_fallback=True): returned ('urn:stalwart:davsync:136', 0, False)
+RESULT [Stalwart] unknown token, DAVClient.report(): returned 207
+RESULT [Stalwart] unknown token, default fallback: returned ('urn:stalwart:davsync:136', 0, False)
+RESULT [Stalwart] a removed member as returned: (href, getetag, data is None): [('client-removed.ics', None, True)]
+RESULT [Stalwart] full listing through get_objects_by_sync_token(): the collection itself among the members: False
+RESULT [Stalwart] DAV:limit 1 through DAVClient.report(): status 207, 507 present: True, token urn:stalwart:davsync:13b:i40000004800000000
+RESULT [Stalwart] DAV:limit 1, get_objects_by_sync_token(disable_fallback=True): (token, objects, truncated): returned ('urn:stalwart:davsync:13b', 3, False)
+RESULT [Stalwart] same calendar unlimited: (token, objects, truncated): returned ('urn:stalwart:davsync:13b', 3, False)
+RESULT [Stalwart] calendar-multiget through DAVClient.report(depth=None), no Depth header: status 207, entries 2 for 2 hrefs
+RESULT [Stalwart] SEQUENCE stored: after create, after save(increase_seqno=False), after save(): ('1', '1', '2')
+RESULT [Stalwart] save(increase_seqno=False) of an object someone else saved since: raised ETagMismatchError {'url': '412 Precondition Failed\n\n', 'preconditions': '[]', 'body': 'None', 'status': '412'}
+RESULT [Stalwart] delete(if_match=<ETag before someone else's save>): raised ETagMismatchError {'url': '412 Precondition Failed\n\n', 'preconditions': '[]', 'body': 'None', 'status': '412'}
+RESULT [Stalwart] delete(if_match=<last ETag>) on an object already deleted: raised NotFoundError {'url': '404 Not Found\n\n', 'preconditions': '[]', 'body': 'None', 'status': '404'}

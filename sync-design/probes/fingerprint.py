@@ -11,14 +11,14 @@ CalDAV: the canonical form unfolds lines, sorts properties and parameters within
 component, sorts components and the parts of a recurrence rule (RFC 5545 section 3.3.10),
 compares other values as sent, and leaves out the properties a server stamps itself.
 
-JMAP: sorted-keys JSON without the properties the server sets, with defaults filled in for
-isDraft, useDefaultAlerts and version.
+JMAP: the JMAP adapter's own fingerprint, jmap-canonical-1, so the log checks the rules that
+ship (calendaring-sync must be installed).
 """
 
 import hashlib
-import json
 import sys
 
+from calendaring_sync.adapters.jmap import _event_fields
 from icalendar.parser import Contentline, Contentlines
 
 from _common import DAV, JMAP, check, finish, ics, result
@@ -26,20 +26,6 @@ from _common import DAV, JMAP, check, finish, ics, result
 ICS_IGNORED = {"DTSTAMP", "LAST-MODIFIED", "PRODID"}
 # Recurrence rules whose parts may come in any order (RFC 5545 section 3.3.10).
 ICS_RECUR = {"RRULE", "EXRULE"}
-JMAP_IGNORED = {
-    "id",
-    "baseEventId",
-    "isOrigin",
-    "utcStart",
-    "utcEnd",
-    "x-href",
-    "created",
-    "updated",
-    "sequence",
-    "prodId",
-}
-# A server MUST return isDraft and useDefaultAlerts (draft-ietf-jmap-calendars-32 section 5.7).
-JMAP_DEFAULTS = {"isDraft": False, "useDefaultAlerts": False, "version": "2.0"}
 
 
 def ics_canonical(text):
@@ -68,10 +54,7 @@ def ics_fingerprint(text):
 
 
 def jmap_fingerprint(event):
-    kept = {k: v for k, v in event.items() if k not in JMAP_IGNORED}
-    filled = {**JMAP_DEFAULTS, **kept}
-    raw = json.dumps(filled, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hashlib.sha256(raw.encode()).hexdigest()
+    return _event_fields(event).fingerprint
 
 
 def differences(sent, stored):

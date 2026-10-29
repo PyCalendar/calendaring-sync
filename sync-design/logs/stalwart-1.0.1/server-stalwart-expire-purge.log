@@ -1,0 +1,6 @@
+>>> x:Account/query {}
+<<< x:Account/query {"accountId": "d333333", "queryState": "n", "canCalculateChanges": true, "position": 0, "ids": ["b"]}
+>>> x:Account/get {"ids": ["b"], "properties": ["name"]}
+<<< x:Account/get {"accountId": "d333333", "list": [{"name": "testuser", "id": "b"}], "notFound": []}
+>>> x:Task/set {"create": {"t": {"@type": "AccountMaintenance", "accountId": "b", "maintenanceType": "purge"}}}
+<<< x:Task/set {"accountId": "d333333", "created": {"t": {"id": "hxksbsynzjus0"}}}

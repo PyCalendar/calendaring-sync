@@ -1,0 +1,6 @@
+
+RESULT [Stalwart] calendaring-jmap version: 1.1.1.dev60+g21a3f25d5
+RESULT [Stalwart] state the server never issued: raised JMAPMethodError {'url': 'http://localhost:8809/jmap/', 'reason': "Method call failed: {'type': 'invalidArguments', 'description': 'invalid JMAP State at line 1 column 166'}", 'error_type': 'invalidArguments'}
+RESULT [Stalwart] three creates since the token, unlimited: returned (3, 0, 0, 'szeba', 'szqba', False)
+RESULT [Stalwart] the same, with maxChanges 1 in calendaring-jmap's own request: returned ([JMAPCalendarObject(data={'start': '2026-10-20T10:00:00', 'title': 'x', 'duration': 'PT1H', 'created': '2026-10-29T06:18:20Z', 'updated': '2026-10-29T06:18:20Z', 'timeZone': 'Etc/UTC', 'uid': 'jmap-client-0', '@type': 'Event', 'version': '2.0', 'id': 'el', 'calendarIds': {'b': True}, 'isDr
+RESULT [Stalwart] get_task_sync_token(): raised HTTPError {'response': '<Response HTTP/1.1 [400]>', 'request': '<PreparedRequest [POST]>'}

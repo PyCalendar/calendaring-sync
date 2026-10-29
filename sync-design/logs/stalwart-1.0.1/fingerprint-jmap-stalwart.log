@@ -1,0 +1,25 @@
+
+===== calendars =====
+>>> Calendar/get {"ids": null}
+<<< Calendar/get {"accountId": "b", "state": "sae", "list": [{"id": "b", "name": "Stalwart Calendar (testuser@example.org)", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": true, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}], "notFound": []}
+
+===== create =====
+>>> CalendarEvent/set {"create": {"c": {"@type": "Event", "uid": "fp-jmap", "title": "fingerprint", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "saq", "newState": "sau", "created": {"c": {"id": "c", "created": "2026-10-29T06:21:27Z", "updated": "2026-10-29T06:21:27Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}}}
+
+===== get =====
+>>> CalendarEvent/get {"ids": ["c"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sau", "list": [{"start": "2026-10-20T10:00:00", "title": "fingerprint", "duration": "PT1H", "created": "2026-10-29T06:21:27Z", "updated": "2026-10-29T06:21:27Z", "timeZone": "Etc/UTC", "uid": "fp-jmap", "@type": "Event", "version": "2.0", "id": "c", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}], "notFound": []}
+
+===== update =====
+>>> CalendarEvent/set {"update": {"c": {"title": "fingerprint, updated"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sau", "newState": "say", "updated": {"c": {"sequence": 1}}}
+
+===== get =====
+>>> CalendarEvent/get {"ids": ["c"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "say", "list": [{"start": "2026-10-20T10:00:00", "title": "fingerprint, updated", "duration": "PT1H", "created": "2026-10-29T06:21:27Z", "updated": "2026-10-29T06:21:27Z", "sequence": 1, "timeZone": "Etc/UTC", "uid": "fp-jmap", "@type": "Event", "version": "2.0", "id": "c", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}], "notFound": []}
+
+RESULT [Stalwart] after create: properties the server added: ['created', 'hideAttendees', 'id', 'isDraft', 'isOrigin', 'mayInviteOthers', 'mayInviteSelf', 'updated', 'useDefaultAlerts', 'version']
+RESULT [Stalwart] PASS after create: fingerprint equal: ok
+RESULT [Stalwart] after an update: properties the server added: ['created', 'hideAttendees', 'id', 'isDraft', 'isOrigin', 'mayInviteOthers', 'mayInviteSelf', 'sequence', 'updated', 'useDefaultAlerts', 'version']
+RESULT [Stalwart] PASS after an update: fingerprint equal: ok
