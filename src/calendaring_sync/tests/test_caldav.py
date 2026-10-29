@@ -659,9 +659,9 @@ class TestListing:
                 SCENARIOS["listing_cut_short"](env)
 
     def test_a_listing_error_other_than_a_cut_is_raised(self, store, asynchronous):
-        # Exchange 8 is the listing, cut short.
+        # Exchange 6 is the listing, cut short.
         tape = _tape("stalwart-listing_cut_short")
-        _edit(tape, 8, old="507 Insufficient Storage", new="500 Internal Server Error")
+        _edit(tape, 6, old="507 Insufficient Storage", new="500 Internal Server Error")
         with _replaying(tape, store, asynchronous) as env:
             for uid in ("a", "b", "c"):
                 env.put(uid, "one")

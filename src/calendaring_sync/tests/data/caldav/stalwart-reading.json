@@ -2,23 +2,12 @@
  "server": "stalwart",
  "scenario": "reading",
  "caldav": "3.6.0",
- "recorded": "2026-10-25",
+ "recorded": "2026-10-29",
  "exchanges": [
   {
    "method": "DELETE",
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-reading/",
-   "status": 401,
-   "headers": {
-    "www-authenticate": "Bearer realm=\"Stalwart Server\", resource_metadata=\"/.well-known/oauth-protected-resource\", Basic realm=\"Stalwart Server\"",
-    "content-type": "application/problem+json"
-   },
-   "body": "{\"type\":\"about:blank\",\"status\":401,\"title\":\"Unauthorized\",\"detail\":\"You have to authenticate first.\"}",
-   "request": ""
-  },
-  {
-   "method": "DELETE",
-   "path": "/dav/cal/testuser%40example.org/calendaring-sync-reading/",
-   "status": 204,
+   "status": 404,
    "headers": {},
    "body": "",
    "request": ""
@@ -29,7 +18,7 @@
    "status": 201,
    "headers": {
     "content-type": "application/xml; charset=utf-8",
-    "etag": "\"1303245059\""
+    "etag": "\"1989554434\""
    },
    "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:mkcol-response xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"></D:mkcol-response>",
    "request": ""
@@ -37,12 +26,11 @@
   {
    "method": "PROPFIND",
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-reading/",
-   "status": 401,
+   "status": 207,
    "headers": {
-    "www-authenticate": "Bearer realm=\"Stalwart Server\", resource_metadata=\"/.well-known/oauth-protected-resource\", Basic realm=\"Stalwart Server\"",
-    "content-type": "application/problem+json"
+    "content-type": "application/xml; charset=utf-8"
    },
-   "body": "{\"type\":\"about:blank\",\"status\":401,\"title\":\"Unauthorized\",\"detail\":\"You have to authenticate first.\"}",
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/</D:href><D:propstat><D:prop><D:sync-token>urn:stalwart:davsync:4a5</D:sync-token></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>",
    "request": ""
   },
   {
@@ -52,17 +40,7 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/</D:href><D:propstat><D:prop><D:sync-token>urn:stalwart:davsync:b5</D:sync-token></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>",
-   "request": ""
-  },
-  {
-   "method": "PROPFIND",
-   "path": "/dav/cal/testuser%40example.org/calendaring-sync-reading/",
-   "status": 207,
-   "headers": {
-    "content-type": "application/xml; charset=utf-8"
-   },
-   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/</D:href><D:propstat><D:prop><D:getetag>&quot;1303245059&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>",
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/</D:href><D:propstat><D:prop><D:getetag>&quot;1989554434&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>",
    "request": ""
   },
   {
@@ -70,7 +48,7 @@
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics",
    "status": 201,
    "headers": {
-    "etag": "\"2570777029\""
+    "etag": "\"3237508861\""
    },
    "body": "",
    "request": ""
@@ -80,7 +58,7 @@
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-reading/b.ics",
    "status": 201,
    "headers": {
-    "etag": "\"1023969665\""
+    "etag": "\"241775156\""
    },
    "body": "",
    "request": ""
@@ -102,7 +80,7 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/b.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1023969665&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2570777029&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:b7</D:sync-token></D:multistatus>",
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3237508861&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/b.ics</D:href><D:propstat><D:prop><D:getetag>&quot;241775156&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:4a7</D:sync-token></D:multistatus>",
    "request": ""
   },
   {
@@ -112,7 +90,7 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/b.ics</D:href><D:propstat><D:prop><A:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:reading-b\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:first b\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></A:calendar-data><D:getetag>&quot;1023969665&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat><D:propstat><D:prop><A:schedule-tag/></D:prop><D:status>HTTP/1.1 404 Not Found</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics</D:href><D:propstat><D:prop><A:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:reading-a\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:first a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></A:calendar-data><D:getetag>&quot;2570777029&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat><D:propstat><D:prop><A:schedule-tag/></D:prop><D:status>HTTP/1.1 404 Not Found</D:status></D:propstat></D:response></D:multistatus>",
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics</D:href><D:propstat><D:prop><A:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:reading-a\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:first a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></A:calendar-data><D:getetag>&quot;3237508861&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat><D:propstat><D:prop><A:schedule-tag/></D:prop><D:status>HTTP/1.1 404 Not Found</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/b.ics</D:href><D:propstat><D:prop><A:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:reading-b\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:first b\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></A:calendar-data><D:getetag>&quot;241775156&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat><D:propstat><D:prop><A:schedule-tag/></D:prop><D:status>HTTP/1.1 404 Not Found</D:status></D:propstat></D:response></D:multistatus>",
    "request": ""
   },
   {
@@ -120,7 +98,7 @@
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics",
    "status": 204,
    "headers": {
-    "etag": "\"42113155\""
+    "etag": "\"2845043169\""
    },
    "body": "",
    "request": ""
@@ -140,7 +118,7 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/b.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;42113155&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:b9</D:sync-token></D:multistatus>",
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/b.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;2845043169&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:4a9</D:sync-token></D:multistatus>",
    "request": ""
   },
   {
@@ -150,7 +128,7 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics</D:href><D:propstat><D:prop><A:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:reading-a\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:second a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></A:calendar-data><D:getetag>&quot;42113155&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat><D:propstat><D:prop><A:schedule-tag/></D:prop><D:status>HTTP/1.1 404 Not Found</D:status></D:propstat></D:response></D:multistatus>",
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-reading/a.ics</D:href><D:propstat><D:prop><A:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:reading-a\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:second a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></A:calendar-data><D:getetag>&quot;2845043169&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat><D:propstat><D:prop><A:schedule-tag/></D:prop><D:status>HTTP/1.1 404 Not Found</D:status></D:propstat></D:response></D:multistatus>",
    "request": ""
   },
   {
