@@ -56,161 +56,6 @@ _CONFLICT_SIDES: dict[ConflictKind, tuple[frozenset[EditKind], bool]] = {
 }
 
 
-class StorageTransaction(ABC):
-    """One transaction on a :class:`Storage`, which :meth:`Storage.begin` returns.
-
-    It holds whatever its transaction needs, such as a connection or a view
-    of the data, so a storage keeps no state per thread. Its data operations
-    are the ones :class:`StateStore` offers, without the checks:
-    :class:`StateStore` calls them only inside this transaction, after it
-    checked the arguments, the records and whether the transaction may
-    write, and turns every exception they raise into a store error. Each
-    returns what the :class:`StateStore` method of the same name returns.
-
-    Args:
-        write: Whether the transaction may write.
-    """
-
-    def __init__(self, *, write: bool) -> None:
-        #: Whether the transaction may write.
-        self.write = write
-
-    @abstractmethod
-    def commit(self) -> None:
-        """Keep what the transaction wrote, and end it."""
-
-    @abstractmethod
-    def rollback(self) -> None:
-        """Discard what the transaction wrote, and end it.
-
-        It's also called after :meth:`commit` raised, so it ends whatever
-        the transaction still holds open.
-        """
-
-    @abstractmethod
-    def get_scope(self, scope_id: str) -> Scope | None:
-        """Do what :meth:`StateStore.get_scope` does, without its checks."""
-
-    @abstractmethod
-    def put_scope(self, scope: Scope) -> None:
-        """Do what :meth:`StateStore.put_scope` does, without its checks."""
-
-    @abstractmethod
-    def delete_scope(self, scope_id: str) -> None:
-        """Do what :meth:`StateStore.delete_scope` does, without its checks."""
-
-    @abstractmethod
-    def scopes(self) -> list[Scope]:
-        """Do what :meth:`StateStore.scopes` does, without its checks."""
-
-    @abstractmethod
-    def insert_record(self, record: Record) -> int:
-        """Do what :meth:`StateStore.insert_record` does, without its checks."""
-
-    @abstractmethod
-    def update_record(self, record: Record) -> None:
-        """Do what :meth:`StateStore.update_record` does, without its checks."""
-
-    @abstractmethod
-    def delete_record(self, local_key: int) -> None:
-        """Do what :meth:`StateStore.delete_record` does, without its checks."""
-
-    @abstractmethod
-    def get_record(self, local_key: int) -> Record | None:
-        """Do what :meth:`StateStore.get_record` does, without its checks."""
-
-    @abstractmethod
-    def find_record(self, scope_id: str, object_id: str) -> Record | None:
-        """Do what :meth:`StateStore.find_record` does, without its checks."""
-
-    @abstractmethod
-    def find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
-        """Do what :meth:`StateStore.find_by_logical_key` does, without its checks."""
-
-    @abstractmethod
-    def scope_records(self, scope_id: str) -> list[Record]:
-        """Return every record of the scope, ordered by local key."""
-
-    def scope_records_in(self, scope_id: str, states: frozenset[RecordState]) -> list[Record]:
-        """Return the scope's records in one of ``states``, ordered by local key.
-
-        This filters what :meth:`scope_records` returns. A storage that can
-        filter where it keeps its records, such as with an index, overrides
-        it. It never gets an empty set.
-        """
-        return [record for record in self.scope_records(scope_id) if record.state in states]
-
-    @abstractmethod
-    def removed_records(self, through: int) -> list[Record]:
-        """Do what :meth:`StateStore.removed_records` does, without its checks."""
-
-    @abstractmethod
-    def append_entry(
-        self,
-        scope_id: str,
-        kind: FeedEntryKind,
-        local_key: int | None,
-        object_id: str | None,
-        at: datetime,
-    ) -> FeedEntry:
-        """Do what :meth:`StateStore.append_entry` does, without its checks."""
-
-    @abstractmethod
-    def entries(self, after: int, limit: int) -> list[FeedEntry]:
-        """Do what :meth:`StateStore.entries` does, without its checks."""
-
-    @abstractmethod
-    def feed_bounds(self) -> tuple[int, int]:
-        """Do what :meth:`StateStore.feed_bounds` does, without its checks."""
-
-    @abstractmethod
-    def trim_entries(self, through: int) -> None:
-        """Do what :meth:`StateStore.trim_entries` does, without its checks."""
-
-
-class Storage(ABC):
-    """Where a :class:`StateStore` keeps its data.
-
-    To keep sync state somewhere new, such as in another database,
-    implement this and a :class:`StorageTransaction`, and pass the storage
-    to :class:`StateStore`. The store adds every check, transaction rule,
-    thread rule and error a store needs, so a storage only reads and writes.
-    """
-
-    #: Whether a transaction that only reads can run while another thread's
-    #: write transaction is open. With ``False``, every transaction waits for
-    #: the one before it to end. Set it to ``True`` only where a read sees the
-    #: data as the last commit left it until it ends, whatever a write does
-    #: meanwhile; reads in other threads then run at the same time too, so
-    #: :meth:`begin` and the transactions it returns must be safe for that.
-    reads_beside_writes: bool = False
-
-    @abstractmethod
-    def begin(self, *, write: bool) -> StorageTransaction:
-        """Start a transaction and return it.
-
-        The store runs one write transaction at a time, and transactions
-        that only read beside it only if :attr:`reads_beside_writes` is
-        set. If this raises, it leaves nothing open.
-        """
-
-    def close(self) -> None:  # noqa: B027, a storage may hold nothing to release
-        """Release what the storage holds open.
-
-        The store calls it once, after every transaction ended.
-        """
-
-    def error(self, exc: Exception) -> StoreError | None:
-        """Return the store error for an exception the storage raised, or ``None``.
-
-        Turn the failures of whatever the storage uses, such as a file it
-        can't open, into :class:`~calendaring_sync.error.StoreError` or one
-        of its subclasses. The store reports any exception this returns
-        ``None`` for as a bug in the storage.
-        """
-        return None
-
-
 def _unexpected(cls: type, exc: Exception) -> UnexpectedStoreError:
     """The error for an exception ``cls`` didn't expect: a bug, reported to whoever wrote it."""
     name = f"{cls.__module__}.{cls.__qualname__}"
@@ -263,6 +108,17 @@ def _check_record(record: Record) -> None:
     # Only a refused edit names the object holding its logical key.
     if conflict.holder is not None and conflict.kind is not ConflictKind.LOGICAL_KEY_TAKEN:
         raise RecordValueError(f"A {conflict.kind} conflict can't name a holder")
+
+
+def _check_unique(current: StorageTransaction, record: Record) -> None:
+    """Raise if another record in the record's scope has its object id."""
+    if record.object_id is None:
+        return
+    other = current.find_record(record.scope, record.object_id)
+    if other is not None and other.local_key != record.local_key:
+        raise DuplicateObjectError(
+            f"Scope {record.scope!r} already has object {record.object_id!r}"
+        )
 
 
 @check_argument_types
@@ -535,8 +391,9 @@ class StateStore:
     def find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
         """Return the scope's records with this :term:`logical key`, ordered by local key.
 
-        A record matches if its synced copy or its :term:`local edit` has
-        the key. Several records can share one. Runs inside any transaction.
+        Matches as :meth:`Replica.find_by_logical_key
+        <calendaring_sync.replica.Replica.find_by_logical_key>` describes.
+        Runs inside any transaction.
 
         Raises:
             TransactionRequiredError: If no transaction is open in this thread.
@@ -667,12 +524,156 @@ class StateStore:
         self.close()
 
 
-def _check_unique(current: StorageTransaction, record: Record) -> None:
-    """Raise if another record in the record's scope has its object id."""
-    if record.object_id is None:
-        return
-    other = current.find_record(record.scope, record.object_id)
-    if other is not None and other.local_key != record.local_key:
-        raise DuplicateObjectError(
-            f"Scope {record.scope!r} already has object {record.object_id!r}"
-        )
+class Storage(ABC):
+    """Where a :class:`StateStore` keeps its data.
+
+    To keep sync state somewhere new, such as in another database,
+    implement this and a :class:`StorageTransaction`, and pass the storage
+    to :class:`StateStore`. The store adds every check, transaction rule,
+    thread rule and error a store needs, so a storage only reads and writes.
+    """
+
+    #: Whether a transaction that only reads can run while another thread's
+    #: write transaction is open. With ``False``, every transaction waits for
+    #: the one before it to end. Set it to ``True`` only where a read sees the
+    #: data as the last commit left it until it ends, whatever a write does
+    #: meanwhile; reads in other threads then run at the same time too, so
+    #: :meth:`begin` and the transactions it returns must be safe for that.
+    reads_beside_writes: bool = False
+
+    @abstractmethod
+    def begin(self, *, write: bool) -> StorageTransaction:
+        """Start a transaction and return it.
+
+        The store runs one write transaction at a time, and transactions
+        that only read beside it only if :attr:`reads_beside_writes` is
+        set. If this raises, it leaves nothing open.
+        """
+
+    def close(self) -> None:  # noqa: B027, a storage may hold nothing to release
+        """Release what the storage holds open.
+
+        The store calls it once, after every transaction ended.
+        """
+
+    def error(self, exc: Exception) -> StoreError | None:
+        """Return the store error for an exception the storage raised, or ``None``.
+
+        Turn the failures of whatever the storage uses, such as a file it
+        can't open, into :class:`~calendaring_sync.error.StoreError` or one
+        of its subclasses. The store reports any exception this returns
+        ``None`` for as a bug in the storage.
+        """
+        return None
+
+
+class StorageTransaction(ABC):
+    """One transaction on a :class:`Storage`, which :meth:`Storage.begin` returns.
+
+    It holds whatever its transaction needs, such as a connection or a view
+    of the data, so a storage keeps no state per thread. Its data operations
+    are the ones :class:`StateStore` offers, without the checks:
+    :class:`StateStore` calls them only inside this transaction, after it
+    checked the arguments, the records and whether the transaction may
+    write, and turns every exception they raise into a store error. Each
+    returns what the :class:`StateStore` method of the same name returns.
+
+    Args:
+        write: Whether the transaction may write.
+    """
+
+    def __init__(self, *, write: bool) -> None:
+        #: Whether the transaction may write.
+        self.write = write
+
+    @abstractmethod
+    def commit(self) -> None:
+        """Keep what the transaction wrote, and end it."""
+
+    @abstractmethod
+    def rollback(self) -> None:
+        """Discard what the transaction wrote, and end it.
+
+        It's also called after :meth:`commit` raised, so it ends whatever
+        the transaction still holds open.
+        """
+
+    @abstractmethod
+    def get_scope(self, scope_id: str) -> Scope | None:
+        """Do what :meth:`StateStore.get_scope` does, without its checks."""
+
+    @abstractmethod
+    def put_scope(self, scope: Scope) -> None:
+        """Do what :meth:`StateStore.put_scope` does, without its checks."""
+
+    @abstractmethod
+    def delete_scope(self, scope_id: str) -> None:
+        """Do what :meth:`StateStore.delete_scope` does, without its checks."""
+
+    @abstractmethod
+    def scopes(self) -> list[Scope]:
+        """Do what :meth:`StateStore.scopes` does, without its checks."""
+
+    @abstractmethod
+    def insert_record(self, record: Record) -> int:
+        """Do what :meth:`StateStore.insert_record` does, without its checks."""
+
+    @abstractmethod
+    def update_record(self, record: Record) -> None:
+        """Do what :meth:`StateStore.update_record` does, without its checks."""
+
+    @abstractmethod
+    def delete_record(self, local_key: int) -> None:
+        """Do what :meth:`StateStore.delete_record` does, without its checks."""
+
+    @abstractmethod
+    def get_record(self, local_key: int) -> Record | None:
+        """Do what :meth:`StateStore.get_record` does, without its checks."""
+
+    @abstractmethod
+    def find_record(self, scope_id: str, object_id: str) -> Record | None:
+        """Do what :meth:`StateStore.find_record` does, without its checks."""
+
+    @abstractmethod
+    def find_by_logical_key(self, scope_id: str, logical_key: str) -> list[Record]:
+        """Do what :meth:`StateStore.find_by_logical_key` does, without its checks."""
+
+    @abstractmethod
+    def scope_records(self, scope_id: str) -> list[Record]:
+        """Return every record of the scope, ordered by local key."""
+
+    def scope_records_in(self, scope_id: str, states: frozenset[RecordState]) -> list[Record]:
+        """Return the scope's records in one of ``states``, ordered by local key.
+
+        This filters what :meth:`scope_records` returns. A storage that can
+        filter where it keeps its records, such as with an index, overrides
+        it. It never gets an empty set.
+        """
+        return [record for record in self.scope_records(scope_id) if record.state in states]
+
+    @abstractmethod
+    def removed_records(self, through: int) -> list[Record]:
+        """Do what :meth:`StateStore.removed_records` does, without its checks."""
+
+    @abstractmethod
+    def append_entry(
+        self,
+        scope_id: str,
+        kind: FeedEntryKind,
+        local_key: int | None,
+        object_id: str | None,
+        at: datetime,
+    ) -> FeedEntry:
+        """Do what :meth:`StateStore.append_entry` does, without its checks."""
+
+    @abstractmethod
+    def entries(self, after: int, limit: int) -> list[FeedEntry]:
+        """Do what :meth:`StateStore.entries` does, without its checks."""
+
+    @abstractmethod
+    def feed_bounds(self) -> tuple[int, int]:
+        """Do what :meth:`StateStore.feed_bounds` does, without its checks."""
+
+    @abstractmethod
+    def trim_entries(self, through: int) -> None:
+        """Do what :meth:`StateStore.trim_entries` does, without its checks."""

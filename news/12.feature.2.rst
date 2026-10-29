@@ -1,1 +1,0 @@
-:class:`~calendaring_sync.objects.resolution.Merge` takes the :class:`~calendaring_sync.objects.edit.EditFields` an adapter's :meth:`~calendaring_sync.adapters.base.Adapter.edit_fields` reads from the merged content, so a merge is fingerprinted the way a sync fingerprints the server's copy.

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, cast
@@ -34,12 +34,11 @@ from calendaring_sync.adapters.base import (
     SyncAdapter,
     _url_id,
 )
-from calendaring_sync.error import ScopeGoneError
 from calendaring_sync.objects.change import Change, Changed, Removed
 from calendaring_sync.objects.change_set import ChangeSet
 from calendaring_sync.objects.edit import EditFields, EditKind, LocalEdit
 from calendaring_sync.objects.push import Applied, Gone, LogicalKeyTaken, PushOutcome, Rejected
-from calendaring_sync.objects.record import Record
+from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
 from calendaring_sync.replica import Replica
 from calendaring_sync.session import Session
@@ -128,6 +127,11 @@ _ROLES = "roles"
 _DROPPED_ROLE = "attendee"
 # The member a refusal for the logical key names.
 _UID = "uid"
+# The member a tested server names instead when the uid is held by another
+# instance in the same calendar, as it does for a calendar that doesn't exist.
+_CALENDAR_IDS = "calendarIds"
+# Every state but removed: what the server holds is read from these.
+_LIVE = frozenset(RecordState) - {RecordState.REMOVED}
 # How calendaring-jmap reports a server's errors (RFC 8620 sections 3.6.2, 5.2 and 5.3).
 _ACCOUNT_NOT_FOUND = "accountNotFound"
 _STATE_MISMATCH = "stateMismatch"
@@ -260,10 +264,14 @@ def _refusal(kind: EditKind, error: JMAPMethodError) -> PushOutcome | None:
         return Rejected()
     if error.error_type == _NOT_FOUND and kind is not EditKind.CREATE:
         return Gone()
-    taken = error.error_type == _INVALID_PROPERTIES and _UID in (error.properties or ())
-    if taken and kind is not EditKind.DELETE:
+    if _names(error, _UID) and kind is not EditKind.DELETE:
         return LogicalKeyTaken()
     return None
+
+
+def _names(error: JMAPMethodError, member: str) -> bool:
+    """Whether ``error`` refuses an event for ``member`` (``invalidProperties`` naming it)."""
+    return error.error_type == _INVALID_PROPERTIES and member in (error.properties or ())
 
 
 class _JMAPFlow(Adapter):
@@ -303,18 +311,10 @@ class _JMAPFlow(Adapter):
             raise ValueError("A created event must be in a calendar")
         return fields
 
-    def _ask(self, request: Callable[[], Any]) -> Steps[Any]:
-        """Make one call about the account; an account that's gone raises.
-
-        ``request`` is a function making the call, so a synchronous client's
-        error is raised here too.
-        """
-        try:
-            return (yield request())
-        except JMAPMethodError as exc:
-            if exc.error_type == _ACCOUNT_NOT_FOUND:
-                raise ScopeGoneError(f"The server has no account {self._account_id!r}") from exc
-            raise
+    def _gone(self, error: Exception) -> str | None:
+        if isinstance(error, JMAPMethodError) and error.error_type == _ACCOUNT_NOT_FOUND:
+            return f"The server has no account {self._account_id!r}"
+        return None
 
     def _changed(self, objects: Iterable[Any]) -> dict[str, Changed]:
         """Changes for the events a server returned."""
@@ -452,12 +452,35 @@ class _JMAPFlow(Adapter):
                 outcome = Applied()
         except JMAPMethodError as exc:
             refused = _refusal(edit.kind, exc)
+            if (
+                refused is None
+                and edit.kind is not EditKind.DELETE
+                and _names(exc, _CALENDAR_IDS)
+                and (yield from self._uid_held(edit, claimed.local_key))
+            ):
+                refused = LogicalKeyTaken()
             if refused is None:
                 raise
             # A refused write changes nothing, so the state stays where it was.
             return refused
         self._state = state
         return outcome
+
+    def _uid_held(self, edit: LocalEdit, local_key: int) -> Steps[bool]:
+        """Whether another event the server holds, in one of the edit's calendars, has its uid."""
+        uid = _event(cast(bytes, edit.content)).get(_UID)
+        # A change may leave the uid out, or give one that isn't text; no event holds that.
+        if not isinstance(uid, str):
+            return False
+        records = yield InStore(self._replica.records, (self._scope_id,), {"states": _LIVE})
+        return any(
+            record.local_key != local_key
+            and (key := record.server_logical_key) is not None
+            # A logical key is the uid, or the uid, a space and a recurrence id.
+            and (key == uid or key.startswith(f"{uid} "))
+            and bool(record.server_containers & edit.containers)
+            for record in records
+        )
 
 
 @check_argument_types

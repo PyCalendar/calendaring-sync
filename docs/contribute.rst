@@ -8,7 +8,7 @@ Contribute
 .. meta::
    :description: Set up calendaring-sync for development, find your way around the code, run the checks CI runs, and send a pull request the way the project reviews it.
 
-calendaring-sync takes bug reports, fixes, documentation, and new adapters. This page covers what you need to send one: the setup, how the code is laid out, the checks a pull request must pass, and the conventions reviewers hold it to.
+calendaring-sync takes bug reports, fixes, documentation, and new adapters.
 
 Before you start
 ================
@@ -65,22 +65,42 @@ A new adapter can live in its own package, built on :mod:`calendaring_sync.adapt
 Run the tests
 =============
 
-Unit tests need no server, network, or Docker. CI runs these four files on every supported Python version:
+Unit tests need no server, network, or Docker. CI runs every test file except the integration ones, on every supported Python version:
 
 .. code-block:: bash
 
-    pytest src/calendaring_sync/tests/test_sync_unit.py src/calendaring_sync/tests/test_classify_unit.py src/calendaring_sync/tests/test_caldav_unit.py src/calendaring_sync/tests/test_jmap_unit.py
+    pytest src/calendaring_sync/tests --ignore-glob="*_integration.py"
 
-``test_sync_unit.py`` covers the core, the stores, and every docs example that needs no server. ``test_classify_unit.py`` covers the classifier over every combination of its inputs. The two adapter files replay HTTP exchanges recorded from real servers, kept in ``src/calendaring_sync/tests/data/``.
+``test_caldav.py`` and ``test_jmap.py`` replay HTTP exchanges recorded from real servers, kept in ``src/calendaring_sync/tests/data/``.
 
 Integration tests run each adapter, and the docs examples that need a server, against real servers:
 
 .. code-block:: bash
 
-    bash tests/docker/stalwart/start.sh
+    bash tests/docker/start.sh stalwart cyrus baikal
     pytest src/calendaring_sync/tests/test_caldav_integration.py src/calendaring_sync/tests/test_jmap_integration.py
 
-Radicale and Xandikos run embedded. Each other server is tested when it answers and skipped when it doesn't; the recorder each integration module's docstring names says how to start it. CI runs them only on a release tag or when a maintainer starts them, not on each pull request, so run them yourself when you change an adapter, against every server you can start.
+Radicale and Xandikos run embedded, and ``tests/docker`` holds a fixture for each other server; one that doesn't answer is skipped. ``bash tests/docker/stop.sh stalwart cyrus baikal`` removes them, so the next start is clean. CI runs every server on each pull request that changes code.
+
+Write a test
+------------
+
+Put a test in the file for its area:
+
+- ``test_store.py``: the stores
+- ``test_ingest.py``: change sets, sessions and resets
+- ``test_replica.py``: scopes, lookups, the values the replica takes, and the change feed
+- ``test_edits.py``: local edits and conflicts
+- ``test_pushes.py``: pushes and resolutions
+- ``test_classify.py``: the classifier, over every combination of its inputs
+- ``test_adapters.py``, ``test_caldav.py`` and ``test_jmap.py``: the adapter base and each adapter
+- ``test_examples.py``: the docs examples, each test named after its example's file
+- ``test_package.py``: the package as a whole
+- ``test_caldav_integration.py`` and ``test_jmap_integration.py``: each adapter against real servers, with what every protocol must show written once in ``EveryProtocol``, in ``_live.py``
+
+In a file, each class covers one behavior, named in its docstring, and the classes follow the order the docs present things. In a class, the normal case comes first, then variations, then refusals, then threads, other processes and recovery. A test's name states what it checks, such as ``test_one_open_session_per_scope``, and variations of one behavior are rows of a ``pytest.mark.parametrize`` table beside it.
+
+Fixtures are in ``conftest.py``: a test that takes ``store`` or ``replica`` runs on every store, and one that takes ``asynchronous`` runs with both kinds of adapter. Helpers more than one file uses are in ``_helpers.py``, and events in ``_content.py``. Test each refusal with ``_assert_refused``, which also checks that nothing changed.
 
 Record server exchanges
 -----------------------
@@ -108,7 +128,7 @@ It prints the best time of each scenario, each on a fresh store. ``--size`` and 
 Check your change
 =================
 
-CI runs every check below on each pull request. Run them first, and fix what they report before you ask for review.
+CI runs every check below on each pull request; run them before you ask for review.
 
 .. list-table::
    :header-rows: 1
@@ -119,7 +139,7 @@ CI runs every check below on each pull request. Run them first, and fix what the
    * - Lint and format
      - ``ruff check .`` and ``ruff format --check .``
    * - Types
-     - ``mypy src/calendaring_sync docs/examples --ignore-missing-imports``
+     - ``mypy src/calendaring_sync docs/examples tests/docker``, with its settings in ``pyproject.toml``
    * - Unit tests
      - The command in :ref:`running-tests`
    * - Docs build
@@ -133,7 +153,7 @@ CI runs every check below on each pull request. Run them first, and fix what the
    * - Change log
      - ``towncrier check --compare-with origin/main``
 
-``pre-commit`` runs the lint, format, and licensing checks on each commit. The docs build fails on any warning, including a cross-reference that doesn't resolve, so a renamed class or a mistyped ``:rfc:`` role fails the build instead of shipping a broken link.
+``pre-commit`` runs the lint, format, and licensing checks on each commit. The docs build fails on any warning, including a cross-reference that doesn't resolve.
 
 .. _code-style:
 
@@ -207,7 +227,7 @@ Cross-references
     Link between pages with ``:doc:`` and a relative path, such as ``:doc:`../explanation/design```, and to a class or method with ``:class:`` or ``:meth:`` and a leading ``~`` for the short name. Link a sync term to :doc:`reference/glossary` with ``:term:`` the first time a section uses it, and define a new term there, not inline.
 
 Code examples
-    Each Python example on a page is a file in ``docs/examples/``, included with ``literalinclude`` and its ``:start-after:`` and ``:end-before:`` markers, so the code a page shows is the code a test runs. An example that needs no server gets a test in ``TestExamples``, and starts from ``start.py`` when it needs a replica that synced. One that needs a server is listed in ``LIVE`` in ``_examples.py``, keeps its server details in top-level assignments, and gets an integration test, which replaces those details. Readers copy these files, so they pass the type check too. A shell command goes in a ``.. code-block:: bash``, and a tutorial ends with a "Next steps" section.
+    Each Python example on a page is a file in ``docs/examples/``, included with ``literalinclude`` and its ``:start-after:`` and ``:end-before:`` markers, so the code a page shows is the code a test runs. An example that needs no server gets a test in ``test_examples.py``, and starts from ``start.py`` when it needs a replica that synced. One that needs a server is listed in ``LIVE`` in ``_examples.py``, keeps its server details in top-level assignments, and gets an integration test, which replaces those details. Readers copy these files, so they pass the type check too. A shell command goes in a ``.. code-block:: bash``, and a tutorial ends with a "Next steps" section.
 
 Diagrams and headings
     Sphinx doesn't check the syntax inside a ``.. mermaid::`` diagram, so render a changed diagram before you open a pull request. Make each heading's underline exactly as long as the heading: Sphinx warns only about a page title's.
@@ -219,8 +239,6 @@ Preview the docs
 
     pip install -e ".[docs]"
     sphinx-autobuild docs docs/_build/html
-
-This serves the docs locally and rebuilds them as you edit.
 
 .. _vale-check:
 
@@ -234,7 +252,7 @@ Check prose with Vale
     vale sync
     vale docs/
 
-It runs the Microsoft style package and `signs-of-ai-writing <https://github.com/ammil-industries/vale-signs-of-ai-writing>`_, which catch many of the rules above. CI runs it as a check that warns without failing. The choice of Diátaxis category, and whether a fact is stated in one place, still need your own read of the diff.
+It runs the Microsoft style package and `signs-of-ai-writing <https://github.com/ammil-industries/vale-signs-of-ai-writing>`_, which catch many of the rules above. CI runs it as a check that warns without failing.
 
 .. _commits-and-prs:
 

@@ -59,7 +59,9 @@ def run(
     """
     source = (EXAMPLES / f"{name}.py").read_text(encoding="utf-8")
     for setting, value in settings.items():
-        source, found = re.subn(rf"^{setting} = .*$", f"{setting} = {value!r}", source, flags=re.M)
+        source, found = re.subn(
+            rf"^{setting} = .*$", f"{setting} = {value!r}", source, flags=re.MULTILINE
+        )
         assert found == 1, f"{name} has no {setting} to replace"
     monkeypatch.chdir(folder)
     monkeypatch.syspath_prepend(str(EXAMPLES))

@@ -18,7 +18,7 @@ Create and change
    :start-after: # start: record
    :end-before: # end: record
 
-:meth:`~calendaring_sync.adapters.base.SyncAdapter.create` returns the new :term:`record`'s :term:`local key`, which stays the same once the server gives the object an id. Edits go through the adapter, which reads their fingerprint the same way it reads the server's copy.
+:meth:`~calendaring_sync.adapters.base.SyncAdapter.create` returns the new :term:`record`'s :term:`local key`, which stays the same once the server gives the object an id.
 
 Undo an edit
 ============

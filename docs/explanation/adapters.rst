@@ -8,12 +8,12 @@ Adapters
 .. meta::
    :description: What every calendaring-sync adapter provides, and how each adapter maps its protocol onto the sync model.
 
-An adapter maps one protocol onto the model in :doc:`design`. Adding an adapter doesn't change the core. The adapters in this package each sit behind their own optional extra, so the core never imports a protocol's client library, and an adapter can also live in another package. Each adapter's section cites the specifications behind its rules, and :doc:`../reference/server-compatibility` records where tested servers depart from them. The :doc:`../reference/glossary` defines the sync terms this page uses.
+An adapter maps one protocol onto the model in :doc:`design`. The adapters in this package each sit behind their own optional extra, so the core never imports a protocol's client library, and an adapter can also live in another package. Each adapter's section cites the specifications behind its rules, and :doc:`../reference/server-compatibility` records where tested servers depart from them. The :doc:`../reference/glossary` defines the sync terms this page uses.
 
 Why every adapter provides the same things
 ==========================================
 
-The core never branches on protocol, so every adapter answers the same questions, which :class:`~calendaring_sync.adapters.base.Adapter` lists: what a :term:`scope` and an :term:`object id` are, how to read changes and send an edit, and what the server checks before it applies one. A protocol without a :term:`version` per object has every reported object fetched and compared by :term:`fingerprint`, and one without changes since a :term:`sync token` gets a :term:`full listing` on every sync. An adapter's synchronous and asynchronous variants share all of its translation and parsing, and differ only in the client they're given.
+The core never branches on protocol, so every adapter answers the same questions, which :class:`~calendaring_sync.adapters.base.Adapter` lists: what a :term:`scope` and an :term:`object id` are, how to read changes and send an edit, and what the server checks before it applies one. A protocol without a :term:`version` per object has every reported object fetched and compared by :term:`fingerprint`, and one without changes since a :term:`sync token` gets a :term:`full listing` on every sync.
 
 CalDAV
 ======
@@ -74,7 +74,7 @@ A server that won't accept a token answers with the ``DAV:valid-sync-token`` pre
 
 The adapter :term:`resets <reset>` the scope only when the error names ``DAV:valid-sync-token``, whatever its status. Any other failure, such as a refused login or a server that's down, is raised, so a flaky server doesn't cause a full listing on every error. The adapter only sends tokens the server issued, so a 500 means the server failed, not that the token was malformed. python-caldav keeps the precondition on every error, so the adapter reads it from the error's ``preconditions``, whatever the status.
 
-A tested server answers a token it no longer accepts with a report that leaves out older changes and raises no error. The adapter can't tell that from an ordinary report, so it says whether a scope needs regular full listings, from python-caldav's ``sync-token.invalid-token`` feature. Your application sets that feature by naming the server or by probing it with caldav-server-tester, so a new server or an upgrade needs no list of names here. How often to run them is up to your application; a full listing only fetches members whose ETag changed, so a frequent one is cheap.
+Stalwart before 1.0 answers a token it no longer accepts with a report that leaves out older changes and raises no error. The adapter can't tell that from an ordinary report, so it says whether a scope needs regular full listings, from python-caldav's ``sync-token.invalid-token`` feature. Your application sets that feature by naming the server or by probing it with caldav-server-tester, so a new server or an upgrade needs no list of names here. How often to run them is up to your application; a full listing only fetches members whose ETag changed, so a frequent one is cheap.
 
 Why content comes from a multiget, with its own ETag
 ----------------------------------------------------
@@ -187,7 +187,7 @@ Pages are counted by position, so an event destroyed while the listing runs shif
 Why every create carries its own UID
 ------------------------------------
 
-A server generates a ``uid`` only when a create omits it (draft-ietf-jmap-calendars-33 section 5.9). The adapter refuses a create without one, and a change that would leave a create it hasn't sent yet without one, so a create whose result was lost is recognized when it comes back under a server-assigned id. A create the server refuses because another event holds its ``uid`` (``invalidProperties`` naming ``uid``) becomes a :term:`conflict`; the server doesn't name that event, so the core finds it by the logical key. Both tested servers keep an event's ``uid`` when an update sends another one, so a change can't take a ``uid`` either.
+A server generates a ``uid`` only when a create omits it (draft-ietf-jmap-calendars-33 section 5.9). The adapter refuses a create without one, and a change that would leave a create it hasn't sent yet without one, so a create whose result was lost is recognized when it comes back under a server-assigned id. A create the server refuses because another event holds its ``uid`` (``invalidProperties`` naming ``uid``) becomes a :term:`conflict`; the server doesn't name that event, so the core finds it by the logical key. A tested server refuses an instance whose ``uid`` another instance in the same calendar holds by naming ``calendarIds`` instead, as it does for a calendar that doesn't exist, so the adapter counts that refusal as the same conflict only when the scope holds another event with that ``uid`` in one of the event's calendars, and raises it otherwise. Both tested servers keep an event's ``uid`` when an update sends another one, so a change can't take a ``uid`` either.
 
 Why writes use ifInState
 ------------------------

@@ -130,3 +130,20 @@ def refused_login(
         finally:
             env.run(close())
         assert env.replica.scope(adapter.scope_id).token == token
+
+
+class EveryProtocol:
+    """The integration tests every protocol runs, on each of its servers.
+
+    A protocol's test class subclasses it and sets ``scenarios`` to its
+    scenario module.
+    """
+
+    scenarios: Any
+
+    @pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.__name__)
+    def test_what_every_protocol_shows(
+        self, live: tuple[Any, Login], asynchronous: bool, check: Callable[[Env], object]
+    ) -> None:
+        with live_environment(self.scenarios, live, check.__name__, asynchronous) as env:
+            check(env)

@@ -103,13 +103,34 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/calendaring_sync"]
+# The tests and their recordings run from a checkout or the sdist, which hold
+# the docs examples some of them run; an installed package doesn't need them.
+exclude = ["src/calendaring_sync/tests"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B"]
+select = [
+  "E", "F", "W", "I", "UP", "B",
+  "A", "C4", "EXE", "FLY", "FURB", "G", "ICN", "INT", "ISC", "LOG", "PERF", "PGH",
+  "PIE", "PLE", "PLW", "RET", "RSE", "RUF", "SIM", "SLOT", "T10", "TID", "TRY",
+]
+# Left out on purpose: T20, since the benchmark, the recorders, the fixture
+# setups and two docs examples print; N, whose only findings are the __init__ that _checks.py
+# generates; COM and Q, which the formatter decides.
+ignore = [
+  # Error messages are written where they're raised, naming the value.
+  "TRY003",
+  # A value of the right type that holds the wrong thing raises ValueError.
+  "TRY004",
+  # Implicit string concatenation is the formatter's call.
+  "ISC001",
+  # A noqa can name a rule this project doesn't enable, to say why a line
+  # catches every exception.
+  "RUF100",
+]
 
 [tool.ruff.lint.per-file-ignores]
 # Each block a docs page shows brings its own imports, after the setup it doesn't show.
@@ -119,6 +140,43 @@ select = ["E", "F", "W", "I", "UP", "B"]
 known-first-party = ["calendaring_sync"]
 # The modules the docs examples share.
 known-local-folder = ["memory_adapter", "start"]
+
+[tool.mypy]
+# Everything mypy reads, the tests and the docs examples included, is checked
+# inside functions without annotations too.
+check_untyped_defs = true
+strict_equality = true
+extra_checks = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+# The package is strict, as --strict is, except for calls into functions
+# without annotations, such as icalendar's content lines and python-caldav's
+# feature checks.
+module = ["calendaring_sync.*"]
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+warn_return_any = true
+implicit_reexport = false
+
+[[tool.mypy.overrides]]
+# lxml, which the CalDAV adapter parses with, ships no type information.
+module = ["lxml", "lxml.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# The tests don't need annotations, so a fixture or a table reads as it is,
+# and may subclass and return what the docs examples and the replays give
+# them, which load at run time and type as Any.
+module = ["calendaring_sync.tests.*"]
+disallow_subclassing_any = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+warn_return_any = false
 
 [tool.pytest.ini_options]
 testpaths = ["src/calendaring_sync/tests"]

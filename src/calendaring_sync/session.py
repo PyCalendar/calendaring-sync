@@ -23,7 +23,7 @@ def _check_outcome(claimed_keys: set[int], claimed: Record, outcome: PushOutcome
         or claimed.edit is None
     ):
         raise ValueError("settle() takes a record this session's claim() returned")
-    outcome._check(claimed.edit.kind, claimed.object_id is not None)
+    outcome._check(claimed.edit.kind, has_object_id=claimed.object_id is not None)
 
 
 class SessionState(StrEnum):

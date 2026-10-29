@@ -29,7 +29,7 @@ One sync of one :term:`scope`, such as one calendar, goes like this:
 #. The adapter then :term:`pushes <push>` your pending edits to the server, and calendaring-sync records how each push ended.
 #. Your application reads the change feed to learn what changed, resolves any conflicts when it's ready, and the next sync pushes the result.
 
-The sections below explain why each part works the way it does. The :doc:`../reference/glossary` defines every sync term, and :doc:`adapters` explains how each protocol fits these steps.
+The :doc:`../reference/glossary` defines every sync term, and :doc:`adapters` explains how each protocol fits these steps.
 
 Why calendaring-sync doesn't talk to servers
 ============================================
@@ -72,11 +72,9 @@ A :term:`version` says something changed, not what, and some protocols have no v
 
 Each scope remembers its :term:`fingerprint scheme`. If the scheme changes, the next sync of that scope is a :term:`full listing`.
 
-The core never reads inside :term:`content`. It stores what the server sent and pushes what you recorded.
-
 .. _lone-surrogates:
 
-Content is bytes, kept exactly as the server sent them, so nothing is decoded and any media type works. Every other value the core stores, such as an id, a token or a logical key, is a string, kept exactly as it's given, empty strings and whitespace included. The one exception is a string holding a lone surrogate, such as ``"\ud800"``: half of the pair UTF-16 uses for characters such as emoji. Python allows one in a string, but it isn't a character and UTF-8 can't encode it, so a store that writes UTF-8 would fail on it where one that keeps Python objects wouldn't. The core refuses such a string with :class:`~calendaring_sync.error.LoneSurrogateError` wherever it takes one, so every store behaves the same.
+The core never reads inside :term:`content`: it's bytes, stored exactly as the server sent them and pushed exactly as you recorded them, so nothing is decoded and any media type works. Every other value the core stores, such as an id, a token or a logical key, is a string, kept exactly as it's given, empty strings and whitespace included. The one exception is a string holding a lone surrogate, such as ``"\ud800"``: half of the pair UTF-16 uses for characters such as emoji. Python allows one in a string, but it isn't a character and UTF-8 can't encode it, so a store that writes UTF-8 would fail on it where one that keeps Python objects wouldn't. The core refuses such a string with :class:`~calendaring_sync.error.LoneSurrogateError` wherever it takes one, so every store behaves the same.
 
 .. _design-change-sets:
 

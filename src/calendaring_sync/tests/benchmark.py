@@ -41,6 +41,7 @@ from calendaring_sync import (
 )
 from calendaring_sync.adapters.caldav import _server_fields
 from calendaring_sync.adapters.jmap import _event_fields
+from calendaring_sync.tests._content import event, ics
 
 #: The number of objects in the scope: a large calendar.
 DEFAULT_SIZE = 20_000
@@ -188,12 +189,12 @@ def read_during_listing(size: int) -> float:
 def caldav_fingerprints(size: int) -> float:
     """The CalDAV adapter's fingerprints of ``size`` events, as a full listing computes them."""
     events = [
-        (
-            "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//benchmark//EN\r\nBEGIN:VEVENT\r\n"
-            f"UID:event-{i}\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\n"
-            "RRULE:FREQ=WEEKLY;COUNT=10\r\nSUMMARY:Weekly planning\r\n"
-            "ATTENDEE;CN=Ana;ROLE=CHAIR:mailto:ana@example.org\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
-        ).encode()
+        ics(
+            f"event-{i}",
+            "Weekly planning",
+            "RRULE:FREQ=WEEKLY;COUNT=10",
+            "ATTENDEE;CN=Ana;ROLE=CHAIR:mailto:ana@example.org",
+        )
         for i in range(size)
     ]
     return _each(_server_fields, events)
@@ -202,26 +203,23 @@ def caldav_fingerprints(size: int) -> float:
 def jmap_fingerprints(size: int) -> float:
     """The JMAP adapter's fingerprints of ``size`` events, as a full listing computes them."""
     events = [
-        {
-            "@type": "Event",
-            "id": f"e{i}",
-            "uid": f"event-{i}",
-            "title": "Weekly planning",
-            "start": "2026-11-02T10:00:00",
-            "timeZone": "Europe/Berlin",
-            "duration": "PT1H",
-            "calendarIds": {"cal": True},
-            "recurrenceRule": {"@type": "RecurrenceRule", "frequency": "weekly", "count": 10},
-            "alerts": {"a": {"@type": "Alert", "trigger": {"offset": "-PT15M"}}},
-            "participants": {
+        event(
+            f"event-{i}",
+            "Weekly planning",
+            "cal",
+            id=f"e{i}",
+            timeZone="Europe/Berlin",
+            recurrenceRule={"@type": "RecurrenceRule", "frequency": "weekly", "count": 10},
+            alerts={"a": {"@type": "Alert", "trigger": {"offset": "-PT15M"}}},
+            participants={
                 "p": {
                     "name": "Ana",
                     "calendarAddress": "mailto:ana@example.org",
                     "roles": {"chair": True},
                 }
             },
-            "updated": "2026-10-01T00:00:00Z",
-        }
+            updated="2026-10-01T00:00:00Z",
+        )
         for i in range(size)
     ]
     return _each(_event_fields, events)

@@ -15,7 +15,7 @@ Base classes
 
 .. automodule:: calendaring_sync.adapters.base
    :members:
-   :private-members: _read, _send, _waits, _new_object_id, _edit_fields
+   :private-members: _read, _send, _waits, _new_object_id, _edit_fields, _gone, _ask
 
 CalDAV
 ------

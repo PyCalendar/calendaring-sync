@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import datetime
+import datetime as dt
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager, nullcontext
@@ -383,7 +383,7 @@ def record(scenarios: Any, library: tuple[str, str]) -> None:
                     "server": args.server,
                     "scenario": scenario,
                     library[0]: library[1],
-                    "recorded": datetime.date.today().isoformat(),
+                    "recorded": dt.date.today().isoformat(),
                 },
             )
             print(f"{args.server}-{scenario}: {len(tape.exchanges)} exchanges")

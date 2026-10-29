@@ -140,7 +140,8 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Type check
-        run: python -m mypy src/calendaring_sync docs/examples --ignore-missing-imports
+        # Its settings are in pyproject.toml.
+        run: python -m mypy src/calendaring_sync docs/examples tests/docker
 
   test:
     name: Test on Python ${{ matrix.python-version }}
@@ -173,10 +174,7 @@ jobs:
         run: |
           pytest --cov --cov-branch --cov-report=xml \
             --junitxml=junit.xml -o junit_family=legacy \
-            src/calendaring_sync/tests/test_sync_unit.py \
-            src/calendaring_sync/tests/test_classify_unit.py \
-            src/calendaring_sync/tests/test_caldav_unit.py \
-            src/calendaring_sync/tests/test_jmap_unit.py
+            src/calendaring_sync/tests --ignore-glob="*_integration.py"
 
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}

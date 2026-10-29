@@ -31,7 +31,7 @@ from typing import Any, TypeVar
 from urllib.parse import urlsplit, urlunsplit
 
 from calendaring_sync._checks import check_argument_types
-from calendaring_sync.error import OtherScopeError
+from calendaring_sync.error import OtherScopeError, ScopeGoneError
 from calendaring_sync.objects.edit import EditFields
 from calendaring_sync.objects.push import PushOutcome, Rejected
 from calendaring_sync.objects.record import Record, RecordState
@@ -43,48 +43,6 @@ _T = TypeVar("_T")
 
 # The records whose edit is waiting to be sent.
 _PENDING = frozenset({RecordState.PENDING})
-
-#: The steps of a sync, as a generator that yields client answers or
-#: :class:`InStore` calls, is sent back what each one returned, and returns
-#: its result.
-Steps = Generator[Any, Any, _T]
-
-
-@dataclass(frozen=True)
-class InStore:
-    """A call into the store, which an asynchronous adapter runs in a worker thread.
-
-    Attributes:
-        call: The function to call, such as ``session.ingest``.
-        args: Its positional arguments.
-        kwargs: Its keyword arguments.
-
-    Examples:
-        A step that ingests a change set::
-
-            yield InStore(session.ingest, (change_set,))
-    """
-
-    call: Callable[..., Any]
-    args: tuple[Any, ...] = ()
-    kwargs: Mapping[str, Any] = field(default_factory=dict)
-
-    def run(self) -> Any:
-        """Make the call and return what it returned."""
-        return self.call(*self.args, **self.kwargs)
-
-
-class ReadResult(enum.Enum):
-    """How the read part of a sync ended, which decides what the sync does next."""
-
-    #: Every change was ingested, so the pushes go out.
-    COMPLETE = "complete"
-    #: The server cut the changes short. The pushes wait, and the next sync
-    #: continues from the :term:`checkpoint`.
-    TRUNCATED = "truncated"
-    #: The server refused the scope's :term:`sync token`, so the scope is
-    #: :term:`reset` and listed in full.
-    INVALID_TOKEN = "invalid token"
 
 
 def _run(steps: Steps[_T]) -> _T:
@@ -235,6 +193,10 @@ class Adapter(ABC):
     - :meth:`_new_object_id` picks the :term:`object id` of a create.
     - :meth:`_edit_fields` reads an edit's fields from its content.
 
+    It may also write :meth:`_gone`, which says whether an error from the
+    server means the scope is gone; a request made through :meth:`_ask`
+    then raises :class:`~calendaring_sync.error.ScopeGoneError` for it.
+
     These names start with an underscore because your application calls
     the adapter's public methods: a read or a send called on its own would
     skip the session that orders them.
@@ -319,13 +281,15 @@ class Adapter(ABC):
     def _sync(self, *, full_listing: bool) -> Steps[None]:
         """One sync: read and ingest, then push; a refused token resets and lists."""
         read = yield from self._in_session(
-            lambda session: self._sync_session(session, full_listing)
+            lambda session: self._sync_session(session, full_listing=full_listing)
         )
         if read is ReadResult.INVALID_TOKEN:
             yield InStore(self._replica.reset, (self._scope_id,))
-            yield from self._in_session(lambda session: self._sync_session(session, True))
+            yield from self._in_session(
+                lambda session: self._sync_session(session, full_listing=True)
+            )
 
-    def _sync_session(self, session: Session, full_listing: bool) -> Steps[ReadResult]:
+    def _sync_session(self, session: Session, *, full_listing: bool) -> Steps[ReadResult]:
         scope: Scope = yield InStore(self._replica.scope, (self._scope_id,))
         read = yield from self._read(session, scope, full_listing=full_listing)
         if read is ReadResult.COMPLETE:
@@ -374,6 +338,34 @@ class Adapter(ABC):
             yield InStore(session.settle, (claimed, outcome))
             if self._guard_covers_scope and isinstance(outcome, Rejected):
                 return
+
+    def _ask(self, request: Callable[[], Any]) -> Steps[Any]:
+        """Make one request about the scope, and return the server's answer.
+
+        ``request`` is a function making the call, so a synchronous client's
+        error is raised inside this step too.
+
+        Raises:
+            ScopeGoneError: If :meth:`_gone` says the request's error means
+                the server no longer has the scope.
+        """
+        try:
+            return (yield request())
+        except Exception as exc:
+            gone = self._gone(exc)
+            if gone is None:
+                raise
+            raise ScopeGoneError(gone) from exc
+
+    def _gone(self, error: Exception) -> str | None:
+        """Say why the scope is gone, if ``error`` means the server no longer has it.
+
+        Returns:
+            The :class:`~calendaring_sync.error.ScopeGoneError` message, or
+            ``None`` for any other error, which is raised unchanged. The
+            base class returns ``None``.
+        """
+        return None
 
     @abstractmethod
     def _read(self, session: Session, scope: Scope, *, full_listing: bool) -> Steps[ReadResult]:
@@ -535,3 +527,46 @@ class AsyncAdapter(Adapter):
     async def waiting(self) -> list[Record]:
         """See :meth:`~calendaring_sync.adapters.base.SyncAdapter.waiting`."""
         return await _arun(self._waiting())
+
+
+#: The steps of a sync, as a generator that yields client answers or
+#: :class:`InStore` calls, is sent back what each one returned, and returns
+#: its result.
+Steps = Generator[Any, Any, _T]
+
+
+@dataclass(frozen=True)
+class InStore:
+    """A call into the store, which an asynchronous adapter runs in a worker thread.
+
+    Attributes:
+        call: The function to call, such as ``session.ingest``.
+        args: Its positional arguments.
+        kwargs: Its keyword arguments.
+
+    Examples:
+        A step that ingests a change set::
+
+            yield InStore(session.ingest, (change_set,))
+    """
+
+    call: Callable[..., Any]
+    args: tuple[Any, ...] = ()
+    kwargs: Mapping[str, Any] = field(default_factory=dict)
+
+    def run(self) -> Any:
+        """Make the call and return what it returned."""
+        return self.call(*self.args, **self.kwargs)
+
+
+class ReadResult(enum.Enum):
+    """How the read part of a sync ended, which decides what the sync does next."""
+
+    #: Every change was ingested, so the pushes go out.
+    COMPLETE = "complete"
+    #: The server cut the changes short. The pushes wait, and the next sync
+    #: continues from the :term:`checkpoint`.
+    TRUNCATED = "truncated"
+    #: The server refused the scope's :term:`sync token`, so the scope is
+    #: :term:`reset` and listed in full.
+    INVALID_TOKEN = "invalid token"

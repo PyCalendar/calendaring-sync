@@ -52,7 +52,7 @@ class _Outcome(ABC):
     always holds its edit; the store checks it.
     """
 
-    def _check(self, kind: EditKind, has_object_id: bool) -> None:  # noqa: B027, most fit any push
+    def _check(self, kind: EditKind, *, has_object_id: bool) -> None:  # noqa: B027, most fit any push
         """Raise ``ValueError`` if no push of an edit of this kind can end this way."""
 
     @abstractmethod
@@ -88,7 +88,7 @@ class Applied(_Outcome):
     def __post_init__(self) -> None:
         check_text(object_id=self.object_id)
 
-    def _check(self, kind: EditKind, has_object_id: bool) -> None:
+    def _check(self, kind: EditKind, *, has_object_id: bool) -> None:
         if kind is EditKind.DELETE and self.object_id is not None:
             raise ValueError("An applied delete has no object id to report")
         if kind is EditKind.CREATE and self.object_id is None and not has_object_id:
@@ -129,7 +129,7 @@ class Gone(_Outcome):
     A delete is then done; a change becomes a :term:`conflict`.
     """
 
-    def _check(self, kind: EditKind, has_object_id: bool) -> None:
+    def _check(self, kind: EditKind, *, has_object_id: bool) -> None:
         if kind is EditKind.CREATE:
             raise ValueError("A create can't be gone: the server never had the object")
 
@@ -157,7 +157,7 @@ class LogicalKeyTaken(_Outcome):
     def __post_init__(self) -> None:
         check_text(holder=self.holder)
 
-    def _check(self, kind: EditKind, has_object_id: bool) -> None:
+    def _check(self, kind: EditKind, *, has_object_id: bool) -> None:
         if kind is EditKind.DELETE:
             raise ValueError("A delete can't be refused for its logical key")
 

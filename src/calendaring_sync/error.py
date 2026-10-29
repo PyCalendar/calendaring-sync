@@ -18,6 +18,42 @@ class CalendaringSyncError(Exception):
     """Base for every calendaring-sync error."""
 
 
+# Scopes and sessions.
+
+
+class UnknownScopeError(CalendaringSyncError):
+    """The :term:`store` has no :term:`scope` with this id."""
+
+
+class ScopeMismatchError(CalendaringSyncError):
+    """A :term:`session` was opened with a media type the :term:`scope` doesn't have.
+
+    The stored content is in the scope's media type, so it can't be reused.
+    Drop the scope and sync it again.
+    """
+
+
+class ScopeGoneError(CalendaringSyncError):
+    """The server no longer has the :term:`scope`, such as a calendar that was deleted.
+
+    Nothing was ingested, so the :term:`store` is as it was. A server that
+    lost the scope only for a moment has it back at the next sync. If it's
+    gone for good, :meth:`~calendaring_sync.replica.Replica.drop_scope`
+    returns the pending edits and open conflicts it discards.
+    """
+
+
+class SessionError(CalendaringSyncError):
+    """A :term:`session` was used out of order.
+
+    For example a second session on a scope that already has one open, an
+    ingest after the session's last page, or a reset while a session is open.
+    """
+
+
+# Change sets.
+
+
 class StaleChangeSetError(CalendaringSyncError):
     """A :term:`change set` was fetched from a token the :term:`scope` no longer has.
 
@@ -45,25 +81,17 @@ class UnknownVersionError(CalendaringSyncError, ValueError):
     """
 
 
-class TrimmedFeedError(CalendaringSyncError):
-    """A :term:`cursor` is older than the oldest :term:`change feed` entry kept.
+class IncompleteListingError(CalendaringSyncError):
+    """The server cut a :term:`full listing` short, so it wasn't ingested.
 
-    The entries after the cursor were trimmed, so they can't be read. Read
-    the scope's records again, and continue from
-    :meth:`~calendaring_sync.replica.Replica.feed_head`.
+    A listing that leaves objects out can't tell them from objects the
+    server removed, so the :term:`store` is left as it was. Raising the
+    server's limit on how many results it lists lets the next listing
+    through.
     """
 
 
-class FeedRangeError(CalendaringSyncError, ValueError):
-    """A :term:`change feed` number is below 0 or past the last entry.
-
-    No entry has that number yet, so the number didn't come from this
-    store's feed, or the store was replaced since.
-    """
-
-
-class UnknownScopeError(CalendaringSyncError):
-    """The :term:`store` has no :term:`scope` with this id."""
+# Records and local edits.
 
 
 class UnknownRecordError(CalendaringSyncError):
@@ -127,6 +155,9 @@ class RemovedRecordError(EditRefusedError):
     """The :term:`record` was removed from the server, so there's nothing to edit."""
 
 
+# Conflicts.
+
+
 class StaleConflictError(CalendaringSyncError):
     """The :term:`conflict` changed since your application read it, so a resolution isn't applied.
 
@@ -152,40 +183,27 @@ class PendingEditError(CalendaringSyncError):
     """
 
 
-class ScopeMismatchError(CalendaringSyncError):
-    """A :term:`session` was opened with a media type the :term:`scope` doesn't have.
+# The change feed.
 
-    The stored content is in the scope's media type, so it can't be reused.
-    Drop the scope and sync it again.
+
+class TrimmedFeedError(CalendaringSyncError):
+    """A :term:`cursor` is older than the oldest :term:`change feed` entry kept.
+
+    The entries after the cursor were trimmed, so they can't be read. Read
+    the scope's records again, and continue from
+    :meth:`~calendaring_sync.replica.Replica.feed_head`.
     """
 
 
-class ScopeGoneError(CalendaringSyncError):
-    """The server no longer has the :term:`scope`, such as a calendar that was deleted.
+class FeedRangeError(CalendaringSyncError, ValueError):
+    """A :term:`change feed` number is below 0 or past the last entry.
 
-    Nothing was ingested, so the :term:`store` is as it was. A server that
-    lost the scope only for a moment has it back at the next sync. If it's
-    gone for good, :meth:`~calendaring_sync.replica.Replica.drop_scope`
-    returns the pending edits and open conflicts it discards.
+    No entry has that number yet, so the number didn't come from this
+    store's feed, or the store was replaced since.
     """
 
 
-class IncompleteListingError(CalendaringSyncError):
-    """The server cut a :term:`full listing` short, so it wasn't ingested.
-
-    A listing that leaves objects out can't tell them from objects the
-    server removed, so the :term:`store` is left as it was. Raising the
-    server's limit on how many results it lists lets the next listing
-    through.
-    """
-
-
-class SessionError(CalendaringSyncError):
-    """A :term:`session` was used out of order.
-
-    For example a second session on a scope that already has one open, an
-    ingest after the session's last page, or a reset while a session is open.
-    """
+# Stores and transactions.
 
 
 class TransactionError(CalendaringSyncError):

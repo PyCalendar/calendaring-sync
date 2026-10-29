@@ -30,11 +30,11 @@ from caldav.davclient import DAVClient
 from caldav.testing import RadicaleServer, XandikosServer
 
 from calendaring_sync import MemoryStore, RecordState, Replica, StateStore
-from calendaring_sync.adapters import caldav as adapter_module
 from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter
 from calendaring_sync.error import IncompleteListingError, ScopeGoneError
 from calendaring_sync.objects.conflict import ConflictKind
 from calendaring_sync.tests import _scenarios
+from calendaring_sync.tests._content import ics
 from calendaring_sync.tests._scenarios import (
     REPLAY,
     Login,
@@ -51,6 +51,12 @@ from calendaring_sync.tests._tape import Tape
 #: The protocol the recordings speak, which names their folder.
 PROTOCOL = "caldav"
 
+#: The login scheme of every server that checks logins. Naming it spares
+#: python-caldav's first request without one, whose 401 Stalwart sometimes
+#: sends and then closes the connection without ``Connection: close``
+#: (RFC 9112 section 9.6), so the retry on it fails.
+AUTH_TYPE = "basic"
+
 
 @dataclass(frozen=True)
 class Server:
@@ -63,9 +69,9 @@ class Server:
     unknown_token: str
     #: Whether deleting an object that's gone, with ``If-Match``, gets 404 (else 412).
     delete_gone_is_404: bool = True
-    #: Where the server listens when started as its Docker fixture's README
-    #: says, and the account the fixture creates; ``None`` for a server that
-    #: runs embedded.
+    #: Where the server listens when ``tests/docker/start.sh`` starts it, and
+    #: the account its fixture creates; ``None`` for a server that runs
+    #: embedded.
     login: Login | None = None
     #: Whether the server refuses a wrong password; embedded ones and
     #: Cyrus' fixture let anyone in.
@@ -119,15 +125,6 @@ def started(server: Server, config: dict[str, Any] | None = None) -> Iterator[Lo
         yield f"{parts.scheme}://{parts.netloc}", embedded.username, embedded.password
     finally:
         embedded.stop()
-
-
-def ics(uid: str, summary: str) -> bytes:
-    """A small event in iCalendar form."""
-    return (
-        "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\n"
-        f"BEGIN:VEVENT\r\nUID:{uid}\r\nDTSTAMP:20261001T000000Z\r\n"
-        f"DTSTART:20261101T100000Z\r\nSUMMARY:{summary}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
-    ).encode()
 
 
 @dataclass
@@ -267,7 +264,8 @@ RECORDINGS = [
 def _fixed_hrefs() -> Iterator[None]:
     """Give creates the same hrefs in a recording and its replays."""
     numbers = itertools.count(1)
-    with mock.patch.object(adapter_module.uuid, "uuid4", lambda: uuid.UUID(int=next(numbers))):
+    # The adapter picks a create's href with uuid.uuid4, patched for the block.
+    with mock.patch.object(uuid, "uuid4", lambda: uuid.UUID(int=next(numbers))):
         yield
 
 
@@ -301,14 +299,17 @@ def environment(
     """
     base_url, username, password = login
     url = f"{base_url.rstrip('/')}{calendar_path(server, scenario)}"
-    other_client = DAVClient(url=base_url, username=username, password=password)
+    # A replay answers with what was recorded, the 401 that asked for a login
+    # included, and a login without a password has no scheme to name.
+    auth = {} if login == REPLAY or password is None else {"auth_type": AUTH_TYPE}
+    other_client = caldav_client(False, url=base_url, username=username, password=password, **auth)
     other_client.session = tape.session(other_client.session)
     other = Calendar(client=other_client, url=url)
     # Start from an empty calendar; one left from an earlier recording goes.
     other_client.request(url, "DELETE")
     other_client.request(url, "MKCALENDAR")
     replica = Replica(MemoryStore() if store is None else store)
-    client = caldav_client(asynchronous, url=base_url, username=username, password=password)
+    client = caldav_client(asynchronous, url=base_url, username=username, password=password, **auth)
     client.session = tape.session(client.session, asynchronous=asynchronous)
     calendar = Calendar(client=client, url=url)
     adapter = adapter_class(asynchronous)(replica, calendar)
