@@ -4,11 +4,9 @@
 """Record the CalDAV adapter's exchanges with real servers, for the unit tests to replay.
 
 Run ``python -m calendaring_sync.tests.record_caldav SERVER [SCENARIO...]``.
-Radicale and Xandikos run embedded. Cyrus is calendaring-jmap's Docker
-fixture, Stalwart this repo's (``tests/docker/stalwart/start.sh``), and
-Baïkal is ``ckulka/baikal:nginx`` set up as the evidence
-branch's ``servers/baikal_setup.py`` does; start them first, or give
-``--url``, ``--username`` and ``--password``. Stalwart's ``listing_cut_short``
+Radicale and Xandikos run embedded; start the others with
+``tests/docker/start.sh``, or give ``--url``, ``--username`` and
+``--password``. Stalwart's ``listing_cut_short``
 needs its result limit lowered first, with the evidence branch's
 ``servers/stalwart_admin.py max-results 2``.
 

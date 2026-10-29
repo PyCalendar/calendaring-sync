@@ -4,8 +4,7 @@
 """Record the JMAP adapter's exchanges with real servers, for the unit tests to replay.
 
 Run ``python -m calendaring_sync.tests.record_jmap SERVER [SCENARIO...]``.
-Cyrus is calendaring-jmap's Docker fixture, and Stalwart this repo's
-(``tests/docker/stalwart/start.sh``); start them first, or give ``--url``
+Start Cyrus and Stalwart with ``tests/docker/start.sh``, or give ``--url``
 (the session URL), ``--username`` and ``--password``. Every scenario
 deletes the account's events first, so use a test account.
 

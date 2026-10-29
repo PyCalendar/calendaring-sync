@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 calendaring-sync contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Baïkal for the integration tests: CalDAV for the user test, reachable from
+# this machine only. setup_baikal.py runs its install wizard.
+
+# A project name of its own, so Compose never takes a container from another
+# folder named baikal for this one.
+name: calendaring-sync-baikal
+
+services:
+  baikal:
+    # Pinned by digest, the image the compatibility page's Baïkal results come from.
+    image: ckulka/baikal@sha256:1a901125d121a3e414cda87c617bd322c57ae86b9d2aedbff7b3a7ac84bb23aa
+    container_name: calendaring-sync-baikal
+    ports:
+      - "127.0.0.1:8811:80"
+      - "[::1]:8811:80"

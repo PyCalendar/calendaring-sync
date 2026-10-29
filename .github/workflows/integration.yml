@@ -6,8 +6,20 @@ name: Integration Tests
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "v*"
+    # Changes that can't affect a sync; a tag runs whatever it holds.
+    paths-ignore:
+      - "news/**"
+      - "**/*.md"
+      - "docs/**/*.rst"
+  pull_request:
+    paths-ignore:
+      - "news/**"
+      - "**/*.md"
+      - "docs/**/*.rst"
 
 concurrency:
   group: integration-${{ github.ref }}
@@ -36,17 +48,24 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
-      # Stalwart serves both JMAP and CalDAV, from this repo's own fixture.
-      - name: Start Stalwart
-        run: bash tests/docker/stalwart/start.sh
+      # Radicale and Xandikos run embedded; the rest from this repo's fixtures.
+      - name: Start Stalwart, Cyrus and Baïkal
+        run: bash tests/docker/start.sh stalwart cyrus baikal
 
-      # Radicale and Xandikos run embedded; Cyrus and Baïkal are skipped, as
-      # nothing starts them here.
       - name: Run integration tests
         run: |
           pytest src/calendaring_sync/tests/test_caldav_integration.py \
             src/calendaring_sync/tests/test_jmap_integration.py
 
-      - name: Stop Stalwart
+      # Each server's log, to read when a test fails; a server that never
+      # started has none, and that mustn't hide the others'.
+      - name: Show the server logs
+        if: ${{ failure() }}
+        run: |
+          docker exec calendaring-sync-stalwart sh -c 'cat /var/log/stalwart/*' || true
+          docker logs calendaring-sync-cyrus || true
+          docker logs calendaring-sync-baikal || true
+
+      - name: Stop the servers
         if: ${{ always() }}
-        run: bash tests/docker/stalwart/stop.sh
+        run: bash tests/docker/stop.sh stalwart cyrus baikal

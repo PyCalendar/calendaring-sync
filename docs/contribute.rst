@@ -77,10 +77,10 @@ Integration tests run each adapter, and the docs examples that need a server, ag
 
 .. code-block:: bash
 
-    bash tests/docker/stalwart/start.sh
+    bash tests/docker/start.sh stalwart cyrus baikal
     pytest src/calendaring_sync/tests/test_caldav_integration.py src/calendaring_sync/tests/test_jmap_integration.py
 
-Radicale and Xandikos run embedded. Each other server is tested when it answers and skipped when it doesn't; the recorder each integration module's docstring names says how to start it. CI runs them only on a release tag or when a maintainer starts them, not on each pull request, so run them yourself when you change an adapter, against every server you can start.
+Radicale and Xandikos run embedded, and ``tests/docker`` holds a fixture for each other server; one that doesn't answer is skipped. ``bash tests/docker/stop.sh stalwart cyrus baikal`` removes them, so the next start is clean. CI runs every server on each pull request that changes code.
 
 Write a test
 ------------

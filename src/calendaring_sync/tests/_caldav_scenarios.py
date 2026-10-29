@@ -52,6 +52,12 @@ from calendaring_sync.tests._tape import Tape
 #: The protocol the recordings speak, which names their folder.
 PROTOCOL = "caldav"
 
+#: The login scheme of every server that checks logins. Naming it spares
+#: python-caldav's first request without one, whose 401 Stalwart sometimes
+#: sends and then closes the connection without ``Connection: close``
+#: (RFC 9112 section 9.6), so the retry on it fails.
+AUTH_TYPE = "basic"
+
 
 @dataclass(frozen=True)
 class Server:
@@ -64,9 +70,9 @@ class Server:
     unknown_token: str
     #: Whether deleting an object that's gone, with ``If-Match``, gets 404 (else 412).
     delete_gone_is_404: bool = True
-    #: Where the server listens when started as its Docker fixture's README
-    #: says, and the account the fixture creates; ``None`` for a server that
-    #: runs embedded.
+    #: Where the server listens when ``tests/docker/start.sh`` starts it, and
+    #: the account its fixture creates; ``None`` for a server that runs
+    #: embedded.
     login: Login | None = None
     #: Whether the server refuses a wrong password; embedded ones and
     #: Cyrus' fixture let anyone in.
@@ -293,14 +299,17 @@ def environment(
     """
     base_url, username, password = login
     url = f"{base_url.rstrip('/')}{calendar_path(server, scenario)}"
-    other_client = DAVClient(url=base_url, username=username, password=password)
+    # A replay answers with what was recorded, the 401 that asked for a login
+    # included, and a login without a password has no scheme to name.
+    auth = {} if login == REPLAY or password is None else {"auth_type": AUTH_TYPE}
+    other_client = caldav_client(False, url=base_url, username=username, password=password, **auth)
     other_client.session = tape.session(other_client.session)
     other = Calendar(client=other_client, url=url)
     # Start from an empty calendar; one left from an earlier recording goes.
     other_client.request(url, "DELETE")
     other_client.request(url, "MKCALENDAR")
     replica = Replica(MemoryStore() if store is None else store)
-    client = caldav_client(asynchronous, url=base_url, username=username, password=password)
+    client = caldav_client(asynchronous, url=base_url, username=username, password=password, **auth)
     client.session = tape.session(client.session, asynchronous=asynchronous)
     calendar = Calendar(client=client, url=url)
     adapter = adapter_class(asynchronous)(replica, calendar)

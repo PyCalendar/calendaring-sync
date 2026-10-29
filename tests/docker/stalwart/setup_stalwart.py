@@ -114,7 +114,7 @@ def _wait_for_session(login: str | None) -> dict[str, Any]:
 
 def main() -> None:
     _wait_for_session(None)
-    set_singleton("x:Authentication/set", {"passwordMinStrength": "zero"})
+    set_singleton("x:Authentication/set", {"minPasswordStrength": "zero"})
     set_singleton(
         "x:Http/set", {"rateLimitAnonymous": UNLIMITED, "rateLimitAuthenticated": UNLIMITED}
     )

@@ -5,7 +5,7 @@
 Integration tests for the JMAP adapter, against running servers.
 
 Cyrus and Stalwart are tested when their Docker fixtures answer, and skipped
-otherwise; ``record_jmap`` says how to start them. A test that syncs runs
+otherwise; start them with ``tests/docker/start.sh``. A test that syncs runs
 the synchronous and the asynchronous adapter, except the docs example, which
 runs as its page shows it. Each row of the server compatibility page's JMAP
 table has a test here or a scenario run against both servers. Every scenario
@@ -64,8 +64,8 @@ from calendaring_sync.tests._tape import Exchange
 _EXPIRING_STALWART = "CALENDARING_SYNC_STALWART_EXPIRY"
 
 
-# This repo's Stalwart fixture setup, whose admin calls the expiry test reuses.
-_STALWART_SETUP = Path(__file__).parents[3] / "tests/docker/stalwart/setup_stalwart.py"
+# This repo's server fixtures, whose setup scripts the expiry tests reuse.
+_FIXTURES = Path(__file__).parents[3] / "tests/docker"
 
 
 # How long Stalwart's purge task takes to truncate the change log.
@@ -103,16 +103,16 @@ def _calls(env: Env, method: str, after: int = 0) -> list[Exchange]:
 def _expire_cyrus() -> None:
     """Make Cyrus forget the user's change history, as its own expiry job does."""
     subprocess.run(
-        ["docker", "exec", "cyrus-test", "/usr/cyrus/sbin/cyr_expire"]
+        ["docker", "exec", _setup("cyrus").CONTAINER, "/usr/cyrus/sbin/cyr_expire"]
         + ["-X", "0", "-D", "0", "-E", "0", "-u", "user1"],
         check=True,
         capture_output=True,
     )
 
 
-def _stalwart_setup() -> SimpleNamespace:
-    """What the fixture's setup script defines, run without writing a bytecode cache beside it."""
-    return SimpleNamespace(**runpy.run_path(str(_STALWART_SETUP)))
+def _setup(server: str) -> SimpleNamespace:
+    """What ``server``'s fixture setup defines, run without leaving a bytecode cache beside it."""
+    return SimpleNamespace(**runpy.run_path(str(_FIXTURES / server / f"setup_{server}.py")))
 
 
 def _stalwart_retention(setup: SimpleNamespace, history: int) -> None:
@@ -124,7 +124,7 @@ def _stalwart_retention(setup: SimpleNamespace, history: int) -> None:
 @contextmanager
 def _expiring_stalwart() -> Iterator[None]:
     """Stalwart keeping one change for the block; leaving it, its purge runs and history is back."""
-    setup = _stalwart_setup()
+    setup = _setup("stalwart")
     kept = setup.admin("x:DataRetention/get", {"ids": ["singleton"]})["list"][0]
     _stalwart_retention(setup, 1)
     try:

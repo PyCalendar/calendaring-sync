@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2026 calendaring-sync contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Cyrus for the integration tests: CalDAV and JMAP for user1 to user5,
+# reachable from this machine only.
+
+# A project name of its own, so Compose never takes a container from another
+# folder named cyrus for this one.
+name: calendaring-sync-cyrus
+
+services:
+  cyrus:
+    # The image has no versioned tags, only ones rebuilt from Cyrus's main,
+    # so it's pinned by digest; bump it on purpose.
+    image: ghcr.io/cyrusimap/cyrus-docker-test-server@sha256:a3c8a451bde22f46a8b06fb6b335370c0ab23960950b84874aed972b64af3997
+    container_name: calendaring-sync-cyrus
+    ports:
+      - "127.0.0.1:8802:8080"
+      - "[::1]:8802:8080"
+    environment:
+      - DEFAULTDOMAIN=example.com
+      - SERVERNAME=calendaring-sync-cyrus
+    volumes:
+      # virtdomains off, so Cyrus can deliver an invitation to another
+      # user's calendar (the comment in imapd.conf says why).
+      - ./imapd.conf:/srv/testserver/imapd.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 30s

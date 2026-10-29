@@ -5,8 +5,8 @@
 Integration tests for the CalDAV adapter, against running servers.
 
 Radicale and Xandikos run embedded. Cyrus, Stalwart and Baïkal are tested
-when their Docker fixtures answer, and skipped otherwise; ``record_caldav``
-says how to start them. A test that syncs runs the synchronous and the
+when their Docker fixtures answer, and skipped otherwise; start them with
+``tests/docker/start.sh``. A test that syncs runs the synchronous and the
 asynchronous adapter, except the docs examples, which run as their pages
 show them. Each server-specific row of the server compatibility page has a
 test here or a scenario run against every server.
@@ -32,6 +32,7 @@ from calendaring_sync import RecordState
 from calendaring_sync.tests import _caldav_scenarios as scenarios
 from calendaring_sync.tests import _examples
 from calendaring_sync.tests._caldav_scenarios import (
+    AUTH_TYPE,
     SCENARIOS,
     SERVERS,
     Env,
@@ -132,7 +133,9 @@ class TestServers:
 
     def test_a_refused_login_is_raised_and_keeps_the_token(self, live, asynchronous):
         def wrong_login(env: Env, url: str, username: str | None) -> tuple[Any, Any]:
-            client = caldav_client(asynchronous, url=url, username=username, password="not it")
+            client = caldav_client(
+                asynchronous, url=url, username=username, password="not it", auth_type=AUTH_TYPE
+            )
             calendar = Calendar(client=client, url=str(env.calendar.url))
             return adapter_class(asynchronous)(env.replica, calendar), client.close
 
