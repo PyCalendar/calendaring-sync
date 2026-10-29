@@ -1,0 +1,205 @@
+
+===== create calendar =====
+>>> MKCALENDAR /dav/cal/testuser%40example.org/expiry/
+<<< 201 Created
+<<< content-type: application/xml; charset=utf-8
+<<< etag: "3915664543"
+<<< <?xml version="1.0" encoding="UTF-8"?><D:mkcol-response xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"></D:mkcol-response>
+
+===== create known =====
+>>> PUT /dav/cal/testuser%40example.org/expiry/known.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:known
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:v1
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< etag: "1218522535"
+
+===== create edited =====
+>>> PUT /dav/cal/testuser%40example.org/expiry/edited.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:edited
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:v1
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< etag: "786016385"
+
+===== full sync =====
+>>> REPORT /dav/cal/testuser%40example.org/expiry/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token/><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/expiry/</D:href><D:propstat><D:prop><D:getetag>&quot;3915664543&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/edited.ics</D:href><D:propstat><D:prop><D:getetag>&quot;786016385&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/known.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1218522535&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:159</D:sync-token></D:multistatus>
+
+===== delete known =====
+>>> DELETE /dav/cal/testuser%40example.org/expiry/known.ics
+<<< 204 No Content
+
+===== edit edited =====
+>>> PUT /dav/cal/testuser%40example.org/expiry/edited.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:edited
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:v2
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 204 No Content
+<<< etag: "1017199648"
+
+===== create later0 =====
+>>> PUT /dav/cal/testuser%40example.org/expiry/later0.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:later0
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:x
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< etag: "3040675491"
+
+===== create later1 =====
+>>> PUT /dav/cal/testuser%40example.org/expiry/later1.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:later1
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:x
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< etag: "1477209022"
+
+===== create later2 =====
+>>> PUT /dav/cal/testuser%40example.org/expiry/later2.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:later2
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:x
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< etag: "4006477132"
+
+===== incremental from the saved token, before expiry =====
+>>> REPORT /dav/cal/testuser%40example.org/expiry/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:159</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 207 Multi-Status
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:multistatus xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/dav/cal/testuser%40example.org/expiry/known.ics</D:href><D:status>HTTP/1.1 404 Not Found</D:status></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/edited.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1017199648&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later0.ics</D:href><D:propstat><D:prop><D:getetag>&quot;3040675491&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later1.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1477209022&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/expiry/later2.ics</D:href><D:propstat><D:prop><D:getetag>&quot;4006477132&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:sync-token>urn:stalwart:davsync:15e</D:sync-token></D:multistatus>
+
+RESULT [Stalwart] before expiry, incremental from the saved token: [('known.ics', '404'), ('edited.ics', '200'), ('later0.ics', '200'), ('later1.ics', '200'), ('later2.ics', '200')]

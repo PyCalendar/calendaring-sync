@@ -1,0 +1,12 @@
+
+===== incremental from the saved token, after expiry =====
+>>> REPORT /dav/cal/testuser%40example.org/expiry/
+>>> Depth: 0
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><D:sync-collection xmlns:D="DAV:"><D:sync-token>urn:stalwart:davsync:159</D:sync-token><D:sync-level>1</D:sync-level><D:prop><D:getetag/></D:prop></D:sync-collection>
+<<< 403 Forbidden
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:error xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:valid-sync-token/></D:error>
+
+RESULT [Stalwart] after expiry, the saved token: 403, valid-sync-token: True, members []
+RESULT [Stalwart] python-caldav with the saved token: AuthorizationError {'url': 'http://localhost:8809/dav/cal/testuser%40example.org/expiry/', 'reason': 'Forbidden', 'preconditions': ['{DAV:}valid-sync-token'], 'body': b'<?xml version="1.0" encoding="UTF-8"?><D:error xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:valid-sync-token/></D:error>', 'status': 403}; retry with an empty token: 207

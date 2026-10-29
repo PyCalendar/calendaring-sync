@@ -5,8 +5,8 @@
 
   cite_check.py                 check the curated claims below (each phrase inside its section)
   cite_check.py FILE [FILE...]  also find every "RFC NNNN §X.Y", ":rfc:`NNNN#section-X.Y`" and
-                                "draft-ietf-jmap-calendars-32 §X.Y" in FILE and confirm the
-                                section exists
+                                "draft-ietf-NAME-NN §X.Y" or "section X.Y" in FILE and confirm
+                                the section exists
 
 Whitespace and page breaks are normalized before matching, so a phrase split across lines or
 across a page footer still matches. Exit status 1 if anything fails.
@@ -21,7 +21,9 @@ from pathlib import Path
 RFC_DIR = os.path.join(os.path.dirname(__file__), "..", "cache")
 DRAFT_URL = "https://www.ietf.org/archive/id/{name}.txt"
 RFC_URL = "https://www.rfc-editor.org/rfc/{name}.txt"
-DRAFT = "draft-ietf-jmap-calendars-32"
+DRAFT = "draft-ietf-jmap-calendars-33"
+# Any draft a page cites, by its full name and revision.
+CITED_DRAFT = r"(draft-ietf-[a-z-]+-\d+)"
 PAGE_BREAK = re.compile(
     r"\n[^\n]*\[Page \d+\]\n\x0c?\n?(?:RFC \d+|Internet-Draft)[^\n]*\n", re.DOTALL
 )
@@ -209,9 +211,7 @@ for path in sys.argv[1:]:
     for doc, secs in re.findall(r"RFC (\d{4}) ((?:§[\d.]*\d(?:, )?)+)", content):
         refs |= {(doc, s) for s in re.findall(r"§([\d.]*\d)", secs)}
     refs |= set(re.findall(r":rfc:`(\d{4})#section-([\d.]*\d)`", content))
-    refs |= {(DRAFT, s) for s in re.findall(rf"{DRAFT} §([\d.]*\d)", content)}
-    refs |= {(DRAFT, s) for s in re.findall(rf"{DRAFT}#section-([\d.]*\d)", content)}
-    refs |= {(DRAFT, s) for s in re.findall(rf"{DRAFT} section ([\d.]*\d)", content)}
+    refs |= set(re.findall(rf"{CITED_DRAFT}(?: §|#section-| section )([\d.]*\d)", content))
     bare = set(re.findall(r":rfc:`(\d{4})`", content))
     for doc in sorted(bare):
         ok = bool(text_of(doc))

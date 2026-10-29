@@ -38,9 +38,9 @@ PASS RFC 4918 �15.6: getetag
 PASS RFC 6578 �3.7: A client can limit the number of results returned by the server
 PASS RFC 8620 �5.1: A (preferably short) string representing the state on the server for *all* the data of thi...
 PASS RFC 8620 �1.6.3: The id MUST be unique among all records of the *same type* within the *same account*
-PASS draft-ietf-jmap-calendars-32 �1.4.1: An Account MUST NOT contain more than one CalendarEvent with the same uid unless all of th...
-PASS draft-ietf-jmap-calendars-32 �5.9: uid MUST be set to a new globally unique identifier
-PASS draft-ietf-jmap-calendars-32 �5.9: version MUST be set to the JSCalendar version the event conforms to
+PASS draft-ietf-jmap-calendars-33 �1.4.1: An Account MUST NOT contain more than one CalendarEvent with the same uid unless all of th...
+PASS draft-ietf-jmap-calendars-33 �5.9: uid MUST be set to a new globally unique identifier
+PASS draft-ietf-jmap-calendars-33 �5.9: version MUST be set to the JSCalendar version the event conforms to
 PASS adapters.rst cites RFC 6578: text found
 PASS adapters.rst cites 3253 �3.1.5: section exists
 PASS adapters.rst cites 3986 �2.3: section exists
@@ -64,17 +64,19 @@ PASS adapters.rst cites 6578 �3.7: section exists
 PASS adapters.rst cites 6578 �4: section exists
 PASS adapters.rst cites 6638 �3.2.4.1: section exists
 PASS adapters.rst cites 8620 �1.6.3: section exists
+PASS adapters.rst cites 8620 �3.6.2: section exists
 PASS adapters.rst cites 8620 �5.1: section exists
 PASS adapters.rst cites 8620 �5.2: section exists
 PASS adapters.rst cites 8620 �5.3: section exists
+PASS adapters.rst cites 8620 �5.5: section exists
 PASS adapters.rst cites 8984 �4.1.4: section exists
 PASS adapters.rst cites 9110 �13.1.1: section exists
 PASS adapters.rst cites 9110 �13.1.2: section exists
 PASS adapters.rst cites 9110 �8.8.3.2: section exists
-PASS adapters.rst cites draft-ietf-jmap-calendars-32 �1.4.1: section exists
-PASS adapters.rst cites draft-ietf-jmap-calendars-32 �5: section exists
-PASS adapters.rst cites draft-ietf-jmap-calendars-32 �5.7: section exists
-PASS adapters.rst cites draft-ietf-jmap-calendars-32 �5.9: section exists
+PASS adapters.rst cites draft-ietf-calext-jscalendarbis-22 �1.4.4: section exists
+PASS adapters.rst cites draft-ietf-jmap-calendars-33 �1.4.1: section exists
+PASS adapters.rst cites draft-ietf-jmap-calendars-33 �5: section exists
+PASS adapters.rst cites draft-ietf-jmap-calendars-33 �5.9: section exists
 PASS server-compatibility.rst cites 4791 �5.3.2.1: section exists
 PASS server-compatibility.rst cites 4791 �5.3.4: section exists
 PASS server-compatibility.rst cites 4791 �7.9: section exists
@@ -88,9 +90,10 @@ PASS server-compatibility.rst cites 6578 �3.7: section exists
 PASS server-compatibility.rst cites 6578 �4: section exists
 PASS server-compatibility.rst cites 8620 �5.2: section exists
 PASS server-compatibility.rst cites 8620 �5.3: section exists
+PASS server-compatibility.rst cites 8620 �5.5: section exists
 PASS server-compatibility.rst cites 9110 �13.1.1: section exists
 PASS server-compatibility.rst cites 9110 �13.1.2: section exists
-PASS server-compatibility.rst cites draft-ietf-jmap-calendars-32 �1.4.1: section exists
-PASS server-compatibility.rst cites draft-ietf-jmap-calendars-32 �5.9: section exists
+PASS server-compatibility.rst cites draft-ietf-jmap-calendars-33 �1.4.1: section exists
+PASS server-compatibility.rst cites draft-ietf-jmap-calendars-33 �5.9: section exists
 
 all citations verified

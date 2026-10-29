@@ -1,0 +1,5 @@
+>>> x:DataRetention/set {"update": {"singleton": {"maxChangesHistory": 1}}}
+<<< x:DataRetention/set {"accountId": "d333333", "updated": {"singleton": null}}
+>>> x:Action/set {"create": {"r": {"@type": "ReloadSettings"}}}
+<<< x:Action/set {"accountId": "d333333", "created": {"r": {"warnings": {"DnsResolver: The configured DNS resolver cannot validate DNSSEC. DANE has been disabled to avoid deferring mail. Ensure the resolver is DNSSEC-capable and reachable over TCP.": true}, "id": "bvofzjq"}}}
+SUMMARY [Stalwart] reload with DataRetention.maxChangesHistory = 1: ok

@@ -1,0 +1,221 @@
+
+===== current state =====
+>>> CalendarEvent/get {"ids": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "syaba", "list": [], "notFound": []}
+
+===== calendars =====
+>>> Calendar/get {"ids": null}
+<<< Calendar/get {"accountId": "b", "state": "sumba", "list": [{"id": "b", "name": "Stalwart Calendar (testuser@example.org)", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": true, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "e", "name": "calendaring-sync-identical-write-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "f", "name": "calendaring-sync-characters-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "g", "name": "calendaring-sync-created-and-removed-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "h", "name": "calendaring-sync-removed-while-edited-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "i", "name": "calendaring-sync-identical-write-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "j", "name": "calendaring-sync-characters-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "k", "name": "calendaring-sync-created-and-removed-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "l", "name": "calendaring-sync-removed-while-edited-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "m", "name": "calendaring-sync-reading-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "n", "name": "calendaring-sync-pushing-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "o", "name": "calendaring-sync-rejected-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "p", "name": "calendaring-sync-delete-gone-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "q", "name": "calendaring-sync-uid-taken-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "r", "name": "calendaring-sync-invalid-token-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "t", "name": "calendaring-sync-listing-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "u", "name": "calendaring-sync-fetch-after-delete-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "v", "name": "calendaring-sync-reading-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "w", "name": "calendaring-sync-pushing-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "x", "name": "calendaring-sync-rejected-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "y", "name": "calendaring-sync-delete-gone-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "z", "name": "calendaring-sync-uid-taken-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "7", "name": "calendaring-sync-invalid-token-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "2", "name": "calendaring-sync-listing-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "0", "name": "calendaring-sync-fetch-after-delete-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "1", "name": "calendaring-sync-listing-after-removal-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "3", "name": "calendaring-sync-listing-after-removal-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "ba", "name": "calendaring-sync-removed-and-created-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "bb", "name": "calendaring-sync-removed-and-created-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "bc", "name": "calendaring-sync-refused-login-sync", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "bd", "name": "calendaring-sync-refused-login-async", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "be", "name": "client", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "bf", "name": "probe", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}], "notFound": []}
+
+===== 2 create a, b, c =====
+>>> CalendarEvent/set {"create": {"a": {"@type": "Event", "uid": "probe-a", "title": "a", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "b": {"@type": "Event", "uid": "probe-b", "title": "b", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "c": {"@type": "Event", "uid": "probe-c", "title": "c", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syaba", "newState": "syeba", "created": {"c": {"id": "eb", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}, "a": {"id": "d3", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}, "b": {"id": "ea", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}}}
+
+===== 2 update a, destroy b, create d =====
+>>> CalendarEvent/set {"update": {"d3": {"title": "a v2"}}, "destroy": ["ea"], "create": {"d": {"@type": "Event", "uid": "probe-d", "title": "d", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syeba", "newState": "syiba", "created": {"d": {"id": "ec", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}}, "updated": {"d3": {"sequence": 1}}, "destroyed": ["ea"]}
+
+===== 2 page 0 =====
+>>> CalendarEvent/changes {"sinceState": "syaba", "maxChanges": 1}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "syaba", "newState": "ryebacai", "hasMoreChanges": true, "created": ["d3"], "updated": [], "destroyed": [], "updatedProperties": null}
+
+===== 2 page 1 =====
+>>> CalendarEvent/changes {"sinceState": "ryebacai", "maxChanges": 1}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "ryebacai", "newState": "ryebacaq", "hasMoreChanges": true, "created": ["eb"], "updated": [], "destroyed": [], "updatedProperties": null}
+
+===== 2 page 2 =====
+>>> CalendarEvent/changes {"sinceState": "ryebacaq", "maxChanges": 1}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "ryebacaq", "newState": "syiba", "hasMoreChanges": false, "created": ["ec"], "updated": [], "destroyed": [], "updatedProperties": null}
+
+===== 2 unpaged =====
+>>> CalendarEvent/changes {"sinceState": "syaba"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "syaba", "newState": "syiba", "hasMoreChanges": false, "created": ["d3", "eb", "ec"], "updated": [], "destroyed": [], "updatedProperties": null}
+
+===== 3 create e =====
+>>> CalendarEvent/set {"create": {"e": {"@type": "Event", "uid": "probe-e", "title": "e", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syiba", "newState": "symba", "created": {"e": {"id": "ed", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}}}
+
+===== 3 destroy e =====
+>>> CalendarEvent/set {"destroy": ["ed"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "symba", "newState": "syqba", "destroyed": ["ed"]}
+
+===== 3 changes after e was created and destroyed =====
+>>> CalendarEvent/changes {"sinceState": "syiba"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "syiba", "newState": "syqba", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": [], "updatedProperties": null}
+
+===== 4 sinceState garbage =====
+>>> CalendarEvent/changes {"sinceState": "garbage-state"}
+<<< error {"type": "invalidArguments", "description": "invalid JMAP State at line 1 column 166"}
+
+===== 4 sinceState empty =====
+>>> CalendarEvent/changes {"sinceState": ""}
+<<< error {"type": "invalidArguments", "description": "invalid JMAP State at line 1 column 153"}
+
+===== 4 sinceState real state with its last character changed =====
+>>> CalendarEvent/changes {"sinceState": "syabA"}
+<<< error {"type": "invalidArguments", "description": "invalid JMAP State at line 1 column 158"}
+
+===== 4 sinceState current state with a suffix =====
+>>> CalendarEvent/changes {"sinceState": "syibax"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "syiba", "newState": "syqba", "hasMoreChanges": false, "created": [], "updated": [], "destroyed": [], "updatedProperties": null}
+
+===== 5 ifInState stale =====
+>>> CalendarEvent/set {"ifInState": "syaba", "update": {"d3": {"title": "a v3"}}}
+<<< error {"type": "stateMismatch", "description": "An \"ifInState\" argument was supplied, but it does not match the current state."}
+
+===== current state =====
+>>> CalendarEvent/get {"ids": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "syqba", "list": [], "notFound": []}
+
+===== 5 ifInState current =====
+>>> CalendarEvent/set {"ifInState": "syqba", "update": {"d3": {"title": "a v3"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syqba", "newState": "syuba", "updated": {"d3": {"sequence": 2}}}
+
+===== 6 get a =====
+>>> CalendarEvent/get {"ids": ["d3"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "syuba", "list": [{"start": "2026-10-20T10:00:00", "title": "a v3", "duration": "PT1H", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "sequence": 2, "timeZone": "Etc/UTC", "uid": "probe-a", "@type": "Event", "version": "2.0", "id": "d3", "calendarIds": {"b": true}, "isDraft": false, "isOrigin": true, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}], "notFound": []}
+
+===== 7 create without version =====
+>>> CalendarEvent/set {"create": {"n": {"@type": "Event", "uid": "probe-noversion", "title": "no version", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syuba", "newState": "syyba", "created": {"n": {"id": "ee", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}}}
+
+===== 8 create with an existing uid =====
+>>> CalendarEvent/set {"create": {"dup": {"@type": "Event", "uid": "probe-a", "title": "dup", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syyba", "newState": "syyba", "notCreated": {"dup": {"type": "invalidProperties", "description": "An event with UID probe-a already exists.", "properties": ["uid"]}}}
+
+===== 8 update a destroyed id =====
+>>> CalendarEvent/set {"update": {"ea": {"title": "gone"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syyba", "newState": "syyba", "notUpdated": {"ea": {"type": "notFound"}}}
+
+===== 8 destroy a destroyed id =====
+>>> CalendarEvent/set {"destroy": ["ea"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syyba", "newState": "syyba", "notDestroyed": {"ea": {"type": "notFound"}}}
+
+===== 9 create five =====
+>>> CalendarEvent/set {"create": {"l0": {"@type": "Event", "uid": "probe-list-0", "title": "before 0", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l1": {"@type": "Event", "uid": "probe-list-1", "title": "before 1", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l2": {"@type": "Event", "uid": "probe-list-2", "title": "before 2", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l3": {"@type": "Event", "uid": "probe-list-3", "title": "before 3", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}, "l4": {"@type": "Event", "uid": "probe-list-4", "title": "before 4", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "syyba", "newState": "sy2ba", "created": {"l1": {"id": "eg", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}, "l2": {"id": "eh", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}, "l3": {"id": "ei", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}, "l0": {"id": "ef", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}, "l4": {"id": "ej", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}}}
+
+===== current state =====
+>>> CalendarEvent/get {"ids": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "sy2ba", "list": [], "notFound": []}
+
+===== 9 query page 0 =====
+>>> CalendarEvent/query {"position": 0, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "sy2ba", "canCalculateChanges": true, "position": 0, "ids": ["dm", "dn"]}
+
+===== 9 get page 0 =====
+>>> CalendarEvent/get {"ids": ["dm", "dn"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "sy2ba", "list": [{"title": "mine", "id": "dm"}, {"title": "one", "id": "dn"}], "notFound": []}
+
+===== 9 change an event mid-listing =====
+>>> CalendarEvent/set {"update": {"eb": {"title": "changed mid-listing"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sy2ba", "newState": "szaba", "updated": {"eb": {"sequence": 1}}}
+
+===== 9 create an event mid-listing =====
+>>> CalendarEvent/set {"create": {"m": {"@type": "Event", "uid": "probe-mid", "title": "created mid-listing", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "szaba", "newState": "szeba", "created": {"m": {"id": "ek", "created": "2026-10-29T06:18:20Z", "updated": "2026-10-29T06:18:20Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}}}
+
+===== 9 query page 1 =====
+>>> CalendarEvent/query {"position": 2, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 2, "ids": ["dp", "du"]}
+
+===== 9 get page 1 =====
+>>> CalendarEvent/get {"ids": ["dp", "du"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "a v3", "id": "dp"}, {"title": "c v2", "id": "du"}], "notFound": []}
+
+===== 9 query page 2 =====
+>>> CalendarEvent/query {"position": 4, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 4, "ids": ["dv", "dw"]}
+
+===== 9 get page 2 =====
+>>> CalendarEvent/get {"ids": ["dv", "dw"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "no DTSTAMP", "id": "dv"}, {"title": "round trip", "id": "dw"}], "notFound": []}
+
+===== 9 query page 3 =====
+>>> CalendarEvent/query {"position": 6, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 6, "ids": ["dx", "d7"]}
+
+===== 9 get page 3 =====
+>>> CalendarEvent/get {"ids": ["dx", "d7"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "v3", "id": "dx"}, {"title": "x", "id": "d7"}], "notFound": []}
+
+===== 9 query page 4 =====
+>>> CalendarEvent/query {"position": 8, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 8, "ids": ["d9", "d2"]}
+
+===== 9 get page 4 =====
+>>> CalendarEvent/get {"ids": ["d9", "d2"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "x", "id": "d9"}, {"title": "x", "id": "d2"}], "notFound": []}
+
+===== 9 query page 5 =====
+>>> CalendarEvent/query {"position": 10, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 10, "ids": ["d0", "d3"]}
+
+===== 9 get page 5 =====
+>>> CalendarEvent/get {"ids": ["d0", "d3"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "sequence", "id": "d0"}, {"title": "a v3", "id": "d3"}], "notFound": []}
+
+===== 9 query page 6 =====
+>>> CalendarEvent/query {"position": 12, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 12, "ids": ["eb", "ec"]}
+
+===== 9 get page 6 =====
+>>> CalendarEvent/get {"ids": ["eb", "ec"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "changed mid-listing", "id": "eb"}, {"title": "d", "id": "ec"}], "notFound": []}
+
+===== 9 query page 7 =====
+>>> CalendarEvent/query {"position": 14, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 14, "ids": ["ee", "ef"]}
+
+===== 9 get page 7 =====
+>>> CalendarEvent/get {"ids": ["ee", "ef"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "no version", "id": "ee"}, {"title": "before 0", "id": "ef"}], "notFound": []}
+
+===== 9 query page 8 =====
+>>> CalendarEvent/query {"position": 16, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 16, "ids": ["eg", "eh"]}
+
+===== 9 get page 8 =====
+>>> CalendarEvent/get {"ids": ["eg", "eh"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "before 1", "id": "eg"}, {"title": "before 2", "id": "eh"}], "notFound": []}
+
+===== 9 query page 9 =====
+>>> CalendarEvent/query {"position": 18, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 18, "ids": ["ei", "ej"]}
+
+===== 9 get page 9 =====
+>>> CalendarEvent/get {"ids": ["ei", "ej"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "before 3", "id": "ei"}, {"title": "before 4", "id": "ej"}], "notFound": []}
+
+===== 9 query page 10 =====
+>>> CalendarEvent/query {"position": 20, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 20, "ids": ["ek"]}
+
+===== 9 get page 10 =====
+>>> CalendarEvent/get {"ids": ["ek"], "properties": ["title"]}
+<<< CalendarEvent/get {"accountId": "b", "state": "szeba", "list": [{"title": "created mid-listing", "id": "ek"}], "notFound": []}
+
+===== 9 query page 11 =====
+>>> CalendarEvent/query {"position": 21, "limit": 2}
+<<< CalendarEvent/query {"accountId": "b", "queryState": "szeba", "canCalculateChanges": true, "position": 21, "ids": []}
+
+===== 9 changes from the state read before listing =====
+>>> CalendarEvent/changes {"sinceState": "sy2ba"}
+<<< CalendarEvent/changes {"accountId": "b", "oldState": "sy2ba", "newState": "szeba", "hasMoreChanges": false, "created": ["ek"], "updated": ["eb"], "destroyed": [], "updatedProperties": null}
+
+RESULT [Stalwart] 1 capabilities: calendars: True, tasks: False
+RESULT [Stalwart] 2 paging: pages 3; oldState echoed on every page: True; ends at the unpaged newState: True; paged {'created': ['d3', 'eb', 'ec'], 'updated': [], 'destroyed': []}; unpaged created ['d3', 'eb', 'ec'] destroyed []
+RESULT [Stalwart] 3 created and destroyed between states: listed in nothing
+RESULT [Stalwart] 4 sinceState garbage: invalidArguments
+RESULT [Stalwart] 4 sinceState empty: invalidArguments
+RESULT [Stalwart] 4 sinceState real state with its last character changed: invalidArguments
+RESULT [Stalwart] 4 sinceState current state with a suffix: answered, oldState 'syiba' for sinceState 'syibax', echoed: False
+RESULT [Stalwart] 5 ifInState stale: error stateMismatch
+RESULT [Stalwart] 5 ifInState current: updated ['d3']
+RESULT [Stalwart] 6 properties the server added: ['created', 'hideAttendees', 'isDraft', 'isOrigin', 'mayInviteOthers', 'mayInviteSelf', 'sequence', 'updated', 'useDefaultAlerts', 'version']
+RESULT [Stalwart] 7 create without version: "accepted"
+RESULT [Stalwart] 8 duplicate uid: {"dup": {"type": "invalidProperties", "description": "An event with UID probe-a already exists.", "properties": ["uid"]}}
+RESULT [Stalwart] 8 update a destroyed id: {"ea": {"type": "notFound"}}
+RESULT [Stalwart] 8 destroy a destroyed id: {"ea": {"type": "notFound"}}
+RESULT [Stalwart] PASS 9 the event changed mid-listing is reported: ok
+RESULT [Stalwart] PASS 9 the event created mid-listing is reported: ok
