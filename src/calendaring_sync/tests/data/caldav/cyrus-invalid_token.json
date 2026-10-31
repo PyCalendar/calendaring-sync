@@ -1,51 +1,36 @@
 {
  "server": "cyrus",
  "scenario": "invalid_token",
- "caldav": "3.6.0",
- "recorded": "2026-10-23",
+ "caldav": "3.7.0",
+ "recorded": "2026-10-30",
  "exchanges": [
   {
    "method": "DELETE",
    "path": "/dav/calendars/user/user1/calendaring-sync-invalid-token/",
-   "status": 401,
+   "status": 404,
    "headers": {
-    "www-authenticate": "Basic realm=\"test\"",
     "content-type": "text/html; charset=utf-8"
    },
-   "body": "<!DOCTYPE html>\n<html style='color-scheme:dark light'>\n  <head>\n    <title>401 Unauthorized</title>\n  </head>\n  <body>\n    <h1>Unauthorized</h1>\n    <p>Must authenticate to access the specified target</p>\n    <hr>\n    <address>Cyrus-HTTP/3.13.7-545-gc04cece19 Cyrus-SASL/2.1.28 LibXML/2.9.14 Jansson/2.14 OpenSSL/3.0.20 Nghttp2/1.52.0 Wslay/1.0.1-DEV Zlib/1.2.13 Xapian/2.0.0 LibiCal/4.0 ICU4C/74.2 SQLite/3.40.1 Server at localhost Port 8802</address>\n  </body>\n</html>\n"
-  },
-  {
-   "method": "DELETE",
-   "path": "/dav/calendars/user/user1/calendaring-sync-invalid-token/",
-   "status": 204,
-   "headers": {},
-   "body": ""
+   "body": "<!DOCTYPE html>\n<html style='color-scheme:dark light'>\n  <head>\n    <title>404 Not Found</title>\n  </head>\n  <body>\n    <h1>Not Found</h1>\n    <p>Mailbox does not exist</p>\n    <hr>\n    <address>Cyrus-HTTP/3.13.8-115-gb2ee17d30 Cyrus-SASL/2.1.28 LibXML/2.9.14 Jansson/2.14 OpenSSL/3.0.22 Nghttp2/1.52.0 Wslay/1.0.1-DEV Zlib/1.2.13 Xapian/2.1.0 LibiCal/4.0 ICU4C/78.2 SQLite/3.40.1 Server at localhost Port 8802</address>\n  </body>\n</html>\n",
+   "request": ""
   },
   {
    "method": "MKCALENDAR",
    "path": "/dav/calendars/user/user1/calendaring-sync-invalid-token/",
    "status": 201,
    "headers": {},
-   "body": ""
+   "body": "",
+   "request": ""
   },
   {
    "method": "PUT",
    "path": "/dav/calendars/user/user1/calendaring-sync-invalid-token/a.ics",
    "status": 201,
    "headers": {
-    "etag": "\"aa7c43ef518a3753576b84513f6972d3e4c8b3cb\""
+    "etag": "\"b4c292e091c200acaa4036ec06a56aad62b06fd7\""
    },
-   "body": ""
-  },
-  {
-   "method": "PROPFIND",
-   "path": "/dav/calendars/user/user1/calendaring-sync-invalid-token/",
-   "status": 401,
-   "headers": {
-    "www-authenticate": "Basic realm=\"test\"",
-    "content-type": "text/html; charset=utf-8"
-   },
-   "body": "<!DOCTYPE html>\n<html style='color-scheme:dark light'>\n  <head>\n    <title>401 Unauthorized</title>\n  </head>\n  <body>\n    <h1>Unauthorized</h1>\n    <p>Must authenticate to access the specified target</p>\n    <hr>\n    <address>Cyrus-HTTP/3.13.7-545-gc04cece19 Cyrus-SASL/2.1.28 LibXML/2.9.14 Jansson/2.14 OpenSSL/3.0.20 Nghttp2/1.52.0 Wslay/1.0.1-DEV Zlib/1.2.13 Xapian/2.0.0 LibiCal/4.0 ICU4C/74.2 SQLite/3.40.1 Server at localhost Port 8802</address>\n  </body>\n</html>\n"
+   "body": "",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -54,7 +39,8 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:sync-token>data:,1792757603-86</D:sync-token>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n"
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:sync-token>data:,1793352888-52</D:sync-token>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -63,7 +49,8 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"1792757603-1-1\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/a.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"aa7c43ef518a3753576b84513f6972d3e4c8b3cb\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n"
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"1793352888-1-1\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/a.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"b4c292e091c200acaa4036ec06a56aad62b06fd7\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
   },
   {
    "method": "REPORT",
@@ -72,7 +59,8 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/a.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <C:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:invalid_token-a\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:one\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></C:calendar-data>\n        <D:getetag>\"aa7c43ef518a3753576b84513f6972d3e4c8b3cb\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n    <D:propstat>\n      <D:prop>\n        <C:schedule-tag/>\n      </D:prop>\n      <D:status>HTTP/1.1 404 Not Found</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n"
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/a.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <C:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:invalid_token-a\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:one\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></C:calendar-data>\n        <D:getetag>\"b4c292e091c200acaa4036ec06a56aad62b06fd7\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n    <D:propstat>\n      <D:prop>\n        <C:schedule-tag/>\n      </D:prop>\n      <D:status>HTTP/1.1 404 Not Found</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -81,7 +69,8 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:supported-report-set>\n          <D:supported-report>\n            <D:report>\n              <D:expand-property/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <D:acl-principal-prop-set/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <D:sync-collection/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:calendar-query/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:calendar-multiget/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:free-busy-query/>\n            </D:report>\n          </D:supported-report>\n        </D:supported-report-set>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n"
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:supported-report-set>\n          <D:supported-report>\n            <D:report>\n              <D:expand-property/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <D:acl-principal-prop-set/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <D:sync-collection/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:calendar-query/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:calendar-multiget/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:free-busy-query/>\n            </D:report>\n          </D:supported-report>\n        </D:supported-report-set>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
   },
   {
    "method": "REPORT",
@@ -90,7 +79,8 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:error xmlns:D=\"DAV:\">\n  <D:valid-sync-token/>\n  <D:responsedescription>Invalid sync-token</D:responsedescription>\n</D:error>\n"
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:error xmlns:D=\"DAV:\">\n  <D:valid-sync-token/>\n  <D:responsedescription>Invalid sync-token</D:responsedescription>\n</D:error>\n",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -99,7 +89,8 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:sync-token>data:,1792757603-86</D:sync-token>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n"
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:sync-token>data:,1793352888-52</D:sync-token>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -108,16 +99,18 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"1792757603-1-1\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/a.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"aa7c43ef518a3753576b84513f6972d3e4c8b3cb\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n"
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"1793352888-1-1\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-invalid-token/a.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"b4c292e091c200acaa4036ec06a56aad62b06fd7\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
   },
   {
    "method": "PUT",
    "path": "/dav/calendars/user/user1/calendaring-sync-invalid-token/a.ics",
    "status": 204,
    "headers": {
-    "etag": "\"25f6d8b37384da45efe193a8ec1a8b8ca9da76b0\""
+    "etag": "\"7ce1a0c059ba050695c768efa66ce1ebd3db19d3\""
    },
-   "body": ""
+   "body": "",
+   "request": ""
   }
  ]
 }

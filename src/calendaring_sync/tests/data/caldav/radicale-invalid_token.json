@@ -1,8 +1,8 @@
 {
  "server": "radicale",
  "scenario": "invalid_token",
- "caldav": "3.6.0",
- "recorded": "2026-10-23",
+ "caldav": "3.7.0",
+ "recorded": "2026-10-30",
  "exchanges": [
   {
    "method": "DELETE",
@@ -11,14 +11,16 @@
    "headers": {
     "content-type": "text/plain; charset=utf-8"
    },
-   "body": "The requested resource could not be found."
+   "body": "The requested resource could not be found.",
+   "request": ""
   },
   {
    "method": "MKCALENDAR",
    "path": "/user1/calendaring-sync-invalid-token/",
    "status": 201,
    "headers": {},
-   "body": ""
+   "body": "",
+   "request": ""
   },
   {
    "method": "PUT",
@@ -27,7 +29,8 @@
    "headers": {
     "etag": "\"6de1bf4ac30390efd4989182970aa93552bfe61bd6821edf59e530d38c99d367\""
    },
-   "body": ""
+   "body": "",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -37,7 +40,8 @@
     "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/8f1eb1c06525f3b27ba1a33d7928b220bf3497bcd01c47fc36a833074f4e6c0f</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/713a17bb28369a7c817349e3bcda441a8544f819fee0deacb027d160ef1601c8</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -47,7 +51,8 @@
     "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><getetag>\"a3529d66ede96b85c887c3373895f4ccb052249556e1876d2d46b24a9b10c292\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-invalid-token/a.ics</href><propstat><prop><getetag>\"6de1bf4ac30390efd4989182970aa93552bfe61bd6821edf59e530d38c99d367\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><getetag>\"a3529d66ede96b85c887c3373895f4ccb052249556e1876d2d46b24a9b10c292\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-invalid-token/a.ics</href><propstat><prop><getetag>\"6de1bf4ac30390efd4989182970aa93552bfe61bd6821edf59e530d38c99d367\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "REPORT",
@@ -56,7 +61,8 @@
    "headers": {
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/user1/calendaring-sync-invalid-token/a.ics</href><propstat><prop><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:invalid_token-a\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nSUMMARY:one\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data><getetag>\"6de1bf4ac30390efd4989182970aa93552bfe61bd6821edf59e530d38c99d367\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat><propstat><prop><C:schedule-tag /></prop><status>HTTP/1.1 404 Not Found</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/user1/calendaring-sync-invalid-token/a.ics</href><propstat><prop><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:invalid_token-a\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nSUMMARY:one\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data><getetag>\"6de1bf4ac30390efd4989182970aa93552bfe61bd6821edf59e530d38c99d367\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat><propstat><prop><C:schedule-tag /></prop><status>HTTP/1.1 404 Not Found</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -66,7 +72,8 @@
     "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><supported-report-set><supported-report><report><expand-property /></report></supported-report><supported-report><report><principal-search-property-set /></report></supported-report><supported-report><report><principal-property-search /></report></supported-report><supported-report><report><sync-collection /></report></supported-report><supported-report><report><C:calendar-multiget /></report></supported-report><supported-report><report><C:calendar-query /></report></supported-report><supported-report><report><C:free-busy-query /></report></supported-report></supported-report-set></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "REPORT",
@@ -75,7 +82,8 @@
    "headers": {
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<error xmlns=\"DAV:\"><valid-sync-token /></error>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<error xmlns=\"DAV:\"><valid-sync-token /></error>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -85,7 +93,8 @@
     "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/8f1eb1c06525f3b27ba1a33d7928b220bf3497bcd01c47fc36a833074f4e6c0f</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/713a17bb28369a7c817349e3bcda441a8544f819fee0deacb027d160ef1601c8</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -95,7 +104,8 @@
     "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><getetag>\"a3529d66ede96b85c887c3373895f4ccb052249556e1876d2d46b24a9b10c292\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-invalid-token/a.ics</href><propstat><prop><getetag>\"6de1bf4ac30390efd4989182970aa93552bfe61bd6821edf59e530d38c99d367\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-invalid-token/</href><propstat><prop><getetag>\"a3529d66ede96b85c887c3373895f4ccb052249556e1876d2d46b24a9b10c292\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-invalid-token/a.ics</href><propstat><prop><getetag>\"6de1bf4ac30390efd4989182970aa93552bfe61bd6821edf59e530d38c99d367\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "PUT",
@@ -104,7 +114,8 @@
    "headers": {
     "etag": "\"7e5d43aa34701ffc7ef542f54ccc69e44f2db58619e6098e5f6aeeb7c2a27d6d\""
    },
-   "body": ""
+   "body": "",
+   "request": ""
   }
  ]
 }

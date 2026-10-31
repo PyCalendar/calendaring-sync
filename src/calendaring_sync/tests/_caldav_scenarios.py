@@ -80,8 +80,7 @@ class Server:
 
 SERVERS = by_name(
     Server("radicale", "/user1/", "http://example.invalid/never-issued"),
-    # Xandikos answers a token that isn't hex with a 500 and no precondition.
-    Server("xandikos", "/sometestuser/calendars/", "0" * 40),
+    Server("xandikos", "/sometestuser/calendars/", "http://example.invalid/never-issued"),
     Server(
         "cyrus",
         "/dav/calendars/user/user1/",
