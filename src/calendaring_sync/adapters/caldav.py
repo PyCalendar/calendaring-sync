@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 try:
-    import lxml.etree as etree
     from caldav.calendarobjectresource import CalendarObjectResource
     from caldav.collection import Calendar
     from caldav.davclient import DAVClient
@@ -75,10 +74,6 @@ _NOT_AN_OBJECT = frozenset({_ROOT, "VCALENDAR", "VTIMEZONE"})
 _HOLDS_OBJECTS = frozenset({_ROOT, "VCALENDAR"})
 _SYNC_COLLECTION = "{DAV:}sync-collection"
 _VALID_SYNC_TOKEN = "{DAV:}valid-sync-token"
-_HREF = "{DAV:}href"
-# How python-caldav's parse_preconditions reads an error body: no entities
-# expanded, nothing fetched.
-_ERROR_PARSER = {"resolve_entities": False, "no_network": True}
 # The prefix of a weak entity tag (RFC 9110 section 8.8.3).
 _WEAK = "W/"
 # python-caldav's feature saying how a server refuses a sync token it won't take.
@@ -299,8 +294,7 @@ class _CalDAVFlow(Adapter):
             )
         except dav_error.ResponseError as exc:
             # python-caldav refuses a multistatus that marks the cut with a 507.
-            # Up to 3.6.0 it gives the status line; later releases set the status.
-            if exc.status != _TRUNCATED and f" {_TRUNCATED} " not in f" {exc.url} ":
+            if exc.status != _TRUNCATED:
                 raise
             raise IncompleteListingError(
                 f"The server cut the listing of {self._url} short"
@@ -390,7 +384,7 @@ class _CalDAVFlow(Adapter):
             try:
                 yield resource.save(no_overwrite=True, raw_data=edit.content, precondition="etag")
             except dav_error.UidConflictError as exc:
-                return LogicalKeyTaken(self._holder(exc))
+                return LogicalKeyTaken(self._holder(exc.href))
             except dav_error.ConsistencyError:
                 return Rejected()
             return Applied()
@@ -405,7 +399,7 @@ class _CalDAVFlow(Adapter):
         try:
             yield resource.save(raw_data=edit.content, precondition="etag", increase_seqno=False)
         except dav_error.UidConflictError as exc:
-            return LogicalKeyTaken(self._holder(exc))
+            return LogicalKeyTaken(self._holder(exc.href))
         except (dav_error.ETagMismatchError, dav_error.ScheduleTagMismatchError):
             return Rejected()
         except dav_error.PutError as exc:
@@ -414,32 +408,22 @@ class _CalDAVFlow(Adapter):
             raise
         return Applied()
 
-    def _holder(self, refusal: Any) -> str | None:
+    def _holder(self, href: str | None) -> str | None:
         """The object id of the object holding a refused create's UID, if the server named it.
 
-        The precondition element may hold its ``DAV:href`` (:rfc:`4791#section-5.3.2.1`),
-        read with the parser settings python-caldav found the precondition
-        with, so it parses. Naming the holder is a help, never a reason to
-        fail the push:
-        a body or href this calendar can't place, such as one in another
-        calendar or on another host, names no holder, and the core finds it
-        by the UID instead.
+        The precondition element may hold its ``DAV:href``
+        (:rfc:`4791#section-5.3.2.1`). Naming the holder is a help, never a
+        reason to fail the push: an href this calendar can't place, such as
+        one in another calendar or on another host, names no holder, and the
+        core finds it by the UID instead.
         """
-        body = refusal.body.encode() if isinstance(refusal.body, str) else refusal.body
-        if not body:
+        if href is None:
             return None
-        root = etree.fromstring(body, parser=etree.XMLParser(**_ERROR_PARSER))
-        for tag in dav_error.UID_CONFLICT_PRECONDITIONS:
-            for element in root.iter(tag):
-                href = element.find(_HREF)
-                if href is not None and href.text:
-                    try:
-                        holder = self._object_id(href.text.strip())
-                    except ValueError:  # on another host than the calendar
-                        return None
-                    in_calendar = holder.rpartition("/")[0] == self._collection.rstrip("/")
-                    return holder if in_calendar else None
-        return None
+        try:
+            holder = self._object_id(href)
+        except ValueError:  # on another host than the calendar
+            return None
+        return holder if holder.rpartition("/")[0] == self._collection.rstrip("/") else None
 
 
 @check_argument_types

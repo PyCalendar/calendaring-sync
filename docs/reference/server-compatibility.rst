@@ -13,7 +13,7 @@ Each table lists how the tested servers behave where sync depends on it, and wha
 CalDAV
 ======
 
-The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1 between 2026-10-10 and 2026-10-12. Its integration tests ran against the same five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. Entries marked (tester) come from `caldav-server-tester <https://github.com/python-caldav/caldav-server-tester>`_, which ran these checks against 22 servers in October 2026; python-caldav publishes its results as compatibility hints (`python-caldav/caldav#822 <https://github.com/python-caldav/caldav/pull/822>`_).
+The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1 between 2026-10-10 and 2026-10-12. Its integration tests ran against the same five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. They last ran on 2026-10-30, against Radicale 3.9.0, Xandikos 0.4.10, Cyrus 3.13.8, Stalwart 1.0.1 and Baïkal 0.10.1, with python-caldav 3.7.0. Entries marked (tester) come from `caldav-server-tester <https://github.com/python-caldav/caldav-server-tester>`_, which ran these checks against 22 servers in October 2026; python-caldav publishes its results as compatibility hints (`python-caldav/caldav#822 <https://github.com/python-caldav/caldav/pull/822>`_).
 
 .. list-table::
    :header-rows: 1
@@ -45,12 +45,9 @@ The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.1
        - Nextcloud, ecloud, Synology: only as removed, though the member is there (tester)
        - Others: once, as changed
      - Fetches removed members too: one that comes back with data counts as changed
-   * - ``sync-collection`` sent with ``Depth: 1``, as python-caldav up to 3.6.0 sends it (:rfc:`6578#section-3.2`: defined for ``Depth: 0`` only; 2026-10-23)
-     - All: answered as with ``Depth: 0``
-     - Relies on python-caldav's report
    * - Token the server never issued (:rfc:`6578#section-3.2`: ``valid-sync-token``)
      - - Radicale, Cyrus: 403 with ``valid-sync-token``
-       - Xandikos: 412 with ``valid-sync-token`` for a well-formed token, 500 otherwise (`xandikos#743 <https://github.com/jelmer/xandikos/issues/743>`_)
+       - Xandikos: 412 with ``valid-sync-token``
        - Stalwart: 207 with a full listing and no error
        - Baïkal: 403 with ``valid-sync-token`` for a token that doesn't start with its own prefix; one that does, even past its newest token, gets no changes and comes back as the new token (2026-10-23)
      - :term:`Resets <reset>` the scope when the error names ``valid-sync-token``; flags Stalwart for regular full listings. Baïkal's answer can't be told from an ordinary one, so after restoring its database from a backup, run a full listing
@@ -109,16 +106,16 @@ The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.1
        - Others: a 404 entry, which python-caldav returns as an object without data
      - A missing member, or one without data, waits for the next report; after a 404 for the whole request, checks that the calendar is there and fetches each member on its own
    * - Removed member in a sync report
-     - - Infomaniak: adds an empty ``propstat`` with 418, on which python-caldav 3.6.0 raises; fixed for its next release (`python-caldav/caldav#821 <https://github.com/python-caldav/caldav/pull/821>`_) (tester)
+     - - Infomaniak: adds an empty ``propstat`` with 418, which python-caldav ignores (`python-caldav/caldav#821 <https://github.com/python-caldav/caldav/pull/821>`_) (tester)
        - Others: as specified
-     - Syncs Infomaniak from python-caldav's next release
+     - Nothing needed
 
 Conditional writes behaved as :rfc:`9110#section-13.1.1` and :rfc:`9110#section-13.1.2` specify on every server in the table: a wrong ``If-Match`` or an ``If-None-Match: *`` on an existing resource gets 412.
 
 JMAP
 ====
 
-The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2026-10-10 and 2026-10-12. Its integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap before its 2.0.0 release, and the rows they added are marked with that date.
+The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2026-10-10 and 2026-10-12. Its integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap before its 2.0.0 release, and the rows they added are marked with that date. They last ran on 2026-10-30, against Cyrus 3.13.8 and Stalwart 1.0.1.
 
 .. list-table::
    :header-rows: 1
