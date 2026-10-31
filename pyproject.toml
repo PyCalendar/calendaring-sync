@@ -42,18 +42,16 @@ dev = [
   "reuse==6.2.0",
   "towncrier==26.9.0",
   "pre-commit==4.7.0",
-  "caldav==3.6.0",
+  "caldav==3.7.0",
   "icalendar==7.3.0",
-  "lxml==6.1.3",
-  "radicale==3.8.3",
+  "radicale==3.9.0",
   "xandikos==0.4.10",
-  "calendaring-jmap @ git+https://github.com/PyCalendar/calendaring-jmap@21a3f25d55b393b821a4b74c6e93a4c6c1d701c2",
+  "calendaring-jmap==2.0.0",
   "niquests==3.21.2",
 ]
 caldav = [
-  "caldav>=3.6.0",
+  "caldav>=3.7.0",
   "icalendar>=7.3.0",
-  "lxml>=6.1.3",
 ]
 jmap = [
   "calendaring-jmap>=2.0.0",
@@ -71,8 +69,8 @@ docs = [
   "sphinx-notfound-page==1.1.0",
   "sphinxcontrib-mermaid==2.1.1",
   "sphinxext-opengraph==0.13.0",
-  "caldav==3.6.0",
-  "calendaring-jmap @ git+https://github.com/PyCalendar/calendaring-jmap@21a3f25d55b393b821a4b74c6e93a4c6c1d701c2",
+  "caldav==3.7.0",
+  "calendaring-jmap==2.0.0",
 ]
 
 [project.urls]
@@ -83,9 +81,6 @@ Changelog = "https://calendaring-sync.readthedocs.io/en/stable/changelog.html"
 
 [tool.hatch.version]
 source = "vcs"
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/calendaring_sync/_version.py"
@@ -162,11 +157,6 @@ disallow_incomplete_defs = true
 disallow_untyped_decorators = true
 warn_return_any = true
 implicit_reexport = false
-
-[[tool.mypy.overrides]]
-# lxml, which the CalDAV adapter parses with, ships no type information.
-module = ["lxml", "lxml.*"]
-ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 # The tests don't need annotations, so a fixture or a table reads as it is,

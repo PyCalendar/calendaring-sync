@@ -31,7 +31,7 @@ Each adapter that ships with calendaring-sync needs its protocol's client librar
      - Installs
    * - ``caldav``
      - :class:`~calendaring_sync.adapters.caldav.CalDAVAdapter`
-     - python-caldav, icalendar, lxml
+     - python-caldav, icalendar
    * - ``jmap``
      - :class:`~calendaring_sync.adapters.jmap.JMAPAdapter`
      - calendaring-jmap
