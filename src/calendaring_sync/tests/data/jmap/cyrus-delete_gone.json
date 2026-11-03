@@ -1,8 +1,8 @@
 {
  "server": "cyrus",
  "scenario": "delete_gone",
- "calendaring-jmap": "1.1.1.dev60+g21a3f25d5",
- "recorded": "2026-10-30",
+ "calendaring-jmap": "2.0.1",
+ "recorded": "2026-11-04",
  "exchanges": [
   {
    "method": "GET",
@@ -21,7 +21,7 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"Calendar/get\",\n      {\n        \"state\": \"85\",\n        \"list\": [\n          {\n            \"id\": \"Default\",\n            \"name\": \"personal\",\n            \"description\": null,\n            \"sortOrder\": 0,\n            \"isVisible\": true,\n            \"isSubscribed\": true,\n            \"isDefault\": true,\n            \"includeInAvailability\": \"all\",\n            \"timeZone\": null,\n            \"myRights\": {\n              \"mayReadFreeBusy\": true,\n              \"mayReadItems\": true,\n              \"mayWriteAll\": true,\n              \"mayWriteOwn\": true,\n              \"mayUpdatePrivate\": true,\n              \"mayRSVP\": true,\n              \"mayDelete\": false,\n              \"mayShare\": true\n            },\n            \"shareWith\": null\n          },\n          {\n            \"id\": \"calendaring-sync-invalid-token\",\n            \"name\": \"calendaring-sync-invalid-token\",\n            \"description\": null,\n            \"sortOrder\": 0,\n            \"isVisible\": true,\n            \"isSubscribed\": true,\n            \"isDefault\": false,\n            \"includeInAvailability\": \"all\",\n            \"timeZone\": null,\n            \"myRights\": {\n              \"mayReadFreeBusy\": true,\n              \"mayReadItems\": true,\n              \"mayWriteAll\": true,\n              \"mayWriteOwn\": true,\n              \"mayUpdatePrivate\": true,\n              \"mayRSVP\": true,\n              \"mayDelete\": true,\n              \"mayShare\": true\n            },\n            \"shareWith\": null\n          },\n          {\n            \"id\": \"calendaring-sync-reading\",\n            \"name\": \"calendaring-sync-reading\",\n            \"description\": null,\n            \"sortOrder\": 0,\n            \"isVisible\": true,\n            \"isSubscribed\": true,\n            \"isDefault\": false,\n            \"includeInAvailability\": \"all\",\n            \"timeZone\": null,\n            \"myRights\": {\n              \"mayReadFreeBusy\": true,\n              \"mayReadItems\": true,\n              \"mayWriteAll\": true,\n              \"mayWriteOwn\": true,\n              \"mayUpdatePrivate\": true,\n              \"mayRSVP\": true,\n              \"mayDelete\": true,\n              \"mayShare\": true\n            },\n            \"shareWith\": null\n          }\n        ],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"cal-get-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"Calendar/get\",\n      {\n        \"state\": \"66\",\n        \"list\": [\n          {\n            \"id\": \"Default\",\n            \"name\": \"personal\",\n            \"description\": null,\n            \"sortOrder\": 0,\n            \"isVisible\": true,\n            \"isSubscribed\": true,\n            \"isDefault\": true,\n            \"includeInAvailability\": \"all\",\n            \"timeZone\": null,\n            \"myRights\": {\n              \"mayReadFreeBusy\": true,\n              \"mayReadItems\": true,\n              \"mayWriteAll\": true,\n              \"mayWriteOwn\": true,\n              \"mayUpdatePrivate\": true,\n              \"mayRSVP\": true,\n              \"mayDelete\": false,\n              \"mayShare\": true\n            },\n            \"shareWith\": null\n          }\n        ],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"cal-get-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
    "request": "{\"methodCalls\": [[\"Calendar/get\", {\"accountId\": \"user1\", \"ids\": null}, \"cal-get-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
@@ -31,7 +31,7 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/query\",\n      {\n        \"queryState\": \"85\",\n        \"canCalculateChanges\": false,\n        \"position\": 0,\n        \"total\": 2,\n        \"ids\": [\n          \"EMJ-\",\n          \"EMJF\"\n        ],\n        \"accountId\": \"user1\"\n      },\n      \"ev-query-0\"\n    ],\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"85\",\n        \"list\": [\n          {\n            \"@type\": \"Event\",\n            \"start\": \"2026-11-02T10:00:00\",\n            \"timeZone\": \"Etc/UTC\",\n            \"duration\": \"PT1H\",\n            \"created\": \"2026-10-30T09:34:48Z\",\n            \"updated\": \"2026-10-30T09:34:48Z\",\n            \"sequence\": 1,\n            \"title\": \"mine too\",\n            \"uid\": \"jmap-rejected-b\",\n            \"prodId\": \"-//CyrusIMAP.org/Cyrus 3.13.8-115-gb2ee17d30//EN\",\n            \"version\": \"2.0\",\n            \"isDraft\": false,\n            \"calendarIds\": {\n              \"Default\": true\n            },\n            \"isOrigin\": true,\n            \"id\": \"EMJ-\"\n          },\n          {\n            \"@type\": \"Event\",\n            \"start\": \"2026-11-02T10:00:00\",\n            \"timeZone\": \"Etc/UTC\",\n            \"duration\": \"PT1H\",\n            \"created\": \"2026-10-30T09:34:48Z\",\n            \"updated\": \"2026-10-30T09:34:48Z\",\n            \"sequence\": 1,\n            \"title\": \"theirs\",\n            \"uid\": \"jmap-rejected-a\",\n            \"prodId\": \"-//CyrusIMAP.org/Cyrus 3.13.8-115-gb2ee17d30//EN\",\n            \"version\": \"2.0\",\n            \"isDraft\": false,\n            \"calendarIds\": {\n              \"Default\": true\n            },\n            \"isOrigin\": true,\n            \"id\": \"EMJF\"\n          }\n        ],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-1\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/query\",\n      {\n        \"queryState\": \"66\",\n        \"canCalculateChanges\": false,\n        \"position\": 0,\n        \"total\": 2,\n        \"ids\": [\n          \"EMEF\",\n          \"EMEV\"\n        ],\n        \"accountId\": \"user1\"\n      },\n      \"ev-query-0\"\n    ],\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"66\",\n        \"list\": [\n          {\n            \"@type\": \"Event\",\n            \"start\": \"2026-11-02T10:00:00\",\n            \"timeZone\": \"Etc/UTC\",\n            \"duration\": \"PT1H\",\n            \"created\": \"2026-11-03T18:41:23Z\",\n            \"updated\": \"2026-11-03T18:41:23Z\",\n            \"sequence\": 1,\n            \"title\": \"theirs\",\n            \"uid\": \"jmap-rejected-a\",\n            \"prodId\": \"-//CyrusIMAP.org/Cyrus 3.13.8-115-gb2ee17d30//EN\",\n            \"version\": \"2.0\",\n            \"isDraft\": false,\n            \"calendarIds\": {\n              \"Default\": true\n            },\n            \"isOrigin\": true,\n            \"id\": \"EMEV\"\n          },\n          {\n            \"@type\": \"Event\",\n            \"start\": \"2026-11-02T10:00:00\",\n            \"timeZone\": \"Etc/UTC\",\n            \"duration\": \"PT1H\",\n            \"created\": \"2026-11-03T18:41:23Z\",\n            \"updated\": \"2026-11-03T18:41:23Z\",\n            \"sequence\": 1,\n            \"title\": \"mine too\",\n            \"uid\": \"jmap-rejected-b\",\n            \"prodId\": \"-//CyrusIMAP.org/Cyrus 3.13.8-115-gb2ee17d30//EN\",\n            \"version\": \"2.0\",\n            \"isDraft\": false,\n            \"calendarIds\": {\n              \"Default\": true\n            },\n            \"isOrigin\": true,\n            \"id\": \"EMEF\"\n          }\n        ],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-1\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
    "request": "{\"methodCalls\": [[\"CalendarEvent/query\", {\"accountId\": \"user1\", \"limit\": 100, \"position\": 0}, \"ev-query-0\"], [\"CalendarEvent/get\", {\"#ids\": {\"name\": \"CalendarEvent/query\", \"path\": \"/ids\", \"resultOf\": \"ev-query-0\"}, \"accountId\": \"user1\"}, \"ev-get-1\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
@@ -41,8 +41,8 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/set\",\n      {\n        \"oldState\": \"85\",\n        \"newState\": \"86\",\n        \"created\": null,\n        \"updated\": null,\n        \"destroyed\": [\n          \"EMJ-\"\n        ],\n        \"notCreated\": null,\n        \"notUpdated\": null,\n        \"notDestroyed\": null,\n        \"accountId\": \"user1\"\n      },\n      \"ev-set-destroy-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
-   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"destroy\": [\"EMJ-\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/set\",\n      {\n        \"oldState\": \"66\",\n        \"newState\": \"67\",\n        \"created\": null,\n        \"updated\": null,\n        \"destroyed\": [\n          \"EMEF\"\n        ],\n        \"notCreated\": null,\n        \"notUpdated\": null,\n        \"notDestroyed\": null,\n        \"accountId\": \"user1\"\n      },\n      \"ev-set-destroy-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"destroy\": [\"EMEF\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
    "method": "POST",
@@ -51,8 +51,8 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/set\",\n      {\n        \"oldState\": \"86\",\n        \"newState\": \"87\",\n        \"created\": null,\n        \"updated\": null,\n        \"destroyed\": [\n          \"EMJF\"\n        ],\n        \"notCreated\": null,\n        \"notUpdated\": null,\n        \"notDestroyed\": null,\n        \"accountId\": \"user1\"\n      },\n      \"ev-set-destroy-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
-   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"destroy\": [\"EMJF\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/set\",\n      {\n        \"oldState\": \"67\",\n        \"newState\": \"68\",\n        \"created\": null,\n        \"updated\": null,\n        \"destroyed\": [\n          \"EMEV\"\n        ],\n        \"notCreated\": null,\n        \"notUpdated\": null,\n        \"notDestroyed\": null,\n        \"accountId\": \"user1\"\n      },\n      \"ev-set-destroy-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"destroy\": [\"EMEV\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
    "method": "POST",
@@ -61,7 +61,7 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/query\",\n      {\n        \"queryState\": \"87\",\n        \"canCalculateChanges\": false,\n        \"position\": 0,\n        \"total\": 0,\n        \"ids\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-query-0\"\n    ],\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"87\",\n        \"list\": [],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-1\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/query\",\n      {\n        \"queryState\": \"68\",\n        \"canCalculateChanges\": false,\n        \"position\": 0,\n        \"total\": 0,\n        \"ids\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-query-0\"\n    ],\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"68\",\n        \"list\": [],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-1\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
    "request": "{\"methodCalls\": [[\"CalendarEvent/query\", {\"accountId\": \"user1\", \"limit\": 100, \"position\": 0}, \"ev-query-0\"], [\"CalendarEvent/get\", {\"#ids\": {\"name\": \"CalendarEvent/query\", \"path\": \"/ids\", \"resultOf\": \"ev-query-0\"}, \"accountId\": \"user1\"}, \"ev-get-1\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
@@ -81,7 +81,7 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/set\",\n      {\n        \"oldState\": \"87\",\n        \"newState\": \"88\",\n        \"created\": {\n          \"new-0\": {\n            \"updated\": \"2026-10-30T09:34:48Z\",\n            \"created\": \"2026-10-30T09:34:48Z\",\n            \"id\": \"EML-\",\n            \"uid\": \"jmap-delete_gone-a\",\n            \"x-href\": \"/dav/calendars/user/user1/Default/jmap-delete_gone-a.ics\"\n          }\n        },\n        \"updated\": null,\n        \"destroyed\": null,\n        \"notCreated\": null,\n        \"notUpdated\": null,\n        \"notDestroyed\": null,\n        \"accountId\": \"user1\"\n      },\n      \"ev-set-create-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/set\",\n      {\n        \"oldState\": \"68\",\n        \"newState\": \"69\",\n        \"created\": {\n          \"new-0\": {\n            \"updated\": \"2026-11-03T18:41:24Z\",\n            \"created\": \"2026-11-03T18:41:24Z\",\n            \"id\": \"EMGF\",\n            \"uid\": \"jmap-delete_gone-a\",\n            \"x-href\": \"/dav/calendars/user/user1/Default/jmap-delete_gone-a.ics\"\n          }\n        },\n        \"updated\": null,\n        \"destroyed\": null,\n        \"notCreated\": null,\n        \"notUpdated\": null,\n        \"notDestroyed\": null,\n        \"accountId\": \"user1\"\n      },\n      \"ev-set-create-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
    "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"create\": {\"new-0\": {\"@type\": \"Event\", \"calendarIds\": {\"Default\": true}, \"duration\": \"PT1H\", \"start\": \"2026-11-02T10:00:00\", \"timeZone\": \"Etc/UTC\", \"title\": \"one\", \"uid\": \"jmap-delete_gone-a\", \"version\": \"2.0\"}}, \"sendSchedulingMessages\": false}, \"ev-set-create-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
@@ -91,7 +91,7 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"88\",\n        \"list\": [],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"69\",\n        \"list\": [],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
    "request": "{\"methodCalls\": [[\"CalendarEvent/get\", {\"accountId\": \"user1\", \"ids\": []}, \"ev-get-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
@@ -101,7 +101,7 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/query\",\n      {\n        \"queryState\": \"88\",\n        \"canCalculateChanges\": false,\n        \"position\": 0,\n        \"total\": 1,\n        \"ids\": [\n          \"EML-\"\n        ],\n        \"accountId\": \"user1\"\n      },\n      \"ev-query-0\"\n    ],\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"88\",\n        \"list\": [\n          {\n            \"@type\": \"Event\",\n            \"start\": \"2026-11-02T10:00:00\",\n            \"timeZone\": \"Etc/UTC\",\n            \"duration\": \"PT1H\",\n            \"created\": \"2026-10-30T09:34:48Z\",\n            \"updated\": \"2026-10-30T09:34:48Z\",\n            \"sequence\": 0,\n            \"title\": \"one\",\n            \"uid\": \"jmap-delete_gone-a\",\n            \"prodId\": \"-//CyrusIMAP.org/Cyrus 3.13.8-115-gb2ee17d30//EN\",\n            \"version\": \"2.0\",\n            \"isDraft\": false,\n            \"calendarIds\": {\n              \"Default\": true\n            },\n            \"isOrigin\": true,\n            \"id\": \"EML-\"\n          }\n        ],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-1\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/query\",\n      {\n        \"queryState\": \"69\",\n        \"canCalculateChanges\": false,\n        \"position\": 0,\n        \"total\": 1,\n        \"ids\": [\n          \"EMGF\"\n        ],\n        \"accountId\": \"user1\"\n      },\n      \"ev-query-0\"\n    ],\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"69\",\n        \"list\": [\n          {\n            \"@type\": \"Event\",\n            \"start\": \"2026-11-02T10:00:00\",\n            \"timeZone\": \"Etc/UTC\",\n            \"duration\": \"PT1H\",\n            \"created\": \"2026-11-03T18:41:24Z\",\n            \"updated\": \"2026-11-03T18:41:24Z\",\n            \"sequence\": 0,\n            \"title\": \"one\",\n            \"uid\": \"jmap-delete_gone-a\",\n            \"prodId\": \"-//CyrusIMAP.org/Cyrus 3.13.8-115-gb2ee17d30//EN\",\n            \"version\": \"2.0\",\n            \"isDraft\": false,\n            \"calendarIds\": {\n              \"Default\": true\n            },\n            \"isOrigin\": true,\n            \"id\": \"EMGF\"\n          }\n        ],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-1\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
    "request": "{\"methodCalls\": [[\"CalendarEvent/query\", {\"accountId\": \"user1\", \"calculateTotal\": true, \"limit\": 100, \"position\": 0}, \"ev-query-0\"], [\"CalendarEvent/get\", {\"#ids\": {\"name\": \"CalendarEvent/query\", \"path\": \"/ids\", \"resultOf\": \"ev-query-0\"}, \"accountId\": \"user1\"}, \"ev-get-1\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
@@ -111,7 +111,7 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"88\",\n        \"list\": [],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/get\",\n      {\n        \"state\": \"69\",\n        \"list\": [],\n        \"notFound\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-get-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
    "request": "{\"methodCalls\": [[\"CalendarEvent/get\", {\"accountId\": \"user1\", \"ids\": []}, \"ev-get-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
@@ -121,8 +121,8 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/changes\",\n      {\n        \"oldState\": \"88\",\n        \"newState\": \"88\",\n        \"hasMoreChanges\": false,\n        \"created\": [],\n        \"updated\": [],\n        \"destroyed\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-changes-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
-   "request": "{\"methodCalls\": [[\"CalendarEvent/changes\", {\"accountId\": \"user1\", \"maxChanges\": 100, \"sinceState\": \"88\"}, \"ev-changes-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/changes\",\n      {\n        \"oldState\": \"69\",\n        \"newState\": \"69\",\n        \"hasMoreChanges\": false,\n        \"created\": [],\n        \"updated\": [],\n        \"destroyed\": [],\n        \"accountId\": \"user1\"\n      },\n      \"ev-changes-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/changes\", {\"accountId\": \"user1\", \"maxChanges\": 100, \"sinceState\": \"69\"}, \"ev-changes-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
    "method": "POST",
@@ -131,8 +131,8 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/set\",\n      {\n        \"oldState\": \"88\",\n        \"newState\": \"89\",\n        \"created\": null,\n        \"updated\": null,\n        \"destroyed\": [\n          \"EML-\"\n        ],\n        \"notCreated\": null,\n        \"notUpdated\": null,\n        \"notDestroyed\": null,\n        \"accountId\": \"user1\"\n      },\n      \"ev-set-destroy-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
-   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"destroy\": [\"EML-\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/set\",\n      {\n        \"oldState\": \"69\",\n        \"newState\": \"70\",\n        \"created\": null,\n        \"updated\": null,\n        \"destroyed\": [\n          \"EMGF\"\n        ],\n        \"notCreated\": null,\n        \"notUpdated\": null,\n        \"notDestroyed\": null,\n        \"accountId\": \"user1\"\n      },\n      \"ev-set-destroy-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"destroy\": [\"EMGF\"], \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
    "method": "POST",
@@ -142,7 +142,7 @@
     "content-type": "application/json; charset=utf-8"
    },
    "body": "{\n  \"methodResponses\": [\n    [\n      \"error\",\n      {\n        \"type\": \"stateMismatch\"\n      },\n      \"ev-set-destroy-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
-   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"destroy\": [\"EML-\"], \"ifInState\": \"88\", \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+   "request": "{\"methodCalls\": [[\"CalendarEvent/set\", {\"accountId\": \"user1\", \"destroy\": [\"EMGF\"], \"ifInState\": \"69\", \"sendSchedulingMessages\": false}, \"ev-set-destroy-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   },
   {
    "method": "POST",
@@ -151,8 +151,8 @@
    "headers": {
     "content-type": "application/json; charset=utf-8"
    },
-   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/changes\",\n      {\n        \"oldState\": \"88\",\n        \"newState\": \"89\",\n        \"hasMoreChanges\": false,\n        \"created\": [],\n        \"updated\": [],\n        \"destroyed\": [\n          \"EML-\"\n        ],\n        \"accountId\": \"user1\"\n      },\n      \"ev-changes-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
-   "request": "{\"methodCalls\": [[\"CalendarEvent/changes\", {\"accountId\": \"user1\", \"maxChanges\": 100, \"sinceState\": \"88\"}, \"ev-changes-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
+   "body": "{\n  \"methodResponses\": [\n    [\n      \"CalendarEvent/changes\",\n      {\n        \"oldState\": \"69\",\n        \"newState\": \"70\",\n        \"hasMoreChanges\": false,\n        \"created\": [],\n        \"updated\": [],\n        \"destroyed\": [\n          \"EMGF\"\n        ],\n        \"accountId\": \"user1\"\n      },\n      \"ev-changes-0\"\n    ]\n  ],\n  \"sessionState\": \"0\"\n}",
+   "request": "{\"methodCalls\": [[\"CalendarEvent/changes\", {\"accountId\": \"user1\", \"maxChanges\": 100, \"sinceState\": \"69\"}, \"ev-changes-0\"]], \"using\": [\"urn:ietf:params:jmap:core\", \"urn:ietf:params:jmap:calendars\"]}"
   }
  ]
 }

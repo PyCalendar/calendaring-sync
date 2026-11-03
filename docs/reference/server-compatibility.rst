@@ -115,7 +115,7 @@ Conditional writes behaved as :rfc:`9110#section-13.1.1` and :rfc:`9110#section-
 JMAP
 ====
 
-The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2026-10-10 and 2026-10-12. Its integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap before its 2.0.0 release, and the rows they added are marked with that date. They last ran on 2026-10-30, against Cyrus 3.13.8 and Stalwart 1.0.1.
+The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2026-10-10 and 2026-10-12. Its integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap before its 2.0.0 release, and the rows they added are marked with that date. They last ran on 2026-11-04, against Cyrus 3.13.8 and Stalwart 1.0.1, with calendaring-jmap 2.0.1.
 
 .. list-table::
    :header-rows: 1

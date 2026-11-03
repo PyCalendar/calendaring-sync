@@ -46,7 +46,7 @@ dev = [
   "icalendar==7.3.0",
   "radicale==3.9.0",
   "xandikos==0.4.10",
-  "calendaring-jmap==2.0.0",
+  "calendaring-jmap==2.0.1",
   "niquests==3.21.2",
 ]
 caldav = [
@@ -54,7 +54,7 @@ caldav = [
   "icalendar>=7.3.0",
 ]
 jmap = [
-  "calendaring-jmap>=2.0.0",
+  "calendaring-jmap>=2.0.1",
 ]
 docs = [
   "sphinx==9.2.0",
@@ -70,7 +70,7 @@ docs = [
   "sphinxcontrib-mermaid==2.1.1",
   "sphinxext-opengraph==0.13.0",
   "caldav==3.7.0",
-  "calendaring-jmap==2.0.0",
+  "calendaring-jmap==2.0.1",
 ]
 
 [project.urls]
