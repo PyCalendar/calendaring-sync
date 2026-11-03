@@ -24,9 +24,15 @@ jobs:
       contents: read
       id-token: write # required for tokenless Codecov upload via OIDC
 
+  integration:
+    name: Run integration tests
+    uses: $/.github/workflows/integration.yml
+    permissions:
+      contents: read
+
   build:
     name: Build distribution
-    needs: test
+    needs: [test, integration]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -86,4 +92,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ github.ref_name }}
-        run: gh release create "$TAG_NAME" --generate-notes
+        # Links the change log of this release's own docs version, which
+        # Read the Docs builds from the same tag.
+        run: |
+          printf 'See the [change log](https://calendaring-sync.readthedocs.io/en/%s/changelog.html) for the full, categorized list of changes in this release.\n' \
+            "$TAG_NAME" > notes.md
+          gh release create "$TAG_NAME" --notes-file notes.md
