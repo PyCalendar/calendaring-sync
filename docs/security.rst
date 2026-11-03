@@ -31,7 +31,7 @@ A :term:`store` keeps the content of every synced object, and your edits to it, 
 Data from the server
 --------------------
 
-The core never parses content: it stores and compares the bytes a server sent. The adapters that ship with calendaring-sync read what they need from it with their protocol's parsers. The CalDAV adapter reads iCalendar content lines with icalendar, and the JMAP adapter reads JSON with the standard library. The CalDAV adapter parses a server's XML error body with lxml, with entity expansion and network access turned off, so a hostile server can't make it read local files or fetch other addresses.
+The core never parses content: it stores and compares the bytes a server sent. The adapters that ship with calendaring-sync read what they need from it with their protocol's parsers. The CalDAV adapter reads iCalendar content lines with icalendar, and the JMAP adapter reads JSON with the standard library. python-caldav parses a server's XML error body with entity expansion and network access turned off, so a hostile server can't make it read local files or fetch other addresses.
 
 Connections and credentials
 ---------------------------

@@ -1,8 +1,8 @@
 {
  "server": "radicale",
  "scenario": "scope_gone",
- "caldav": "3.6.0",
- "recorded": "2026-10-23",
+ "caldav": "3.7.0",
+ "recorded": "2026-10-30",
  "exchanges": [
   {
    "method": "DELETE",
@@ -11,14 +11,16 @@
    "headers": {
     "content-type": "text/plain; charset=utf-8"
    },
-   "body": "The requested resource could not be found."
+   "body": "The requested resource could not be found.",
+   "request": ""
   },
   {
    "method": "MKCALENDAR",
    "path": "/user1/calendaring-sync-scope-gone/",
    "status": 201,
    "headers": {},
-   "body": ""
+   "body": "",
+   "request": ""
   },
   {
    "method": "PUT",
@@ -27,7 +29,8 @@
    "headers": {
     "etag": "\"16a298802092c852a2febebb9948c58da0ac4760cebc87bcd5c5456b66d70473\""
    },
-   "body": ""
+   "body": "",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -37,7 +40,8 @@
     "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-scope-gone/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/6eb2a686d43535dcf78e4fa31190e58bd501c3161c1aac27f1278a84a113b119</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-scope-gone/</href><propstat><prop><sync-token>http://radicale.org/ns/sync/270c29630d5b22fdc791235c490d897ed48347c7490751a81e4dfdaeabdc14b1</sync-token></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -47,7 +51,8 @@
     "dav": "1, 2, 3, calendar-access, addressbook, extended-mkcol",
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-scope-gone/</href><propstat><prop><getetag>\"6554d62c9d57d519ad5f85d9f49d18cacec11b1da51321e928599cb1f697f0ee\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-scope-gone/a.ics</href><propstat><prop><getetag>\"16a298802092c852a2febebb9948c58da0ac4760cebc87bcd5c5456b66d70473\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-scope-gone/</href><propstat><prop><getetag>\"6554d62c9d57d519ad5f85d9f49d18cacec11b1da51321e928599cb1f697f0ee\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response><response><href>/user1/calendaring-sync-scope-gone/a.ics</href><propstat><prop><getetag>\"16a298802092c852a2febebb9948c58da0ac4760cebc87bcd5c5456b66d70473\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "REPORT",
@@ -56,7 +61,8 @@
    "headers": {
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/user1/calendaring-sync-scope-gone/a.ics</href><propstat><prop><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:scope_gone-a\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nSUMMARY:one\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data><getetag>\"16a298802092c852a2febebb9948c58da0ac4760cebc87bcd5c5456b66d70473\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat><propstat><prop><C:schedule-tag /></prop><status>HTTP/1.1 404 Not Found</status></propstat></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\"><response><href>/user1/calendaring-sync-scope-gone/a.ics</href><propstat><prop><C:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:scope_gone-a\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nSUMMARY:one\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</C:calendar-data><getetag>\"16a298802092c852a2febebb9948c58da0ac4760cebc87bcd5c5456b66d70473\"</getetag></prop><status>HTTP/1.1 200 OK</status></propstat><propstat><prop><C:schedule-tag /></prop><status>HTTP/1.1 404 Not Found</status></propstat></response></multistatus>",
+   "request": ""
   },
   {
    "method": "DELETE",
@@ -65,7 +71,8 @@
    "headers": {
     "content-type": "text/xml; charset=utf-8"
    },
-   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-scope-gone/</href><status>HTTP/1.1 200 OK</status></response></multistatus>"
+   "body": "<?xml version='1.0' encoding='utf-8'?>\n<multistatus xmlns=\"DAV:\"><response><href>/user1/calendaring-sync-scope-gone/</href><status>HTTP/1.1 200 OK</status></response></multistatus>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -74,7 +81,8 @@
    "headers": {
     "content-type": "text/plain; charset=utf-8"
    },
-   "body": "The requested resource could not be found."
+   "body": "The requested resource could not be found.",
+   "request": ""
   }
  ]
 }

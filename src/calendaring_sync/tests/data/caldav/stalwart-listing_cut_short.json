@@ -1,13 +1,13 @@
 {
  "server": "stalwart",
  "scenario": "listing_cut_short",
- "caldav": "3.6.0",
- "recorded": "2026-10-29",
+ "caldav": "3.7.0",
+ "recorded": "2026-10-30",
  "exchanges": [
   {
    "method": "DELETE",
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/",
-   "status": 404,
+   "status": 204,
    "headers": {},
    "body": "",
    "request": ""
@@ -18,7 +18,7 @@
    "status": 201,
    "headers": {
     "content-type": "application/xml; charset=utf-8",
-    "etag": "\"176290912\""
+    "etag": "\"2162536747\""
    },
    "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:mkcol-response xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"></D:mkcol-response>",
    "request": ""
@@ -28,7 +28,7 @@
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/a.ics",
    "status": 201,
    "headers": {
-    "etag": "\"1218555590\""
+    "etag": "\"684316598\""
    },
    "body": "",
    "request": ""
@@ -38,7 +38,7 @@
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/b.ics",
    "status": 201,
    "headers": {
-    "etag": "\"492465165\""
+    "etag": "\"3780959069\""
    },
    "body": "",
    "request": ""
@@ -48,7 +48,7 @@
    "path": "/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/c.ics",
    "status": 201,
    "headers": {
-    "etag": "\"3131010583\""
+    "etag": "\"3073256435\""
    },
    "body": "",
    "request": ""
@@ -60,7 +60,7 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/</D:href><D:propstat><D:prop><D:sync-token>urn:stalwart:davsync:4ad</D:sync-token></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>",
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/</D:href><D:propstat><D:prop><D:sync-token>urn:stalwart:davsync:f</D:sync-token></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>",
    "request": ""
   },
   {
@@ -70,7 +70,7 @@
    "headers": {
     "content-type": "application/xml; charset=utf-8"
    },
-   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/</D:href><D:propstat><D:prop><D:getetag>&quot;176290912&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;1218555590&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/</D:href><D:status>HTTP/1.1 507 Insufficient Storage</D:status><D:error><D:number-of-matches-within-limits/></D:error><D:responsedescription>The number of matches exceeds the limit of 2</D:responsedescription></D:response></D:multistatus>",
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:multistatus xmlns:D=\"DAV:\" xmlns:A=\"urn:ietf:params:xml:ns:caldav\"><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/</D:href><D:propstat><D:prop><D:getetag>&quot;2162536747&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/a.ics</D:href><D:propstat><D:prop><D:getetag>&quot;684316598&quot;</D:getetag></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response><D:response><D:href>/dav/cal/testuser%40example.org/calendaring-sync-listing-cut-short/</D:href><D:status>HTTP/1.1 507 Insufficient Storage</D:status><D:error><D:number-of-matches-within-limits/></D:error><D:responsedescription>The number of matches exceeds the limit of 2</D:responsedescription></D:response></D:multistatus>",
    "request": ""
   }
  ]

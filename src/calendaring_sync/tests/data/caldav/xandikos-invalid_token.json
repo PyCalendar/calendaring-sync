@@ -1,8 +1,8 @@
 {
  "server": "xandikos",
  "scenario": "invalid_token",
- "caldav": "3.6.0",
- "recorded": "2026-10-23",
+ "caldav": "3.7.0",
+ "recorded": "2026-10-30",
  "exchanges": [
   {
    "method": "DELETE",
@@ -11,7 +11,8 @@
    "headers": {
     "content-type": "application/octet-stream"
    },
-   "body": "Path /sometestuser/calendars/calendaring-sync-invalid-token/ not found."
+   "body": "Path /sometestuser/calendars/calendaring-sync-invalid-token/ not found.",
+   "request": ""
   },
   {
    "method": "MKCALENDAR",
@@ -20,7 +21,8 @@
    "headers": {
     "content-type": "application/octet-stream"
    },
-   "body": ""
+   "body": "",
+   "request": ""
   },
   {
    "method": "PUT",
@@ -31,7 +33,8 @@
     "schedule-tag": "\"62e98e85327646d5f78c9b30af62119ce3a8e8a361fe2ac41e37691c8c30422f\"",
     "content-type": "application/octet-stream"
    },
-   "body": ""
+   "body": "",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -40,7 +43,8 @@
    "headers": {
     "content-type": "text/xml; charset=\"utf-8\""
    },
-   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:sync-token>79228976f1302bf7b55eaa8d88060787fe12ef0c</ns0:sync-token></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:sync-token>79228976f1302bf7b55eaa8d88060787fe12ef0c</ns0:sync-token></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -49,7 +53,8 @@
    "headers": {
     "content-type": "text/xml; charset=\"utf-8\""
    },
-   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"79228976f1302bf7b55eaa8d88060787fe12ef0c\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"b836871f52f52267eb79f426462187128e2f325e\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"79228976f1302bf7b55eaa8d88060787fe12ef0c\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"b836871f52f52267eb79f426462187128e2f325e\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>",
+   "request": ""
   },
   {
    "method": "REPORT",
@@ -58,7 +63,8 @@
    "headers": {
     "content-type": "text/xml; charset=\"utf-8\""
    },
-   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns1:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nSUMMARY:one\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nUID:invalid_token-a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</ns1:calendar-data><ns0:getetag>\"b836871f52f52267eb79f426462187128e2f325e\"</ns0:getetag><ns1:schedule-tag>\"62e98e85327646d5f78c9b30af62119ce3a8e8a361fe2ac41e37691c8c30422f\"</ns1:schedule-tag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns1:calendar-data>BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nSUMMARY:one\r\nDTSTART:20261101T100000Z\r\nDTSTAMP:20261001T000000Z\r\nUID:invalid_token-a\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</ns1:calendar-data><ns0:getetag>\"b836871f52f52267eb79f426462187128e2f325e\"</ns0:getetag><ns1:schedule-tag>\"62e98e85327646d5f78c9b30af62119ce3a8e8a361fe2ac41e37691c8c30422f\"</ns1:schedule-tag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -67,7 +73,8 @@
    "headers": {
     "content-type": "text/xml; charset=\"utf-8\""
    },
-   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:supported-report-set><ns0:supported-report><ns0:report><ns1:calendar-multiget /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns1:calendar-query /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:expand-property /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:principal-property-search /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:sync-collection /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns1:free-busy-query /></ns0:report></ns0:supported-report></ns0:supported-report-set></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\" xmlns:ns1=\"urn:ietf:params:xml:ns:caldav\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:supported-report-set><ns0:supported-report><ns0:report><ns1:calendar-multiget /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns1:calendar-query /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:expand-property /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:principal-property-search /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns0:sync-collection /></ns0:report></ns0:supported-report><ns0:supported-report><ns0:report><ns1:free-busy-query /></ns0:report></ns0:supported-report></ns0:supported-report-set></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>",
+   "request": ""
   },
   {
    "method": "REPORT",
@@ -76,7 +83,8 @@
    "headers": {
     "content-type": "text/xml; encoding=\"utf-8\""
    },
-   "body": "<ns0:error xmlns:ns0=\"DAV:\"><ns0:valid-sync-token /><ns0:responsedescription>Requested sync token 0000000000000000000000000000000000000000 is invalid</ns0:responsedescription></ns0:error>"
+   "body": "<ns0:error xmlns:ns0=\"DAV:\"><ns0:valid-sync-token /><ns0:responsedescription>Requested sync token http://example.invalid/never-issued is invalid</ns0:responsedescription></ns0:error>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -85,7 +93,8 @@
    "headers": {
     "content-type": "text/xml; charset=\"utf-8\""
    },
-   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:sync-token>79228976f1302bf7b55eaa8d88060787fe12ef0c</ns0:sync-token></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:sync-token>79228976f1302bf7b55eaa8d88060787fe12ef0c</ns0:sync-token></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>",
+   "request": ""
   },
   {
    "method": "PROPFIND",
@@ -94,7 +103,8 @@
    "headers": {
     "content-type": "text/xml; charset=\"utf-8\""
    },
-   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"79228976f1302bf7b55eaa8d88060787fe12ef0c\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"b836871f52f52267eb79f426462187128e2f325e\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>"
+   "body": "<ns0:multistatus xmlns:ns0=\"DAV:\"><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"79228976f1302bf7b55eaa8d88060787fe12ef0c\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response><ns0:response><ns0:href>/sometestuser/calendars/calendaring-sync-invalid-token/a.ics</ns0:href><ns0:propstat><ns0:status>HTTP/1.1 200 OK</ns0:status><ns0:prop><ns0:getetag>\"b836871f52f52267eb79f426462187128e2f325e\"</ns0:getetag></ns0:prop></ns0:propstat></ns0:response></ns0:multistatus>",
+   "request": ""
   },
   {
    "method": "PUT",
@@ -104,7 +114,8 @@
     "etag": "\"c0cacd974014bf2b1ebfbb0004ffbd584891c34c\"",
     "schedule-tag": "\"852bb7368b65716e1bd5a8cb63b399780396ab03a065f2468f9eb528e065f4b3\""
    },
-   "body": ""
+   "body": "",
+   "request": ""
   }
  ]
 }

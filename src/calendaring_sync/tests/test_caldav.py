@@ -643,21 +643,6 @@ class TestListing:
             _first_two_syncs(env)
         assert env.replica.scope(env.adapter.scope_id).token == token
 
-    def test_a_cut_the_client_reports_by_status_is_a_cut(self, store):
-        # python-caldav after 3.6.0 gives the 507 as a status, not in the message.
-        tape = _tape("stalwart-listing_cut_short")
-        with _replaying(tape, store, asynchronous=False) as env:
-            get_properties = env.calendar.get_properties
-
-            def by_status(*args: Any, **kwargs: Any) -> Any:
-                try:
-                    return get_properties(*args, **kwargs)
-                except dav_error.ResponseError:
-                    raise dav_error.ResponseError(status=507) from None
-
-            with patch.object(env.calendar, "get_properties", by_status):
-                SCENARIOS["listing_cut_short"](env)
-
     def test_a_listing_error_other_than_a_cut_is_raised(self, store, asynchronous):
         # Exchange 6 is the listing, cut short.
         tape = _tape("stalwart-listing_cut_short")
