@@ -5,12 +5,12 @@ name: Integration Tests
 
 on:
   workflow_dispatch:
+  # release.yml runs it before publishing, so a tag doesn't trigger it here.
+  workflow_call:
   push:
     branches:
       - main
-    tags:
-      - "v*"
-    # Changes that can't affect a sync; a tag runs whatever it holds.
+    # Changes that can't affect a sync.
     paths-ignore:
       - "news/**"
       - "**/*.md"
