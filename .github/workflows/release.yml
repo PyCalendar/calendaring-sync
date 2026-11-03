@@ -92,12 +92,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ github.ref_name }}
-          REPOSITORY: ${{ github.repository }}
         # Links the change log of this release's own docs version, which
         # Read the Docs builds from the same tag.
         run: |
-          generated_notes=$(gh api "repos/$REPOSITORY/releases/generate-notes" \
-            -f tag_name="$TAG_NAME" --jq .body)
-          printf 'See the [change log](https://calendaring-sync.readthedocs.io/en/%s/changelog.html) for the full, categorized list of changes in this release.\n\n%s\n' \
-            "$TAG_NAME" "$generated_notes" > notes.md
+          printf 'See the [change log](https://calendaring-sync.readthedocs.io/en/%s/changelog.html) for the full, categorized list of changes in this release.\n' \
+            "$TAG_NAME" > notes.md
           gh release create "$TAG_NAME" --notes-file notes.md
