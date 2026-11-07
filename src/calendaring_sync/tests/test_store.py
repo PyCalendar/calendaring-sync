@@ -32,6 +32,7 @@ from calendaring_sync import (
     MemoryData,
     MemoryKeeper,
     MemoryStore,
+    NotAllowed,
     RecordState,
     RecordValueError,
     Removed,
@@ -67,6 +68,7 @@ from calendaring_sync.tests._helpers import (
     _CONFLICT,
     _EDIT,
     _FIELDS,
+    _NOT_ALLOWED,
     _OTHER,
     _REMOVED,
     _SCOPE,
@@ -86,7 +88,6 @@ from calendaring_sync.tests._helpers import (
     _new_scope,
     _open_session,
     _page,
-    _pending,
     _pushing,
     _seeded,
     _snapshot,
@@ -197,6 +198,12 @@ _BAD_RECORDS = {
         conflict=replace(_CONFLICT, kind=ConflictKind.LOGICAL_KEY_TAKEN),
     ),
     "a holder on another kind": replace(_CONFLICTED, conflict=replace(_CONFLICT, holder="b")),
+    "an edit not allowed holding the server's copy": replace(
+        _CONFLICTED, conflict=replace(_CONFLICT, kind=ConflictKind.NOT_ALLOWED)
+    ),
+    "a reason on another kind": replace(
+        _CONFLICTED, conflict=replace(_CONFLICT, reason=_NOT_ALLOWED)
+    ),
 }
 
 
@@ -379,13 +386,21 @@ class TestRecords:
         assert (every.called or some.called) == (states != frozenset())
         assert some.called == bool(states)
 
-    @pytest.mark.parametrize("holder", [None, "b"])
-    def test_a_refused_create_keeps_its_holder(self, store, holder):
+    @pytest.mark.parametrize(
+        "kind, said",
+        [
+            (ConflictKind.LOGICAL_KEY_TAKEN, {"holder": None}),
+            (ConflictKind.LOGICAL_KEY_TAKEN, {"holder": "b"}),
+            (ConflictKind.NOT_ALLOWED, {"reason": None}),
+            (ConflictKind.NOT_ALLOWED, {"reason": _NOT_ALLOWED}),
+        ],
+    )
+    def test_a_refused_create_keeps_what_the_server_said(self, store, kind, said):
         record = replace(
             _CONFLICTED,
             content=None,
             edit=replace(_EDIT, kind=EditKind.CREATE),
-            conflict=replace(_GONE, kind=ConflictKind.LOGICAL_KEY_TAKEN, holder=holder),
+            conflict=replace(_GONE, kind=kind, **said),
         )
         with _write_with_scope(store):
             key = store.insert_record(record)
@@ -683,16 +698,18 @@ class TestSQLiteFile:
             _sync(replica, _page("T2", "T3", changes))
             replica.delete(_key(replica, "c"))
             _sync(replica, _page("T3", "T4", {"d": Removed()}))
-            # A create refused with the object holding its key, and a push in flight.
+            # A create refused with the object holding its key, a delete not
+            # allowed with the server's reason, and a push in flight.
             with _pushing(replica, "T4", "T5") as session:
                 session.settle(_claim(session, created), LogicalKeyTaken("b"))
+                session.settle(_claim(session, _key(replica, "c")), NotAllowed(_NOT_ALLOWED))
                 session.claim(_key(replica))
             expected = _snapshot(replica, store)
             assert [_summary(r) for r in replica.records(_SCOPE)] == [
                 (RecordState.IN_FLIGHT, EditKind.CHANGE, None),
                 _conflicted(EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY),
                 _conflicted(EditKind.CREATE, ConflictKind.LOGICAL_KEY_TAKEN),
-                _pending(EditKind.DELETE),
+                _conflicted(EditKind.DELETE, ConflictKind.NOT_ALLOWED),
                 _REMOVED,
             ]
         with SQLiteStore(db_path) as store:

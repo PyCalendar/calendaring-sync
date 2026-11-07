@@ -37,10 +37,15 @@ def _deleted(record: Record, now: datetime) -> _Settled | None:
 
 
 def _in_conflict(
-    record: Record, kind: ConflictKind, now: datetime, holder: str | None = None
+    record: Record,
+    kind: ConflictKind,
+    now: datetime,
+    *,
+    holder: str | None = None,
+    reason: str | None = None,
 ) -> _Settled:
-    """A conflict whose server has no copy of the object, opened by a push's outcome."""
-    conflict = replace(Conflict.from_change(kind, Removed(), now), holder=holder)
+    """A conflict that holds no copy of the server's object, opened by a push's outcome."""
+    conflict = replace(Conflict.from_change(kind, Removed(), now), holder=holder, reason=reason)
     opened = replace(record, state=RecordState.CONFLICT, conflict=conflict)
     return _Settled(opened, FeedEntryKind.CONFLICT_OPENED)
 
@@ -162,7 +167,44 @@ class LogicalKeyTaken(_Outcome):
             raise ValueError("A delete can't be refused for its logical key")
 
     def _settled(self, record: Record, now: datetime) -> _Settled | None:
-        return _in_conflict(record, ConflictKind.LOGICAL_KEY_TAKEN, now, self.holder)
+        return _in_conflict(record, ConflictKind.LOGICAL_KEY_TAKEN, now, holder=self.holder)
+
+
+@checked_when_built
+@dataclass(frozen=True)
+class NotAllowed(_Outcome):
+    """The server won't take the edit as it was sent, so sending it again unchanged won't help.
+
+    For example, you may only read the object, or the server won't store
+    such content. The edit becomes a :term:`conflict`, which stays open
+    until you resolve it: keep the server's copy, send new content, delete
+    the object, or send the edit again once the server would take it.
+
+    Attributes:
+        reason: The server's explanation, to show to a person, or ``None``
+            if it gave none.
+
+    Raises:
+        TypeError: If the reason isn't a string or ``None``.
+        LoneSurrogateError: If the reason holds a lone surrogate.
+
+    Examples:
+        An :term:`adapter` reports a change to an object you may only read,
+        with what the server said, so your application can tell the person
+        why their edit didn't go out:
+
+        >>> from calendaring_sync import NotAllowed
+        >>> NotAllowed("You may only read this calendar").reason
+        'You may only read this calendar'
+    """
+
+    reason: str | None = None
+
+    def __post_init__(self) -> None:
+        check_text(reason=self.reason)
+
+    def _settled(self, record: Record, now: datetime) -> _Settled | None:
+        return _in_conflict(record, ConflictKind.NOT_ALLOWED, now, reason=self.reason)
 
 
 @dataclass(frozen=True)
@@ -177,5 +219,5 @@ class Unknown(_Outcome):
         return None
 
 
-#: Any one of the five.
-PushOutcome: TypeAlias = Applied | Rejected | Gone | LogicalKeyTaken | Unknown
+#: Any one of the six.
+PushOutcome: TypeAlias = Applied | Rejected | Gone | LogicalKeyTaken | NotAllowed | Unknown

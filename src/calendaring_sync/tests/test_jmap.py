@@ -31,6 +31,7 @@ from calendaring_sync import (
     Gone,
     LocalEdit,
     LogicalKeyTaken,
+    NotAllowed,
     OtherScopeError,
     PushOutcome,
     Record,
@@ -287,19 +288,39 @@ def _uid_held(
 
 
 # What each refusal of a push means, by edit kind: Rejected, Gone,
-# LogicalKeyTaken, or None for an error that isn't one and is raised.
-_REFUSALS: dict[tuple[str, tuple[str, ...] | None], dict[str, type[PushOutcome] | None]] = {
+# LogicalKeyTaken, NotAllowed, or None for an error that isn't one and is raised.
+_Expected = dict[str, type[PushOutcome] | None]
+_EVERY_KIND_NOT_ALLOWED: _Expected = {
+    "create": NotAllowed,
+    "change": NotAllowed,
+    "delete": NotAllowed,
+}
+_EVERY_KIND_RAISED: _Expected = {"create": None, "change": None, "delete": None}
+_REFUSALS: dict[tuple[str, tuple[str, ...] | None], _Expected] = {
     ("stateMismatch", None): {"create": Rejected, "change": Rejected, "delete": Rejected},
     ("notFound", None): {"create": None, "change": Gone, "delete": Gone},
     ("invalidProperties", ("uid",)): {
         "create": LogicalKeyTaken,
         "change": LogicalKeyTaken,
-        "delete": None,
+        "delete": NotAllowed,
     },
-    ("invalidProperties", ("title",)): {"create": None, "change": None, "delete": None},
-    ("invalidPatch", ("uid",)): {"create": None, "change": None, "delete": None},
-    ("invalidProperties", None): {"create": None, "change": None, "delete": None},
-    ("serverFail", None): {"create": None, "change": None, "delete": None},
+    ("invalidProperties", ("title",)): _EVERY_KIND_NOT_ALLOWED,
+    ("invalidProperties", ("calendarIds",)): _EVERY_KIND_NOT_ALLOWED,
+    ("invalidProperties", None): _EVERY_KIND_NOT_ALLOWED,
+    ("invalidPatch", ("uid",)): _EVERY_KIND_NOT_ALLOWED,
+    ("forbidden", None): _EVERY_KIND_NOT_ALLOWED,
+    ("accountReadOnly", None): _EVERY_KIND_NOT_ALLOWED,
+    ("overQuota", None): _EVERY_KIND_NOT_ALLOWED,
+    ("tooLarge", None): _EVERY_KIND_NOT_ALLOWED,
+    ("singleton", None): _EVERY_KIND_NOT_ALLOWED,
+    ("noSupportedScheduleMethods", None): _EVERY_KIND_NOT_ALLOWED,
+    ("rateLimit", None): _EVERY_KIND_RAISED,
+    ("serverFail", None): _EVERY_KIND_RAISED,
+    ("serverUnavailable", None): _EVERY_KIND_RAISED,
+    ("serverPartialFail", None): _EVERY_KIND_RAISED,
+    ("invalidArguments", None): _EVERY_KIND_RAISED,
+    ("unknownMethod", None): _EVERY_KIND_RAISED,
+    ("willDestroy", None): _EVERY_KIND_RAISED,
 }
 
 
@@ -755,9 +776,9 @@ class TestPushing:
             pytest.param(
                 "change",
                 ("invalidProperties", ["title"]),
-                RecordState.IN_FLIGHT,
+                RecordState.CONFLICT,
+                ConflictKind.NOT_ALLOWED,
                 None,
-                JMAPMethodError,
                 id="change, other property",
             ),
             pytest.param(
@@ -766,26 +787,53 @@ class TestPushing:
             pytest.param(
                 "delete",
                 ("invalidProperties", ["uid"]),
-                RecordState.IN_FLIGHT,
+                RecordState.CONFLICT,
+                ConflictKind.NOT_ALLOWED,
                 None,
-                JMAPMethodError,
                 id="delete, uid named",
             ),
             pytest.param(
                 "create",
                 ("invalidProperties", ["calendarIds"]),
-                RecordState.IN_FLIGHT,
+                RecordState.CONFLICT,
+                ConflictKind.NOT_ALLOWED,
                 None,
-                JMAPMethodError,
                 id="create, calendar named, no event holds its uid",
             ),
             pytest.param(
                 "delete",
                 ("invalidProperties", ["calendarIds"]),
+                RecordState.CONFLICT,
+                ConflictKind.NOT_ALLOWED,
+                None,
+                id="delete, calendar named",
+            ),
+            *(
+                pytest.param(
+                    kind,
+                    ("forbidden", None),
+                    RecordState.CONFLICT,
+                    ConflictKind.NOT_ALLOWED,
+                    None,
+                    id=f"{kind}, forbidden",
+                )
+                for kind in ("create", "change", "delete")
+            ),
+            pytest.param(
+                "change",
+                "accountReadOnly",
+                RecordState.CONFLICT,
+                ConflictKind.NOT_ALLOWED,
+                None,
+                id="change, account read-only",
+            ),
+            pytest.param(
+                "create",
+                ("rateLimit", None),
                 RecordState.IN_FLIGHT,
                 None,
                 JMAPMethodError,
-                id="delete, calendar named",
+                id="create, rate limited",
             ),
         ],
     )
@@ -794,6 +842,11 @@ class TestPushing:
     ):
         record = _refused_push(store, asynchronous, kind, refusal, raised)
         assert (record.state, record.conflict and record.conflict.kind) == (state, conflict)
+        if conflict is ConflictKind.NOT_ALLOWED:
+            # The reason is the error's type and the properties it names.
+            error_type, named = (refusal, None) if isinstance(refusal, str) else refusal
+            reason = " ".join([error_type, *(named or ())])
+            assert cast(Conflict, record.conflict).reason == reason
 
     def test_a_refusal_naming_the_calendar_is_a_taken_uid_where_an_event_holds_it(
         self, store, asynchronous
@@ -871,6 +924,17 @@ class TestPushing:
         expected = _REFUSALS[error][kind.value]
         outcome = _refusal(kind, refused)
         assert (None if outcome is None else type(outcome)) is expected
+
+    @pytest.mark.parametrize(
+        "properties",
+        ["uid", [1], [{"x": 1}], ["uid", 2]],
+        ids=["a string", "a number", "an object", "a string and a number"],
+    )
+    def test_properties_that_arent_strings_name_nothing(self, properties):
+        # Against RFC 8620 section 5.3, so a server sending them makes the
+        # refusal one that names no property, not a taken uid.
+        refused = JMAPMethodError(error_type="invalidProperties", properties=properties)
+        assert _refusal(EditKind.CREATE, refused) == NotAllowed("invalidProperties")
 
 
 class TestScenarios:

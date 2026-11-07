@@ -23,6 +23,7 @@ from calendaring_sync import (
     FeedEntryKind,
     LocalEdit,
     LogicalKeyTaken,
+    NotAllowed,
     PushOutcome,
     Record,
     RecordState,
@@ -49,6 +50,8 @@ _WAIT = 5.0
 _FIELDS: dict[str, Any] = {"containers": frozenset({"x", "y"}), "logical_key": "u"}
 # A string no store can keep: a lone surrogate.
 _BAD_TEXT = "a\ud800b"
+# The reason the server gives for an edit it doesn't allow.
+_NOT_ALLOWED = "403 Forbidden"
 
 
 # Building change sets and syncing them.
@@ -268,11 +271,17 @@ def _in_conflict(
 ) -> int:
     """Open a conflict of ``kind`` in a seeded scope; return its local key.
 
-    A conflict about a create is at the id n, and a refused edit, the
-    ``refused`` kind of edit, names b as the object holding its logical key u.
+    A conflict about a create is at the id n. A refused edit is the
+    ``refused`` kind of edit: one refused for its logical key u names b as
+    the object holding it, and one not allowed gives ``_NOT_ALLOWED`` as
+    the reason.
     """
     if kind is ConflictKind.LOGICAL_KEY_TAKEN:
         return _refused_create(replica, "b", since, token, local=refused)
+    if kind is ConflictKind.NOT_ALLOWED:
+        key, _ = _edit_locally(replica, refused)
+        _push(replica, key, NotAllowed(_NOT_ALLOWED), since, token)
+        return key
     local, remote = _OPENED_BY[kind]
     key, object_id = _edit_locally(replica, local, object_id)
     _sync(replica, _page(since, token, {object_id: _remote(remote)}))

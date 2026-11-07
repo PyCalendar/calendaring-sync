@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 calendaring-sync contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""The :term:`server's copy` in a :term:`conflict`, kept on its :term:`record` until resolved."""
+"""What the server has or said in a :term:`conflict`, kept on its :term:`record` until resolved."""
 
 from __future__ import annotations
 
@@ -29,11 +29,19 @@ class ConflictKind(StrEnum):
     #: object holds its :term:`logical key`. Once that object stops holding
     #: it, the edit is pending again.
     LOGICAL_KEY_TAKEN = "logical_key_taken"
+    #: The server won't take your create, change or delete as you sent it,
+    #: for example because you may only read the object, or because it
+    #: won't store such content. It stays open until you resolve it.
+    NOT_ALLOWED = "not_allowed"
 
 
 @dataclass(frozen=True)
 class Conflict:
-    """The server's copy of an object, kept where it conflicts with your edit.
+    """What the server has or said about an object, kept where it conflicts with your edit.
+
+    For most conflicts that's the :term:`server's copy`. For an edit the
+    server refused, it holds no copy, only what the server said: the
+    object holding the logical key, or its reason.
 
     Together with its record's synced copy and :attr:`Record.edit
     <calendaring_sync.objects.record.Record.edit>`, it makes up the
@@ -61,9 +69,12 @@ class Conflict:
         remote_logical_key: The :term:`logical key` of the server's copy, if
             it has one.
         opened_at: When the conflict was first stored.
-        holder: For a create refused because another object holds its
+        holder: For an edit refused because another object holds its
             :term:`logical key`, that object's :term:`object id` when the
             server named it; ``None`` otherwise.
+        reason: For an edit the server didn't allow, the server's
+            explanation as the :term:`adapter` reports it, to show to a
+            person; ``None`` otherwise, or when the server gave none.
     """
 
     kind: ConflictKind
@@ -74,6 +85,7 @@ class Conflict:
     remote_logical_key: str | None
     opened_at: datetime
     holder: str | None = None
+    reason: str | None = None
 
     @classmethod
     def from_change(

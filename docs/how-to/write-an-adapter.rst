@@ -29,7 +29,7 @@ Read changes
 Send edits
 ==========
 
-:meth:`~calendaring_sync.adapters.base.Adapter._send` maps each answer your protocol gives to a :data:`~calendaring_sync.objects.push.PushOutcome`: here a version mismatch is :class:`~calendaring_sync.objects.push.Rejected`, and an object the server doesn't have is :class:`~calendaring_sync.objects.push.Gone`. Any other error propagates.
+:meth:`~calendaring_sync.adapters.base.Adapter._send` maps each answer your protocol gives to a :data:`~calendaring_sync.objects.push.PushOutcome`: here a version mismatch is :class:`~calendaring_sync.objects.push.Rejected`, and an object the server doesn't have is :class:`~calendaring_sync.objects.push.Gone`. Map a refusal about rights or content to :class:`~calendaring_sync.objects.push.NotAllowed`, with the server's explanation as its reason, so the edit becomes a conflict instead of stopping every sync. Any other error propagates.
 
 Test it
 =======

@@ -1,0 +1,166 @@
+{
+ "server": "cyrus",
+ "scenario": "own_write_with_attendees",
+ "caldav": "3.7.0",
+ "recorded": "2026-11-07",
+ "exchanges": [
+  {
+   "method": "DELETE",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 404,
+   "headers": {
+    "content-type": "text/html; charset=utf-8"
+   },
+   "body": "<!DOCTYPE html>\n<html style='color-scheme:dark light'>\n  <head>\n    <title>404 Not Found</title>\n  </head>\n  <body>\n    <h1>Not Found</h1>\n    <p>Mailbox does not exist</p>\n    <hr>\n    <address>Cyrus-HTTP/3.13.8-115-gb2ee17d30 Cyrus-SASL/2.1.28 LibXML/2.9.14 Jansson/2.14 OpenSSL/3.0.22 Nghttp2/1.52.0 Wslay/1.0.1-DEV Zlib/1.2.13 Xapian/2.1.0 LibiCal/4.0 ICU4C/78.2 SQLite/3.40.1 Server at localhost Port 8802</address>\n  </body>\n</html>\n",
+   "request": ""
+  },
+  {
+   "method": "MKCALENDAR",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 201,
+   "headers": {},
+   "body": "",
+   "request": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:sync-token>data:,1794033990-437</D:sync-token>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"1794033990-0-0\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "PROPFIND",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:supported-report-set>\n          <D:supported-report>\n            <D:report>\n              <D:expand-property/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <D:acl-principal-prop-set/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <D:sync-collection/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:calendar-query/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:calendar-multiget/>\n            </D:report>\n          </D:supported-report>\n          <D:supported-report>\n            <D:report>\n              <C:free-busy-query/>\n            </D:report>\n          </D:supported-report>\n        </D:supported-report-set>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:sync-token>data:,1794033990-437</D:sync-token>\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/00000000-0000-0000-0000-000000000001.ics",
+   "status": 201,
+   "headers": {
+    "schedule-tag": "\"da39a3ee5e6b4b0d3255bfef95601890afd80709\""
+   },
+   "body": "",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/00000000-0000-0000-0000-000000000001.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"217f6a12027d17b40328a817388ea680168bd6a2\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n  <D:sync-token>data:,1794033990-441</D:sync-token>\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/00000000-0000-0000-0000-000000000001.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <C:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:own_write_with_attendees-m\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:meeting\r\nORGANIZER:mailto:user1@example.com\r\nATTENDEE;PARTSTAT=ACCEPTED:mailto:user1@example.com\r\nATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-STATUS=1.1:mailto:\r\n someone@example.net\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></C:calendar-data>\n        <D:getetag>\"217f6a12027d17b40328a817388ea680168bd6a2\"</D:getetag>\n        <C:schedule-tag>\"3ad857f811056e61fdfd2b6ebc4959adec0369d2\"</C:schedule-tag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:sync-token>data:,1794033990-441</D:sync-token>\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/00000000-0000-0000-0000-000000000001.ics",
+   "status": 204,
+   "headers": {
+    "schedule-tag": "\"7a31057b6e44ebcd7fe910d407d98e8ab97ad835\""
+   },
+   "body": "",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/00000000-0000-0000-0000-000000000001.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <D:getetag>\"dc450f05e1572dbe7734fa745e9503226d71370e\"</D:getetag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n  <D:sync-token>data:,1794033990-445</D:sync-token>\n</D:multistatus>\n",
+   "request": ""
+  },
+  {
+   "method": "REPORT",
+   "path": "/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/",
+   "status": 207,
+   "headers": {
+    "content-type": "application/xml; charset=utf-8"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:caldav\">\n  <D:response>\n    <D:href>/dav/calendars/user/user1/calendaring-sync-own-write-with-attendees/00000000-0000-0000-0000-000000000001.ics</D:href>\n    <D:propstat>\n      <D:prop>\n        <C:calendar-data><![CDATA[BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\nBEGIN:VEVENT\r\nUID:own_write_with_attendees-m\r\nDTSTAMP:20261001T000000Z\r\nDTSTART:20261101T100000Z\r\nSUMMARY:meeting moved\r\nORGANIZER:mailto:user1@example.com\r\nATTENDEE;PARTSTAT=ACCEPTED:mailto:user1@example.com\r\nATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-STATUS=1.1:mailto:\r\n someone@example.net\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n]]></C:calendar-data>\n        <D:getetag>\"dc450f05e1572dbe7734fa745e9503226d71370e\"</D:getetag>\n        <C:schedule-tag>\"3ad857f811056e61fdfd2b6ebc4959adec0369d2\"</C:schedule-tag>\n      </D:prop>\n      <D:status>HTTP/1.1 200 OK</D:status>\n    </D:propstat>\n  </D:response>\n</D:multistatus>\n",
+   "request": ""
+  }
+ ]
+}

@@ -44,7 +44,14 @@ from calendaring_sync.error import IncompleteListingError
 from calendaring_sync.objects.change import Change, Changed, Removed, Unchanged
 from calendaring_sync.objects.change_set import ChangeSet
 from calendaring_sync.objects.edit import EditFields, EditKind, LocalEdit
-from calendaring_sync.objects.push import Applied, Gone, LogicalKeyTaken, PushOutcome, Rejected
+from calendaring_sync.objects.push import (
+    Applied,
+    Gone,
+    LogicalKeyTaken,
+    NotAllowed,
+    PushOutcome,
+    Rejected,
+)
 from calendaring_sync.objects.record import Record
 from calendaring_sync.objects.scope import Scope
 from calendaring_sync.replica import Replica
@@ -63,6 +70,9 @@ MULTIGET_SIZE = 100
 # 3.7.3), left out of the fingerprint so a server's copy of your own write
 # fingerprints the same.
 _SERVER_SET = frozenset({"DTSTAMP", "LAST-MODIFIED", "PRODID"})
+# Parameters a server that schedules adds to, or takes off, the organizer
+# and attendees of your own write (RFC 6638 sections 7.2 and 7.3).
+_SERVER_SET_PARAMETERS = frozenset({"SCHEDULE-STATUS", "SCHEDULE-FORCE-SEND"})
 # Recurrence rules, whose parts may come in any order (RFC 5545 section 3.3.10).
 _RECURRENCE_RULES = frozenset({"RRULE", "EXRULE"})
 # What the canonical form's outermost level is called; calendar data has
@@ -80,7 +90,19 @@ _WEAK = "W/"
 _TOKEN_REFUSAL_FEATURE = "sync-token.invalid-token"
 # The status a server gives the collection when it cuts a listing short.
 _TRUNCATED = 507
-_NOT_FOUND = 404
+# The statuses saying the object a write was for is gone (RFC 9110 sections
+# 15.5.5 and 15.5.11).
+_GONE = frozenset({404, 410})
+# A refused write says the client erred (RFC 9110 section 15.5), so the same
+# write would be refused again, except where the status says something else:
+# the object is gone, the version moved (section 15.5.13), a login is needed
+# (sections 15.5.2 and 15.5.8), or the request is worth repeating later
+# (section 15.5.9, RFC 8470 section 5.2, RFC 6585 section 4).
+_CLIENT_ERRORS = range(400, 500)
+_NOT_A_REFUSAL = _GONE | {401, 407, 408, 412, 425, 429}
+# No room to store a write, which mustn't go out again until you ask for it
+# again (RFC 4918 section 11.5).
+_INSUFFICIENT_STORAGE = 507
 # How python-caldav's server profiles describe a server whose refusal of a
 # token can't be relied on, so its scopes need regular full listings.
 _UNRELIABLE_TOKEN_REFUSAL = frozenset({"broken", "ungraceful"})
@@ -99,10 +121,10 @@ def _fields(content: bytes) -> _Fields:
 
     The fingerprint is SHA-256 of a canonical form: content lines unfolded,
     components sorted, properties and parameters sorted within each, the
-    parts of each recurrence rule sorted, the properties a server sets left
-    out, and every other value as sent. The logical key is the ``UID`` of
-    the first object: a component in the calendar other than a time zone,
-    so not one inside an object, such as an alarm.
+    parts of each recurrence rule sorted, the properties and parameters a
+    server sets left out, and every other value as sent. The logical key is
+    the ``UID`` of the first object: a component in the calendar other than
+    a time zone, so not one inside an object, such as an alarm.
 
     Raises:
         ValueError: If the content isn't UTF-8 or isn't iCalendar data.
@@ -136,7 +158,13 @@ def _fields(content: bytes) -> _Fields:
                 uid = str(vText.from_ical(value))
             if name in _RECURRENCE_RULES:
                 value = ";".join(sorted(value.split(";")))
-            parameters = tuple(sorted((key.upper(), str(item)) for key, item in params.items()))
+            parameters = tuple(
+                sorted(
+                    (key.upper(), str(item))
+                    for key, item in params.items()
+                    if key.upper() not in _SERVER_SET_PARAMETERS
+                )
+            )
             stack[-1][1].append((name, parameters, value))
     if len(stack) != 1 or not stack[0][2]:
         raise ValueError("Calendar data must hold whole components")
@@ -154,6 +182,30 @@ def _server_fields(content: bytes) -> _Fields:
         return _fields(content)
     except ValueError:
         return _Fields(hashlib.sha256(content).hexdigest(), None)
+
+
+def _not_allowed(error: dav_error.DAVError) -> NotAllowed:
+    """The outcome of a write the server won't take as it was sent.
+
+    That's a 4xx other than those in ``_NOT_A_REFUSAL``, or a 507. The
+    reason holds the status, the names of any precondition elements, and
+    the server's explanation where it's plain text.
+
+    Raises:
+        DAVError: ``error`` itself, if it's no such refusal.
+    """
+    status = error.status
+    if status is None or not (
+        (status in _CLIENT_ERRORS and status not in _NOT_A_REFUSAL)
+        or status == _INSUFFICIENT_STORAGE
+    ):
+        raise error
+    reason = " ".join([str(status), *error.preconditions])
+    body = error.body.decode("utf-8", "replace") if isinstance(error.body, bytes) else error.body
+    text = " ".join((body or "").split())
+    if text and not text.startswith("<"):
+        reason = f"{reason}: {text}"
+    return NotAllowed(reason)
 
 
 def _chunks(items: Sequence[str], size: int) -> Iterator[Sequence[str]]:
@@ -387,6 +439,8 @@ class _CalDAVFlow(Adapter):
                 return LogicalKeyTaken(self._holder(exc.href))
             except dav_error.ConsistencyError:
                 return Rejected()
+            except dav_error.DAVError as exc:
+                return _not_allowed(exc)
             return Applied()
         if edit.kind is EditKind.DELETE:
             try:
@@ -395,6 +449,8 @@ class _CalDAVFlow(Adapter):
                 return Gone()
             except dav_error.ETagMismatchError:
                 return Rejected()
+            except dav_error.DAVError as exc:
+                return Gone() if exc.status in _GONE else _not_allowed(exc)
             return Applied()
         try:
             yield resource.save(raw_data=edit.content, precondition="etag", increase_seqno=False)
@@ -402,10 +458,8 @@ class _CalDAVFlow(Adapter):
             return LogicalKeyTaken(self._holder(exc.href))
         except (dav_error.ETagMismatchError, dav_error.ScheduleTagMismatchError):
             return Rejected()
-        except dav_error.PutError as exc:
-            if exc.status == _NOT_FOUND:
-                return Gone()
-            raise
+        except dav_error.DAVError as exc:
+            return Gone() if exc.status in _GONE else _not_allowed(exc)
         return Applied()
 
     def _holder(self, href: str | None) -> str | None:
@@ -433,8 +487,11 @@ class CalDAVAdapter(_CalDAVFlow, SyncAdapter):
     The calendar is one :term:`scope`. The content :meth:`create` and
     :meth:`change` take is iCalendar data in UTF-8, and a create's must
     hold an object with a ``UID``; anything else raises
-    :class:`ValueError`. A failure python-caldav reports, such as a refused
-    login, reaches you as its ``caldav.lib.error.DAVError``, unchanged.
+    :class:`ValueError`. A write the server won't take as it was sent
+    becomes a :term:`conflict` of kind
+    :attr:`~calendaring_sync.objects.conflict.ConflictKind.NOT_ALLOWED`.
+    Any other failure python-caldav reports, such as a refused login, reaches
+    you as its ``caldav.lib.error.DAVError``, unchanged.
 
     Args:
         replica: Where the sync state is kept.

@@ -260,6 +260,7 @@ _SCHEMA = (
     conflict_remote_logical_key TEXT,
     conflict_opened_at TEXT,
     conflict_holder TEXT,
+    conflict_reason TEXT,
     claims INTEGER NOT NULL
 )""",
     f"""CREATE UNIQUE INDEX {_RECORDS}_by_object_id ON {_RECORDS} (scope, object_id)""",

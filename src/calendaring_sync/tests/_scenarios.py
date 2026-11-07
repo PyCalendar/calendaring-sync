@@ -231,16 +231,25 @@ def pushing(env: Env) -> None:
     assert env.at(key).state is RecordState.REMOVED
 
 
-def delete_gone(env: Env, request: tuple[str, str], first: RecordState) -> None:
-    """A delete of an object someone else deleted ends with the record removed.
+def delete_a_removed_behind(env: Env, request: tuple[str, str]) -> int:
+    """Sync ``a``, delete it here, and return its key; the second client deletes it first.
 
-    The second client deletes it right before the first request whose method
-    and body marker are ``request``; the sync sending it leaves the record
-    ``first``, and the next one removes it.
+    It does so right before the first request whose method and body marker
+    are ``request``.
     """
     key = env.synced("a")
     env.replica.delete(key)
     env.tape.before(*request, lambda: env.remove("a"))
+    return key
+
+
+def delete_gone(env: Env, request: tuple[str, str], first: RecordState) -> None:
+    """A delete of an object someone else deleted ends with the record removed.
+
+    The sync sending it, after the second client's delete, leaves the record
+    ``first``, and the next one removes it.
+    """
+    key = delete_a_removed_behind(env, request)
     env.sync()
     assert env.at(key).state is first
     env.sync()
