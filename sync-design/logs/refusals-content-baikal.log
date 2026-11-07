@@ -1,0 +1,87 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /dav.php/calendars/test/refusals/
+<<< 404 Not Found
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
+<<<   <s:sabredav-version>4.7.0</s:sabredav-version>
+<<<   <s:exception>Sabre\DAV\Exception\NotFound</s:exception>
+<<<   <s:message>Node with name 'refusals' could not be found</s:message>
+<<< </d:error>
+
+===== MKCALENDAR for events only =====
+>>> MKCALENDAR /dav.php/calendars/test/refusals/
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><C:mkcalendar xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><D:set><D:prop><C:supported-calendar-component-set><C:comp name="VEVENT"/></C:supported-calendar-component-set></D:prop></D:set></C:mkcalendar>
+<<< 201 Created
+<<< Content-Type: text/html; charset=UTF-8
+
+===== event without DTSTART =====
+>>> PUT /dav.php/calendars/test/refusals/nostart.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:nostart-984f5dad-4213-441e-8e44-f2ce51452fe5
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> SUMMARY:no start
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 415 Unsupported Media Type
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
+<<<   <s:sabredav-version>4.7.0</s:sabredav-version>
+<<<   <s:exception>Sabre\DAV\Exception\UnsupportedMediaType</s:exception>
+<<<   <s:message>Validation error in iCalendar: DTSTART MUST appear exactly once in a VEVENT component</s:message>
+<<< </d:error>
+
+===== task in a calendar for events =====
+>>> PUT /dav.php/calendars/test/refusals/task.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VTODO
+
+>>> UID:task-38bd4511-60c9-469d-b259-6737fab0b9c5
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> SUMMARY:a task
+
+>>> END:VTODO
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
+<<<   <s:sabredav-version>4.7.0</s:sabredav-version>
+<<<   <s:exception>Sabre\CalDAV\Exception\InvalidComponentType</s:exception>
+<<<   <s:message>iCalendar objects must at least have a component of type VEVENT</s:message>
+<<<   <cal:supported-calendar-component xmlns:cal="urn:ietf:params:xml:ns:caldav"/>
+<<< </d:error>
+
+RESULT [Baikal] MKCALENDAR for events only: 201
+RESULT [Baikal] event without DTSTART: 415
+RESULT [Baikal] task in a calendar for events: 403

@@ -1,0 +1,188 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /dav/calendars/user/user1/schedule/
+<<< 404 Not Found
+<<< Content-Type: text/html; charset=utf-8
+<<< <!DOCTYPE html>
+<<< <html style='color-scheme:dark light'>
+<<<   <head>
+<<<     <title>404 Not Found</title>
+<<<   </head>
+<<<   <body>
+<<<     <h1>Not Found</h1>
+<<<     <p>Mailbox does not exist</p>
+<<<     <hr>
+<<<     <address>Cyrus-HTTP/3.13.8-115-gb2ee17d30 Cyrus-SASL/2.1.28 LibXML/2.9.14 Jansson/2.14 OpenSSL/3.0.22 Nghttp2/1.52.0 Wslay/1.0.1-DEV Zlib/1.2.13 Xapian/2.1.0 LibiCal/4.0 ICU4C/78.2 SQLite/3.40.1 Server at localhost Port 8802</address>
+<<<   </body>
+<<< </html>
+
+===== reset: MKCALENDAR =====
+>>> MKCALENDAR /dav/calendars/user/user1/schedule/
+<<< 201 Created
+
+===== create PUT =====
+>>> PUT /dav/calendars/user/user1/schedule/meeting.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:schedule-09fda5b0-6859-49e2-9c92-4d195b035ec0
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> DTSTART:20261201T100000Z
+
+>>> DTEND:20261201T110000Z
+
+>>> SEQUENCE:0
+
+>>> SUMMARY:plan
+
+>>> ORGANIZER;CN=Organizer:mailto:user1@example.com
+
+>>> ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:user1@example.com
+
+>>> ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+
+>>> ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:client@example.net
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+
+===== create GET =====
+>>> GET /dav/calendars/user/user1/schedule/meeting.ics
+<<< 200 OK
+<<< ETag: "88278db603cf0ccfc1eb9f0af06b71c5f74492c5"
+<<< Content-Type: text/calendar; charset=utf-8
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync probes//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:schedule-09fda5b0-6859-49e2-9c92-4d195b035ec0
+
+<<< DTSTAMP:20261101T100000Z
+
+<<< DTSTART:20261201T100000Z
+
+<<< DTEND:20261201T110000Z
+
+<<< SEQUENCE:0
+
+<<< SUMMARY:plan
+
+<<< ORGANIZER;CN=Organizer:mailto:user1@example.com
+
+<<< ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:user1@example.com
+
+<<< ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-STATUS=1.1:
+
+<<<  mailto:asked@example.net
+
+<<< ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:
+
+<<<  client@example.net
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+===== change PUT =====
+>>> PUT /dav/calendars/user/user1/schedule/meeting.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-Match: "88278db603cf0ccfc1eb9f0af06b71c5f74492c5"
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:schedule-09fda5b0-6859-49e2-9c92-4d195b035ec0
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> DTSTART:20261201T100000Z
+
+>>> DTEND:20261201T110000Z
+
+>>> SEQUENCE:0
+
+>>> SUMMARY:moved
+
+>>> ORGANIZER;CN=Organizer:mailto:user1@example.com
+
+>>> ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:user1@example.com
+
+>>> ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+
+>>> ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:client@example.net
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 204 No Content
+
+===== change GET =====
+>>> GET /dav/calendars/user/user1/schedule/meeting.ics
+<<< 200 OK
+<<< ETag: "cbbdf1c9d24ad52e114747c8d28b7594ba02a950"
+<<< Content-Type: text/calendar; charset=utf-8
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync probes//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:schedule-09fda5b0-6859-49e2-9c92-4d195b035ec0
+
+<<< DTSTAMP:20261101T100000Z
+
+<<< DTSTART:20261201T100000Z
+
+<<< DTEND:20261201T110000Z
+
+<<< SEQUENCE:0
+
+<<< SUMMARY:moved
+
+<<< ORGANIZER;CN=Organizer:mailto:user1@example.com
+
+<<< ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:user1@example.com
+
+<<< ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-STATUS=1.1:
+
+<<<  mailto:asked@example.net
+
+<<< ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:
+
+<<<  client@example.net
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+RESULT [Cyrus] create: sent, not stored: ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+RESULT [Cyrus] create: stored, not sent: ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-STATUS=1.1:mailto:asked@example.net
+RESULT [Cyrus] PASS create: the server's copy fingerprints as what was sent: ok
+RESULT [Cyrus] change: sent, not stored: ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+RESULT [Cyrus] change: stored, not sent: ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-STATUS=1.1:mailto:asked@example.net
+RESULT [Cyrus] PASS change: the server's copy fingerprints as what was sent: ok

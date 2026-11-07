@@ -1,0 +1,183 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /test/schedule/
+<<< 404 Not Found
+<<< Content-Type: text/plain; charset=utf-8
+<<< The requested resource could not be found.
+
+===== reset: MKCALENDAR =====
+>>> MKCALENDAR /test/schedule/
+<<< 201 Created
+
+===== create PUT =====
+>>> PUT /test/schedule/meeting.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:schedule-ccd64885-19f6-4732-9d4c-dc98dfc46198
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> DTSTART:20261201T100000Z
+
+>>> DTEND:20261201T110000Z
+
+>>> SEQUENCE:0
+
+>>> SUMMARY:plan
+
+>>> ORGANIZER;CN=Organizer:mailto:test@example.com
+
+>>> ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:test@example.com
+
+>>> ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+
+>>> ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:client@example.net
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< ETag: "157718dd08e90be26313622a05e0dfdb40b225784616c39c9ff9ac20784bb0c0"
+
+===== create GET =====
+>>> GET /test/schedule/meeting.ics
+<<< 200 OK
+<<< Content-Type: text/calendar; charset=utf-8
+<<< ETag: "157718dd08e90be26313622a05e0dfdb40b225784616c39c9ff9ac20784bb0c0"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync probes//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:schedule-ccd64885-19f6-4732-9d4c-dc98dfc46198
+
+<<< DTSTART:20261201T100000Z
+
+<<< DTEND:20261201T110000Z
+
+<<< ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:test@example.com
+
+<<< ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-FORCE-SEND=REQUE
+
+<<<  ST:mailto:asked@example.net
+
+<<< ATTENDEE;CN=Client;PARTSTAT=NEEDS-ACTION;SCHEDULE-AGENT=CLIENT:mailto:clien
+
+<<<  t@example.net
+
+<<< DTSTAMP:20261101T100000Z
+
+<<< ORGANIZER;CN=Organizer:mailto:test@example.com
+
+<<< SEQUENCE:0
+
+<<< SUMMARY:plan
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+===== change PUT =====
+>>> PUT /test/schedule/meeting.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-Match: "157718dd08e90be26313622a05e0dfdb40b225784616c39c9ff9ac20784bb0c0"
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:schedule-ccd64885-19f6-4732-9d4c-dc98dfc46198
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> DTSTART:20261201T100000Z
+
+>>> DTEND:20261201T110000Z
+
+>>> SEQUENCE:0
+
+>>> SUMMARY:moved
+
+>>> ORGANIZER;CN=Organizer:mailto:test@example.com
+
+>>> ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:test@example.com
+
+>>> ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+
+>>> ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:client@example.net
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 204 No Content
+<<< ETag: "d556810ca942a130f60510ad0db76063ae46bb01a002573c8a535877f7a2f3be"
+
+===== change GET =====
+>>> GET /test/schedule/meeting.ics
+<<< 200 OK
+<<< Content-Type: text/calendar; charset=utf-8
+<<< ETag: "d556810ca942a130f60510ad0db76063ae46bb01a002573c8a535877f7a2f3be"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync probes//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:schedule-ccd64885-19f6-4732-9d4c-dc98dfc46198
+
+<<< DTSTART:20261201T100000Z
+
+<<< DTEND:20261201T110000Z
+
+<<< ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:test@example.com
+
+<<< ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-FORCE-SEND=REQUE
+
+<<<  ST:mailto:asked@example.net
+
+<<< ATTENDEE;CN=Client;PARTSTAT=NEEDS-ACTION;SCHEDULE-AGENT=CLIENT:mailto:clien
+
+<<<  t@example.net
+
+<<< DTSTAMP:20261101T100000Z
+
+<<< ORGANIZER;CN=Organizer:mailto:test@example.com
+
+<<< SEQUENCE:0
+
+<<< SUMMARY:moved
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+RESULT [Radicale] create: sent, not stored: ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+RESULT [Radicale] create: sent, not stored: ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:client@example.net
+RESULT [Radicale] create: stored, not sent: ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-FORCE-SEND=REQUEST:mailto:asked@example.net
+RESULT [Radicale] create: stored, not sent: ATTENDEE;CN=Client;PARTSTAT=NEEDS-ACTION;SCHEDULE-AGENT=CLIENT:mailto:client@example.net
+RESULT [Radicale] PASS create: the server's copy fingerprints as what was sent: ok
+RESULT [Radicale] change: sent, not stored: ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+RESULT [Radicale] change: sent, not stored: ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:client@example.net
+RESULT [Radicale] change: stored, not sent: ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;SCHEDULE-FORCE-SEND=REQUEST:mailto:asked@example.net
+RESULT [Radicale] change: stored, not sent: ATTENDEE;CN=Client;PARTSTAT=NEEDS-ACTION;SCHEDULE-AGENT=CLIENT:mailto:client@example.net
+RESULT [Radicale] PASS change: the server's copy fingerprints as what was sent: ok

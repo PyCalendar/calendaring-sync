@@ -43,12 +43,14 @@ PASS draft-ietf-jmap-calendars-33 �5.9: uid MUST be set to a new globally uniq
 PASS draft-ietf-jmap-calendars-33 �5.9: version MUST be set to the JSCalendar version the event conforms to
 PASS adapters.rst cites RFC 6578: text found
 PASS adapters.rst cites 3253 �3.1.5: section exists
+PASS adapters.rst cites 3744 �7.1.1: section exists
 PASS adapters.rst cites 3986 �2.3: section exists
 PASS adapters.rst cites 4791 �1.3: section exists
 PASS adapters.rst cites 4791 �5.3.2.1: section exists
 PASS adapters.rst cites 4791 �5.3.4: section exists
 PASS adapters.rst cites 4791 �7.9: section exists
 PASS adapters.rst cites 4918 �10.2: section exists
+PASS adapters.rst cites 4918 �11.5: section exists
 PASS adapters.rst cites 4918 �15.6: section exists
 PASS adapters.rst cites 4918 �9.1: section exists
 PASS adapters.rst cites 5545 �3.1.4: section exists
@@ -62,7 +64,11 @@ PASS adapters.rst cites 6578 �3.2: section exists
 PASS adapters.rst cites 6578 �3.6: section exists
 PASS adapters.rst cites 6578 �3.7: section exists
 PASS adapters.rst cites 6578 �4: section exists
+PASS adapters.rst cites 6585 �4: section exists
 PASS adapters.rst cites 6638 �3.2.4.1: section exists
+PASS adapters.rst cites 6638 �7.2: section exists
+PASS adapters.rst cites 6638 �7.3: section exists
+PASS adapters.rst cites 8470 �5.2: section exists
 PASS adapters.rst cites 8620 �1.6.3: section exists
 PASS adapters.rst cites 8620 �3.6.2: section exists
 PASS adapters.rst cites 8620 �5.1: section exists
@@ -72,11 +78,18 @@ PASS adapters.rst cites 8620 �5.5: section exists
 PASS adapters.rst cites 8984 �4.1.4: section exists
 PASS adapters.rst cites 9110 �13.1.1: section exists
 PASS adapters.rst cites 9110 �13.1.2: section exists
+PASS adapters.rst cites 9110 �15.5: section exists
+PASS adapters.rst cites 9110 �15.5.11: section exists
+PASS adapters.rst cites 9110 �15.5.5: section exists
+PASS adapters.rst cites 9110 �15.5.9: section exists
 PASS adapters.rst cites 9110 �8.8.3.2: section exists
 PASS adapters.rst cites draft-ietf-calext-jscalendarbis-22 �1.4.4: section exists
 PASS adapters.rst cites draft-ietf-jmap-calendars-33 �1.4.1: section exists
 PASS adapters.rst cites draft-ietf-jmap-calendars-33 �5: section exists
 PASS adapters.rst cites draft-ietf-jmap-calendars-33 �5.9: section exists
+PASS adapters.rst cites draft-ietf-jmap-calendars-33 �5.9.2: section exists
+PASS server-compatibility.rst cites 3744 �7.1.1: section exists
+PASS server-compatibility.rst cites 4791 �5.2.3: section exists
 PASS server-compatibility.rst cites 4791 �5.3.2.1: section exists
 PASS server-compatibility.rst cites 4791 �5.3.4: section exists
 PASS server-compatibility.rst cites 4791 �7.9: section exists
@@ -88,6 +101,8 @@ PASS server-compatibility.rst cites 6578 �3.5.2: section exists
 PASS server-compatibility.rst cites 6578 �3.6: section exists
 PASS server-compatibility.rst cites 6578 �3.7: section exists
 PASS server-compatibility.rst cites 6578 �4: section exists
+PASS server-compatibility.rst cites 6638 �7.2: section exists
+PASS server-compatibility.rst cites 6638 �7.3: section exists
 PASS server-compatibility.rst cites 8620 �5.2: section exists
 PASS server-compatibility.rst cites 8620 �5.3: section exists
 PASS server-compatibility.rst cites 8620 �5.5: section exists

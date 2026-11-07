@@ -1,0 +1,70 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /dav/cal/testuser%40example.org/refusals/
+<<< 404 Not Found
+
+===== MKCALENDAR for events only =====
+>>> MKCALENDAR /dav/cal/testuser%40example.org/refusals/
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><C:mkcalendar xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><D:set><D:prop><C:supported-calendar-component-set><C:comp name="VEVENT"/></C:supported-calendar-component-set></D:prop></D:set></C:mkcalendar>
+<<< 201 Created
+<<< content-type: application/xml; charset=utf-8
+<<< etag: "2964688758"
+<<< <?xml version="1.0" encoding="UTF-8"?><A:mkcalendar-response xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><D:propstat><D:prop><A:supported-calendar-component-set/></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></A:mkcalendar-response>
+
+===== event without DTSTART =====
+>>> PUT /dav/cal/testuser%40example.org/refusals/nostart.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:nostart-919c1cc8-773c-4e55-b904-7c5d5a76d57c
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> SUMMARY:no start
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< etag: "1574103811"
+
+===== task in a calendar for events =====
+>>> PUT /dav/cal/testuser%40example.org/refusals/task.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VTODO
+
+>>> UID:task-3f432476-8866-4988-81cc-446e623e1bc0
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> SUMMARY:a task
+
+>>> END:VTODO
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+<<< content-type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="UTF-8"?><D:error xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"><A:supported-calendar-component/></D:error>
+
+RESULT [Stalwart] MKCALENDAR for events only: 201
+RESULT [Stalwart] event without DTSTART: 201
+RESULT [Stalwart] task in a calendar for events: 403 ['supported-calendar-component']

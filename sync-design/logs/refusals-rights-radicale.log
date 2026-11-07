@@ -1,0 +1,140 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /owner/rights/
+<<< 404 Not Found
+<<< Content-Type: text/plain; charset=utf-8
+<<< The requested resource could not be found.
+
+===== reset: MKCALENDAR =====
+>>> MKCALENDAR /owner/rights/
+<<< 201 Created
+
+===== owner PUT =====
+>>> PUT /owner/rights/shared.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:shared-0ec43fbc-5787-4224-8af2-1e5555d3c04a
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:one
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< ETag: "994cbec107866bb7c8b54a6ec5648fff05b886c59bf265989473981322341cc1"
+
+===== reader GET =====
+>>> GET /owner/rights/shared.ics
+<<< 200 OK
+<<< Content-Type: text/calendar; charset=utf-8
+<<< ETag: "994cbec107866bb7c8b54a6ec5648fff05b886c59bf265989473981322341cc1"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync evidence//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:shared-0ec43fbc-5787-4224-8af2-1e5555d3c04a
+
+<<< DTSTART:20261020T100000Z
+
+<<< DTEND:20261020T110000Z
+
+<<< DTSTAMP:20261010T000000Z
+
+<<< SUMMARY:one
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+===== reader change =====
+>>> PUT /owner/rights/shared.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-Match: "994cbec107866bb7c8b54a6ec5648fff05b886c59bf265989473981322341cc1"
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:shared-0ec43fbc-5787-4224-8af2-1e5555d3c04a
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:mine
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+<<< Content-Type: text/plain; charset=utf-8
+<<< Access to the requested resource forbidden.
+
+===== reader create =====
+>>> PUT /owner/rights/mine.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:mine-2f0ae9e1-a1b0-4af2-98d3-826a35f284ff
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:mine
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+<<< Content-Type: text/plain; charset=utf-8
+<<< Access to the requested resource forbidden.
+
+===== reader delete =====
+>>> DELETE /owner/rights/shared.ics
+>>> If-Match: "994cbec107866bb7c8b54a6ec5648fff05b886c59bf265989473981322341cc1"
+<<< 403 Forbidden
+<<< Content-Type: text/plain; charset=utf-8
+<<< Access to the requested resource forbidden.
+
+RESULT [Radicale] reader GET: 200
+RESULT [Radicale] reader change: 403, body 'Access to the requested resource forbidden.'
+RESULT [Radicale] reader create: 403, body 'Access to the requested resource forbidden.'
+RESULT [Radicale] reader delete: 403, body 'Access to the requested resource forbidden.'

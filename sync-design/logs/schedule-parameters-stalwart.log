@@ -1,0 +1,174 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /dav/cal/testuser%40example.org/schedule/
+<<< 404 Not Found
+
+===== reset: MKCALENDAR =====
+>>> MKCALENDAR /dav/cal/testuser%40example.org/schedule/
+<<< 201 Created
+<<< content-type: application/xml; charset=utf-8
+<<< etag: "1052144957"
+<<< <?xml version="1.0" encoding="UTF-8"?><D:mkcol-response xmlns:D="DAV:" xmlns:A="urn:ietf:params:xml:ns:caldav"></D:mkcol-response>
+
+===== create PUT =====
+>>> PUT /dav/cal/testuser%40example.org/schedule/meeting.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:schedule-b8b62f84-f2ca-47c0-a4e0-52d035e3b156
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> DTSTART:20261201T100000Z
+
+>>> DTEND:20261201T110000Z
+
+>>> SEQUENCE:0
+
+>>> SUMMARY:plan
+
+>>> ORGANIZER;CN=Organizer:mailto:testuser@example.org
+
+>>> ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:testuser@example.org
+
+>>> ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+
+>>> ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:client@example.net
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+
+===== create GET =====
+>>> GET /dav/cal/testuser%40example.org/schedule/meeting.ics
+<<< 200 OK
+<<< content-type: text/calendar; charset=utf-8
+<<< etag: "1010573051"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync probes//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:schedule-b8b62f84-f2ca-47c0-a4e0-52d035e3b156
+
+<<< DTSTAMP:20261101T100000Z
+
+<<< DTSTART:20261201T100000Z
+
+<<< DTEND:20261201T110000Z
+
+<<< SEQUENCE:0
+
+<<< SUMMARY:plan
+
+<<< ORGANIZER;CN=Organizer:mailto:testuser@example.org
+
+<<< ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:testuser@example.org
+
+<<< ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+
+<<< ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:clien
+
+<<<  t@example.net
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+===== change PUT =====
+>>> PUT /dav/cal/testuser%40example.org/schedule/meeting.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-Match: "1010573051"
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:schedule-b8b62f84-f2ca-47c0-a4e0-52d035e3b156
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> DTSTART:20261201T100000Z
+
+>>> DTEND:20261201T110000Z
+
+>>> SEQUENCE:0
+
+>>> SUMMARY:moved
+
+>>> ORGANIZER;CN=Organizer:mailto:testuser@example.org
+
+>>> ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:testuser@example.org
+
+>>> ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+
+>>> ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:client@example.net
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 204 No Content
+
+===== change GET =====
+>>> GET /dav/cal/testuser%40example.org/schedule/meeting.ics
+<<< 200 OK
+<<< content-type: text/calendar; charset=utf-8
+<<< etag: "1543511439"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync probes//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:schedule-b8b62f84-f2ca-47c0-a4e0-52d035e3b156
+
+<<< DTSTAMP:20261101T100000Z
+
+<<< DTSTART:20261201T100000Z
+
+<<< DTEND:20261201T110000Z
+
+<<< SEQUENCE:0
+
+<<< SUMMARY:moved
+
+<<< ORGANIZER;CN=Organizer:mailto:testuser@example.org
+
+<<< ATTENDEE;CN=Organizer;PARTSTAT=ACCEPTED:mailto:testuser@example.org
+
+<<< ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+
+<<< ATTENDEE;CN=Client;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:clien
+
+<<<  t@example.net
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+RESULT [Stalwart] create: sent, not stored: ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+RESULT [Stalwart] create: stored, not sent: ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+RESULT [Stalwart] PASS create: the server's copy fingerprints as what was sent: ok
+RESULT [Stalwart] change: sent, not stored: ATTENDEE;CN=Asked;SCHEDULE-FORCE-SEND=REQUEST;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+RESULT [Stalwart] change: stored, not sent: ATTENDEE;CN=Asked;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:asked@example.net
+RESULT [Stalwart] PASS change: the server's copy fingerprints as what was sent: ok

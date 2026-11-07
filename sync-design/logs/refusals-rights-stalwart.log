@@ -1,0 +1,132 @@
+
+===== calendars =====
+>>> Calendar/get {"ids": null}
+<<< Calendar/get {"accountId": "b", "state": "sai", "list": [{"id": "b", "name": "Stalwart Calendar (testuser@example.org)", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": true, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "c", "name": "refusals", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}], "notFound": []}
+
+===== share to read =====
+>>> Calendar/set {"update": {"b": {"shareWith/c": {"mayReadItems": true, "mayReadFreeBusy": true}}}}
+<<< Calendar/set {"accountId": "b", "oldState": "sai", "newState": "saq", "updated": {"b": null}}
+
+===== owner PUT =====
+>>> PUT /dav/cal/testuser%40example.org/default/shared.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:shared-c66d278b-ea72-4f9c-b5ed-255ea1e0bc47
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:one
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< etag: "4199079792"
+
+===== reader GET =====
+>>> GET /dav/cal/testuser%40example.org/default/shared.ics
+<<< 200 OK
+<<< content-type: text/calendar; charset=utf-8
+<<< etag: "4199079792"
+<<< BEGIN:VCALENDAR
+
+<<< VERSION:2.0
+
+<<< PRODID:-//calendaring-sync evidence//EN
+
+<<< BEGIN:VEVENT
+
+<<< UID:shared-c66d278b-ea72-4f9c-b5ed-255ea1e0bc47
+
+<<< DTSTAMP:20261010T000000Z
+
+<<< DTSTART:20261020T100000Z
+
+<<< DTEND:20261020T110000Z
+
+<<< SUMMARY:one
+
+<<< END:VEVENT
+
+<<< END:VCALENDAR
+
+===== reader change =====
+>>> PUT /dav/cal/testuser%40example.org/default/shared.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-Match: "4199079792"
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:shared-c66d278b-ea72-4f9c-b5ed-255ea1e0bc47
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:mine
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+
+===== reader create =====
+>>> PUT /dav/cal/testuser%40example.org/default/mine.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:mine-506feb4e-4031-40dc-8268-9469d90ddf83
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:mine
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+
+===== reader delete =====
+>>> DELETE /dav/cal/testuser%40example.org/default/shared.ics
+>>> If-Match: "4199079792"
+<<< 403 Forbidden
+
+RESULT [Stalwart] reader GET: 200
+RESULT [Stalwart] reader change: 403
+RESULT [Stalwart] reader create: 403
+RESULT [Stalwart] reader delete: 403

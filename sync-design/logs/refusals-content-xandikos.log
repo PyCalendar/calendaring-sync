@@ -1,0 +1,72 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /user/calendars/refusals/
+<<< 404 Not Found
+<<< Content-Type: application/octet-stream
+<<< Path /user/calendars/refusals/ not found.
+
+===== MKCALENDAR for events only =====
+>>> MKCALENDAR /user/calendars/refusals/
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><C:mkcalendar xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><D:set><D:prop><C:supported-calendar-component-set><C:comp name="VEVENT"/></C:supported-calendar-component-set></D:prop></D:set></C:mkcalendar>
+<<< 201 Created
+<<< Content-Type: text/xml; charset="utf-8"
+<<< <ns0:mkcalendar-response xmlns:ns0="urn:ietf:params:xml:ns:carldav:" xmlns:ns1="DAV:" xmlns:ns2="urn:ietf:params:xml:ns:caldav"><ns1:propstat><ns1:status>HTTP/1.1 200 OK</ns1:status><ns1:prop><ns2:supported-calendar-component-set /></ns1:prop></ns1:propstat></ns0:mkcalendar-response>
+
+===== event without DTSTART =====
+>>> PUT /user/calendars/refusals/nostart.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:nostart-82020a35-1757-43cd-84aa-70e0698dc29d
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> SUMMARY:no start
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< ETag: "c3f4c5f8d8069e5f3588bfd05307d05e2c1755cd"
+<<< Content-Type: application/octet-stream
+
+===== task in a calendar for events =====
+>>> PUT /user/calendars/refusals/task.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VTODO
+
+>>> UID:task-b699985c-6ba7-4229-bac5-a09944dd5cdd
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> SUMMARY:a task
+
+>>> END:VTODO
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+<<< Content-Type: text/xml; encoding="utf-8"
+<<< <ns0:error xmlns:ns0="DAV:" xmlns:ns1="urn:ietf:params:xml:ns:caldav"><ns1:supported-calendar-component /><ns0:responsedescription>This calendar does not accept VTODO components.</ns0:responsedescription></ns0:error>
+
+RESULT [Xandikos] MKCALENDAR for events only: 201
+RESULT [Xandikos] event without DTSTART: 201
+RESULT [Xandikos] task in a calendar for events: 403 ['supported-calendar-component']

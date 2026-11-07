@@ -1,0 +1,83 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /dav/calendars/user/user1/refusals/
+<<< 404 Not Found
+<<< Content-Type: text/html; charset=utf-8
+<<< <!DOCTYPE html>
+<<< <html style='color-scheme:dark light'>
+<<<   <head>
+<<<     <title>404 Not Found</title>
+<<<   </head>
+<<<   <body>
+<<<     <h1>Not Found</h1>
+<<<     <p>Mailbox does not exist</p>
+<<<     <hr>
+<<<     <address>Cyrus-HTTP/3.13.8-115-gb2ee17d30 Cyrus-SASL/2.1.28 LibXML/2.9.14 Jansson/2.14 OpenSSL/3.0.22 Nghttp2/1.52.0 Wslay/1.0.1-DEV Zlib/1.2.13 Xapian/2.1.0 LibiCal/4.0 ICU4C/78.2 SQLite/3.40.1 Server at localhost Port 8802</address>
+<<<   </body>
+<<< </html>
+
+===== MKCALENDAR for events only =====
+>>> MKCALENDAR /dav/calendars/user/user1/refusals/
+>>> Content-Type: application/xml; charset=utf-8
+>>> <?xml version="1.0" encoding="utf-8"?><C:mkcalendar xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><D:set><D:prop><C:supported-calendar-component-set><C:comp name="VEVENT"/></C:supported-calendar-component-set></D:prop></D:set></C:mkcalendar>
+<<< 201 Created
+
+===== event without DTSTART =====
+>>> PUT /dav/calendars/user/user1/refusals/nostart.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:nostart-250045fa-9524-4109-82a7-47af183adcef
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> SUMMARY:no start
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< ETag: "10417744d128bbaacfdc27b427971be88f4339c3"
+
+===== task in a calendar for events =====
+>>> PUT /dav/calendars/user/user1/refusals/task.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync probes//EN
+
+>>> BEGIN:VTODO
+
+>>> UID:task-44f770f8-9d1e-4f6f-8cef-9cfb38fac67e
+
+>>> DTSTAMP:20261101T100000Z
+
+>>> SUMMARY:a task
+
+>>> END:VTODO
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <D:error xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+<<<   <C:supported-calendar-component/>
+<<< </D:error>
+
+RESULT [Cyrus] MKCALENDAR for events only: 201
+RESULT [Cyrus] event without DTSTART: 201
+RESULT [Cyrus] task in a calendar for events: 403 ['supported-calendar-component']

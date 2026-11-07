@@ -1,0 +1,176 @@
+
+===== reset: DELETE calendar =====
+>>> DELETE /dav/calendars/user/user1/rights/
+<<< 404 Not Found
+<<< Content-Type: text/html; charset=utf-8
+<<< <!DOCTYPE html>
+<<< <html style='color-scheme:dark light'>
+<<<   <head>
+<<<     <title>404 Not Found</title>
+<<<   </head>
+<<<   <body>
+<<<     <h1>Not Found</h1>
+<<<     <p>Mailbox does not exist</p>
+<<<     <hr>
+<<<     <address>Cyrus-HTTP/3.13.8-115-gb2ee17d30 Cyrus-SASL/2.1.28 LibXML/2.9.14 Jansson/2.14 OpenSSL/3.0.22 Nghttp2/1.52.0 Wslay/1.0.1-DEV Zlib/1.2.13 Xapian/2.1.0 LibiCal/4.0 ICU4C/78.2 SQLite/3.40.1 Server at localhost Port 8802</address>
+<<<   </body>
+<<< </html>
+
+===== reset: MKCALENDAR =====
+>>> MKCALENDAR /dav/calendars/user/user1/rights/
+<<< 201 Created
+
+===== owner PUT =====
+>>> PUT /dav/calendars/user/user1/rights/shared.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:shared-0de3e7b2-c647-4e38-9501-c351a5564bb9
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:one
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 201 Created
+<<< ETag: "dc4424a7ac49c5964bb0d615257aaf3488f93915"
+
+===== reader GET =====
+>>> GET /dav/calendars/user/user1/rights/shared.ics
+<<< 403 Forbidden
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <D:error xmlns:D="DAV:">
+<<<   <D:need-privileges>
+<<<     <D:resource>
+<<<       <D:href>/dav/calendars/user/user2/user1.rights/shared.ics</D:href>
+<<<       <D:privilege>
+<<<         <D:read/>
+<<<       </D:privilege>
+<<<     </D:resource>
+<<<   </D:need-privileges>
+<<< </D:error>
+
+===== reader change =====
+>>> PUT /dav/calendars/user/user1/rights/shared.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-Match: "dc4424a7ac49c5964bb0d615257aaf3488f93915"
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:shared-0de3e7b2-c647-4e38-9501-c351a5564bb9
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:mine
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <D:error xmlns:D="DAV:" xmlns:CY="http://cyrusimap.org/ns/">
+<<<   <D:need-privileges>
+<<<     <D:resource>
+<<<       <D:href>/dav/calendars/user/user2/user1.rights/shared.ics</D:href>
+<<<       <D:privilege>
+<<<         <CY:write-properties-resource/>
+<<<       </D:privilege>
+<<<       <D:privilege>
+<<<         <D:write-content/>
+<<<       </D:privilege>
+<<<     </D:resource>
+<<<   </D:need-privileges>
+<<< </D:error>
+
+===== reader create =====
+>>> PUT /dav/calendars/user/user1/rights/mine.ics
+>>> Content-Type: text/calendar; charset=utf-8
+>>> If-None-Match: *
+>>> BEGIN:VCALENDAR
+
+>>> VERSION:2.0
+
+>>> PRODID:-//calendaring-sync evidence//EN
+
+>>> BEGIN:VEVENT
+
+>>> UID:mine-f6d9704f-8ab9-457b-a30a-8ff591c8a96e
+
+>>> DTSTAMP:20261010T000000Z
+
+>>> DTSTART:20261020T100000Z
+
+>>> DTEND:20261020T110000Z
+
+>>> SUMMARY:mine
+
+>>> END:VEVENT
+
+>>> END:VCALENDAR
+
+>>> 
+<<< 403 Forbidden
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <D:error xmlns:D="DAV:" xmlns:CY="http://cyrusimap.org/ns/">
+<<<   <D:need-privileges>
+<<<     <D:resource>
+<<<       <D:href>/dav/calendars/user/user2/user1.rights/mine.ics</D:href>
+<<<       <D:privilege>
+<<<         <CY:write-properties-resource/>
+<<<       </D:privilege>
+<<<       <D:privilege>
+<<<         <D:write-content/>
+<<<       </D:privilege>
+<<<     </D:resource>
+<<<   </D:need-privileges>
+<<< </D:error>
+
+===== reader delete =====
+>>> DELETE /dav/calendars/user/user1/rights/shared.ics
+>>> If-Match: "dc4424a7ac49c5964bb0d615257aaf3488f93915"
+<<< 403 Forbidden
+<<< Content-Type: application/xml; charset=utf-8
+<<< <?xml version="1.0" encoding="utf-8"?>
+<<< <D:error xmlns:D="DAV:" xmlns:CY="http://cyrusimap.org/ns/">
+<<<   <D:need-privileges>
+<<<     <D:resource>
+<<<       <D:href>/dav/calendars/user/user2/user1.rights/shared.ics</D:href>
+<<<       <D:privilege>
+<<<         <CY:remove-resource/>
+<<<       </D:privilege>
+<<<     </D:resource>
+<<<   </D:need-privileges>
+<<< </D:error>
+
+RESULT [Cyrus] reader GET: 403
+RESULT [Cyrus] reader change: 403 ['write-properties-resource', 'write-content']
+RESULT [Cyrus] reader create: 403 ['write-properties-resource', 'write-content']
+RESULT [Cyrus] reader delete: 403 ['remove-resource']
