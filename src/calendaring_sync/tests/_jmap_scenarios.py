@@ -85,6 +85,9 @@ class Server:
     needs_version: bool = False
     #: Whether it keeps an event in two calendars.
     keeps_two_calendars: bool = False
+    #: A second user of its fixture, whom the first can share a calendar
+    #: with; ``None`` where the fixture has none.
+    reader: Login | None = None
 
 
 SERVERS = by_name(
@@ -102,6 +105,7 @@ SERVERS = by_name(
         instances_share_uid=False,
         checks_passwords=True,
         keeps_two_calendars=True,
+        reader=(f"http://localhost:8809{SESSION_PATH}", "reader@example.org", "readerpw"),
     ),
 )
 
@@ -362,6 +366,27 @@ def adapter_class(asynchronous: bool) -> type[JMAPAdapter] | type[AsyncJMAPAdapt
     return AsyncJMAPAdapter if asynchronous else JMAPAdapter
 
 
+def adapter_for(
+    replica: Replica,
+    login: Login,
+    account: str,
+    tape: Tape,
+    *,
+    asynchronous: bool,
+    **options: Any,
+) -> tuple[Any, Callable[[], Any]]:
+    """An adapter of ``replica`` on ``account``, through a new client logged in as ``login``.
+
+    It comes with how to close that client. The client goes through
+    ``tape``, and ``options`` go to the adapter.
+    """
+    url, username, password = login
+    client = jmap_client(asynchronous, url=url, username=username, password=password)
+    attach(tape, client, asynchronous=asynchronous)
+    adapter = adapter_class(asynchronous)(replica, client, account_id=account, **options)
+    return adapter, client.aclose if asynchronous else client.close
+
+
 def attach(tape: Tape, client: Any, *, asynchronous: bool = False) -> None:
     """Route a calendaring-jmap client's requests through the tape, its session's too."""
     through_tape = tape.session(niquests.Session())
@@ -411,13 +436,11 @@ def environment(
     account = other.get_account_id()
     calendar = other.get_calendars(account_id=account)[0].id
     _clear(other, account)
-    client = jmap_client(asynchronous, url=url, username=username, password=password)
-    attach(tape, client, asynchronous=asynchronous)
     replica = Replica(MemoryStore() if store is None else store)
-    adapter = adapter_class(asynchronous)(replica, client, account_id=account)
+    adapter, close = adapter_for(replica, login, account, tape, asynchronous=asynchronous)
     with stepper(asynchronous) as run_step:
         try:
             yield Env(server, scenario, tape, adapter, run_step, other, account, calendar)
         finally:
-            run_step(client.aclose() if asynchronous else client.close())
+            run_step(close())
             other.close()

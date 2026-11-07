@@ -19,8 +19,10 @@ from calendaring_sync import (
     FeedEntryKind,
     LocalEdit,
     LogicalKeyTaken,
+    NotAllowed,
     OpenConflictError,
     PushInFlightError,
+    PushOutcome,
     RecordState,
     Removed,
     RemovedRecordError,
@@ -43,6 +45,7 @@ from calendaring_sync.tests._helpers import (
     _conflicted,
     _content,
     _create,
+    _edit_locally,
     _feed,
     _in_conflict,
     _insert,
@@ -51,7 +54,6 @@ from calendaring_sync.tests._helpers import (
     _page,
     _pending,
     _push,
-    _refused_create,
     _remote,
     _seeded,
     _seeded_edit,
@@ -61,16 +63,18 @@ from calendaring_sync.tests._helpers import (
 )
 
 
-def _refused_edit(replica: Replica, refused: EditKind) -> int:
-    """Have the server refuse an edit for b's logical key u, at T2 to T3; return its key.
+def _refused_edit(replica: Replica, refused: EditKind, outcome: PushOutcome | None = None) -> int:
+    """Have the server refuse an edit holding the logical key u, at T2 to T3; return its key.
 
-    A create gets the id n, and a change goes to a.
+    It's refused with ``outcome``, by default because b holds u. A create
+    gets the id n, and a change goes to a.
     """
     if refused is EditKind.CREATE:
-        return _refused_create(replica, "b", "T2", "T3")
-    key = _key(replica)
-    _change(replica, key, "fl", logical_key="u")
-    _push(replica, key, LogicalKeyTaken("b"), "T2", "T3")
+        key, _ = _edit_locally(replica, "create", logical_key="u")
+    else:
+        key = _key(replica)
+        _change(replica, key, "fl", logical_key="u")
+    _push(replica, key, LogicalKeyTaken("b") if outcome is None else outcome, "T2", "T3")
     return key
 
 
@@ -260,32 +264,85 @@ class TestConflicts:
 
 
 class TestRefusedEdits:
-    """An edit the server refused because another object holds its key."""
+    """An edit the server refused: another object holds its key, or the server doesn't allow it."""
 
     @pytest.mark.parametrize(
-        "following, expected, feed",
+        "kind, refused, following, expected, feed",
         [
+            *(
+                row
+                for kind in (ConflictKind.LOGICAL_KEY_TAKEN, ConflictKind.NOT_ALLOWED)
+                for row in (
+                    (
+                        kind,
+                        "change",
+                        "fx",
+                        _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED),
+                        [FeedEntryKind.CONFLICT_UPDATED],
+                    ),
+                    (
+                        kind,
+                        "change",
+                        "removed",
+                        _conflicted(EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY),
+                        [FeedEntryKind.CONFLICT_UPDATED],
+                    ),
+                    (kind, "change", "fl", _SYNCED, [FeedEntryKind.CONFLICT_RESOLVED]),
+                    # The synced copy again, at a new version: nothing new, so it stays refused.
+                    (kind, "change", "fa", _conflicted(EditKind.CHANGE, kind), []),
+                )
+            ),
             (
+                ConflictKind.NOT_ALLOWED,
+                "delete",
                 "fx",
-                _conflicted(EditKind.CHANGE, ConflictKind.BOTH_CHANGED),
+                _conflicted(EditKind.DELETE, ConflictKind.DELETED_LOCALLY),
                 [FeedEntryKind.CONFLICT_UPDATED],
             ),
             (
+                ConflictKind.NOT_ALLOWED,
+                "delete",
                 "removed",
-                _conflicted(EditKind.CHANGE, ConflictKind.REMOVED_REMOTELY),
-                [FeedEntryKind.CONFLICT_UPDATED],
+                _REMOVED,
+                [FeedEntryKind.CONFLICT_RESOLVED],
             ),
-            ("fl", _SYNCED, [FeedEntryKind.CONFLICT_RESOLVED]),
+            (
+                ConflictKind.NOT_ALLOWED,
+                "delete",
+                "fa",
+                _conflicted(EditKind.DELETE, ConflictKind.NOT_ALLOWED),
+                [],
+            ),
         ],
     )
-    def test_a_refused_change_meets_the_next_report(self, replica, following, expected, feed):
-        # The refusal holds no copy of the server's object, so any report is news.
-        key = _in_conflict(_seeded(replica), kind=ConflictKind.LOGICAL_KEY_TAKEN, refused="change")
+    def test_a_refused_change_or_delete_meets_the_next_report(
+        self, replica, kind, refused, following, expected, feed
+    ):
+        # The refusal holds no copy of the server's object, so only another
+        # copy than the synced one, or a removal, is news.
+        key = _in_conflict(_seeded(replica), kind=kind, refused=refused)
         # The server still holds the synced copy, so a listing needn't fetch it.
         assert replica.known_versions(_SCOPE)["a"] == replica.record(key).version
         head = replica.feed_head()
         _sync(replica, _page("T2", "T3", {"a": _remote(following, "v3")}))
-        _assert_ended(replica, key, head, expected, feed)
+        record = _assert_ended(replica, key, head, expected, feed)
+        if following == "fa":
+            # Only the version moved, so the next listing doesn't fetch it again.
+            assert record is not None and record.version == "v3"
+
+    def test_a_freed_key_leaves_an_edit_the_server_didnt_allow(self, replica):
+        _sync(_seeded(replica), _page("T1", "T2", {"b": _changed("fb", "v2", logical_key="u")}))
+        # The edit holds the key b frees, which would lift a refusal for that key.
+        key = _refused_edit(replica, EditKind.CHANGE, NotAllowed())
+        head = replica.feed_head()
+        _sync(replica, _page("T3", "T4", {"b": Removed()}))
+        _assert_ended(
+            replica,
+            key,
+            head,
+            _conflicted(EditKind.CHANGE, ConflictKind.NOT_ALLOWED),
+            [FeedEntryKind.REMOVED],
+        )
 
     @pytest.mark.parametrize("refused", [EditKind.CREATE, EditKind.CHANGE])
     @pytest.mark.parametrize(

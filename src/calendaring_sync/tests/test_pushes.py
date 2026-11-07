@@ -30,6 +30,7 @@ from calendaring_sync import (
     LogicalKeyTaken,
     LoneSurrogateError,
     Merge,
+    NotAllowed,
     ObjectIdAssignedError,
     OpenConflictError,
     OtherScopeError,
@@ -57,6 +58,7 @@ from calendaring_sync.tests import _examples
 from calendaring_sync.tests._helpers import (
     _BAD_TEXT,
     _CLASSIFIED,
+    _NOT_ALLOWED,
     _OPENED_BY,
     _OTHER,
     _REMOVED,
@@ -127,6 +129,21 @@ _OUTCOMES = [
         "change",
         LogicalKeyTaken("b"),
         _conflicted(EditKind.CHANGE, ConflictKind.LOGICAL_KEY_TAKEN),
+        [FeedEntryKind.CONFLICT_OPENED],
+    ),
+    *(
+        (
+            local.value,
+            NotAllowed(_NOT_ALLOWED),
+            _conflicted(local, ConflictKind.NOT_ALLOWED),
+            [FeedEntryKind.CONFLICT_OPENED],
+        )
+        for local in EditKind
+    ),
+    (
+        "change",
+        NotAllowed(),
+        _conflicted(EditKind.CHANGE, ConflictKind.NOT_ALLOWED),
         [FeedEntryKind.CONFLICT_OPENED],
     ),
     ("change", Unknown(), (RecordState.IN_FLIGHT, EditKind.CHANGE, None), []),
@@ -209,16 +226,28 @@ _RESOLVED = [
     (ConflictKind.LOGICAL_KEY_TAKEN, "change", _MERGED, _pending(EditKind.CHANGE)),
     (ConflictKind.LOGICAL_KEY_TAKEN, "change", Delete(), _pending(EditKind.DELETE)),
     (ConflictKind.LOGICAL_KEY_TAKEN, "change", UpdateHolder(), _SYNCED),
+    (ConflictKind.NOT_ALLOWED, "create", KeepServer(), None),
+    (ConflictKind.NOT_ALLOWED, "create", KeepLocal(), _pending(EditKind.CREATE)),
+    (ConflictKind.NOT_ALLOWED, "create", _MERGED, _pending(EditKind.CREATE)),
+    (ConflictKind.NOT_ALLOWED, "create", Delete(), None),
+    (ConflictKind.NOT_ALLOWED, "change", KeepServer(), _SYNCED),
+    (ConflictKind.NOT_ALLOWED, "change", KeepLocal(), _pending(EditKind.CHANGE)),
+    (ConflictKind.NOT_ALLOWED, "change", _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.NOT_ALLOWED, "change", Delete(), _pending(EditKind.DELETE)),
+    (ConflictKind.NOT_ALLOWED, "delete", KeepServer(), _SYNCED),
+    (ConflictKind.NOT_ALLOWED, "delete", KeepLocal(), _pending(EditKind.DELETE)),
+    (ConflictKind.NOT_ALLOWED, "delete", _MERGED, _pending(EditKind.CHANGE)),
+    (ConflictKind.NOT_ALLOWED, "delete", Delete(), _pending(EditKind.DELETE)),
 ]
 
 
-def _first_push_rejected(replica: Replica, guard_covers_scope: bool) -> Any:
-    """The docs' example adapter, its first push rejected and every later one applied."""
+def _first_push_refused(replica: Replica, guard_covers_scope: bool, first: PushOutcome) -> Any:
+    """The docs' example adapter, its first push ending ``first`` and every later one applied."""
     memory = _examples.load("memory_adapter")
     # Loaded from its file, so a type checker can't see its classes.
     example: Any = memory.MemoryAdapter
 
-    class FirstPushRejected(example):
+    class FirstPushRefused(example):
         def __init__(self) -> None:
             server = memory.MemoryServer()
             server.put("a", b"a", if_version=None)
@@ -230,10 +259,10 @@ def _first_push_rejected(replica: Replica, guard_covers_scope: bool) -> Any:
             self.sent.append(claimed.local_key)
             if len(self.sent) == 1:
                 yield from ()
-                return Rejected()
+                return first
             return (yield from super()._send(claimed))
 
-    return FirstPushRejected()
+    return FirstPushRefused()
 
 
 class TestPushes:
@@ -261,6 +290,8 @@ class TestPushes:
             )
         if isinstance(outcome, LogicalKeyTaken):
             assert record.conflict is not None and record.conflict.holder == outcome.holder
+        if isinstance(outcome, NotAllowed):
+            assert record.conflict is not None and record.conflict.reason == outcome.reason
 
     def test_a_guarded_push_waits_for_a_version(self, replica):
         _seeded(replica)
@@ -333,21 +364,29 @@ class TestPushes:
         declared = (flow._guarded_by_version, flow._unique_logical_key, flow._guard_covers_scope)
         assert declared == (guarded_by_version, unique_logical_key, guard_covers_scope)
 
-    @pytest.mark.parametrize("covers_scope", [True, False], ids=["scope", "object"])
+    @pytest.mark.parametrize(
+        "covers_scope, first, stops",
+        [
+            pytest.param(True, Rejected(), True, id="rejected, scope"),
+            pytest.param(False, Rejected(), False, id="rejected, object"),
+            # A refusal of one edit says nothing about the others.
+            pytest.param(True, NotAllowed(_NOT_ALLOWED), False, id="not allowed, scope"),
+        ],
+    )
     def test_a_rejected_push_stops_the_rest_where_the_check_covers_the_scope(
-        self, replica, covers_scope
+        self, replica, covers_scope, first, stops
     ):
-        flow = _first_push_rejected(replica, covers_scope)
+        flow = _first_push_refused(replica, covers_scope, first)
         flow.sync()
         changed = _key(replica)
         flow.change(changed, b"fl")
         created = flow.create(b"fn")
         flow.sync()
         # Where the check covers the scope, the create would be rejected too, so it waits unsent.
-        assert flow.sent == ([changed] if covers_scope else [changed, created])
+        assert flow.sent == ([changed] if stops else [changed, created])
         later = replica.record(created)
         assert later is not None
-        assert later.state is (RecordState.PENDING if covers_scope else RecordState.SYNCED)
+        assert later.state is (RecordState.PENDING if stops else RecordState.SYNCED)
 
     @pytest.mark.parametrize(
         "changes, expected",
@@ -582,11 +621,10 @@ class TestResolutions:
         before = replica.record(key)
         conflict = before.conflict
         # The server's copy: what its side of the conflict holds, or, for a
-        # change it refused, the synced copy it kept.
-        refused_change = kind is ConflictKind.LOGICAL_KEY_TAKEN and refused == "change"
+        # change or delete it refused, the synced copy it kept.
         server = (
             (before.version, before.content)
-            if refused_change
+            if before.is_refused_existing
             else (conflict.remote_version, conflict.remote_content)
         )
         head = replica.feed_head()
@@ -653,7 +691,10 @@ class TestResolutions:
     @pytest.mark.parametrize(
         "kind, resolution, message",
         [
-            *((kind, UpdateHolder(), "^Only an edit refused") for kind in _OPENED_BY),
+            *(
+                (kind, UpdateHolder(), "^Only an edit refused")
+                for kind in [*_OPENED_BY, ConflictKind.NOT_ALLOWED]
+            ),
             (ConflictKind.LOGICAL_KEY_TAKEN, KeepLocal(), "can't be pushed again unchanged$"),
             (None, KeepServer(), "takes a record in conflict$"),
         ],

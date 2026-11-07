@@ -37,7 +37,14 @@ from calendaring_sync.adapters.base import (
 from calendaring_sync.objects.change import Change, Changed, Removed
 from calendaring_sync.objects.change_set import ChangeSet
 from calendaring_sync.objects.edit import EditFields, EditKind, LocalEdit
-from calendaring_sync.objects.push import Applied, Gone, LogicalKeyTaken, PushOutcome, Rejected
+from calendaring_sync.objects.push import (
+    Applied,
+    Gone,
+    LogicalKeyTaken,
+    NotAllowed,
+    PushOutcome,
+    Rejected,
+)
 from calendaring_sync.objects.record import Record, RecordState
 from calendaring_sync.objects.scope import Scope
 from calendaring_sync.replica import Replica
@@ -140,6 +147,21 @@ _INVALID_PROPERTIES = "invalidProperties"
 # Errors that refuse the state a sync asked from, so the scope is listed again:
 # the RFC's own, and the one a tested server gives for a state it can't read.
 _REFUSED_STATE = frozenset({"cannotCalculateChanges", "invalidArguments"})
+# Errors refusing a write as it was sent, which the same write would get again
+# (RFC 8620 sections 3.6.2 and 5.3, draft-ietf-jmap-calendars-33 section 5.9.2).
+# Others, such as rateLimit and serverFail, may pass, or are a bug, and are raised.
+_NOT_ALLOWED = frozenset(
+    {
+        "forbidden",
+        "accountReadOnly",
+        "overQuota",
+        "tooLarge",
+        "invalidPatch",
+        "invalidProperties",
+        "singleton",
+        "noSupportedScheduleMethods",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -258,20 +280,44 @@ def _content(event: dict[str, Any]) -> bytes:
     return json.dumps(event, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
-def _refusal(kind: EditKind, error: JMAPMethodError) -> PushOutcome | None:
-    """The outcome a server's refusal of a push means, or ``None`` if it's no refusal of one."""
+def _refusal(
+    kind: EditKind, error: JMAPMethodError, *, uid_held: bool = False
+) -> PushOutcome | None:
+    """The outcome a server's refusal of a push means, or ``None`` if it's no refusal of one.
+
+    ``uid_held`` says that another event in one of the edit's calendars
+    holds its uid, for a refusal naming ``calendarIds``.
+    """
     if error.error_type == _STATE_MISMATCH:
         return Rejected()
     if error.error_type == _NOT_FOUND and kind is not EditKind.CREATE:
         return Gone()
-    if _names(error, _UID) and kind is not EditKind.DELETE:
+    taken = _names(error, _UID) or (uid_held and _names(error, _CALENDAR_IDS))
+    if taken and kind is not EditKind.DELETE:
         return LogicalKeyTaken()
+    if error.error_type in _NOT_ALLOWED:
+        # The type and the properties it names are the explanation
+        # calendaring-jmap gives.
+        return NotAllowed(" ".join([error.error_type, *_named(error)]))
     return None
+
+
+def _named(error: JMAPMethodError) -> list[str]:
+    """The properties ``error`` names, or none if the server sent anything but a list of strings.
+
+    RFC 8620 section 5.3 makes them a ``String[]``, but calendaring-jmap
+    passes on whatever the server sent (calendaring-jmap#94), and a string
+    would match any part of it.
+    """
+    names = error.properties
+    if isinstance(names, list) and all(isinstance(name, str) for name in names):
+        return names
+    return []
 
 
 def _names(error: JMAPMethodError, member: str) -> bool:
     """Whether ``error`` refuses an event for ``member`` (``invalidProperties`` naming it)."""
-    return error.error_type == _INVALID_PROPERTIES and member in (error.properties or ())
+    return error.error_type == _INVALID_PROPERTIES and member in _named(error)
 
 
 class _JMAPFlow(Adapter):
@@ -451,14 +497,12 @@ class _JMAPFlow(Adapter):
                 )
                 outcome = Applied()
         except JMAPMethodError as exc:
-            refused = _refusal(edit.kind, exc)
-            if (
-                refused is None
-                and edit.kind is not EditKind.DELETE
+            held = (
+                edit.kind is not EditKind.DELETE
                 and _names(exc, _CALENDAR_IDS)
                 and (yield from self._uid_held(edit, claimed.local_key))
-            ):
-                refused = LogicalKeyTaken()
+            )
+            refused = _refusal(edit.kind, exc, uid_held=held)
             if refused is None:
                 raise
             # A refused write changes nothing, so the state stays where it was.
@@ -492,9 +536,11 @@ class JMAPAdapter(_JMAPFlow, SyncAdapter):
     JSON. A create's must have a ``uid`` and at least one calendar in
     ``calendarIds``, and so must a change to a create not sent yet;
     anything else raises :class:`ValueError`. The server picks a created
-    event's id, and :meth:`waiting` always returns an empty list. A
-    failure calendaring-jmap reports, such as a refused login, reaches you
-    as its
+    event's id, and :meth:`waiting` always returns an empty list. A write
+    the server won't take as it was sent becomes a :term:`conflict` of kind
+    :attr:`~calendaring_sync.objects.conflict.ConflictKind.NOT_ALLOWED`. Any
+    other failure calendaring-jmap reports, such as a refused login,
+    reaches you as its
     :external+calendaring_jmap:py:class:`~calendaring_jmap.error.JMAPError`,
     unchanged.
 

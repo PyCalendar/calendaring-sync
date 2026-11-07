@@ -29,12 +29,19 @@ from caldav.collection import Calendar
 from caldav.davclient import DAVClient
 from caldav.testing import RadicaleServer, XandikosServer
 
-from calendaring_sync import MemoryStore, RecordState, Replica, StateStore
+from calendaring_sync import (
+    FeedEntryKind,
+    KeepServer,
+    MemoryStore,
+    RecordState,
+    Replica,
+    StateStore,
+)
 from calendaring_sync.adapters.caldav import AsyncCalDAVAdapter, CalDAVAdapter
 from calendaring_sync.error import IncompleteListingError, ScopeGoneError
 from calendaring_sync.objects.conflict import ConflictKind
 from calendaring_sync.tests import _scenarios
-from calendaring_sync.tests._content import ics
+from calendaring_sync.tests._content import ICS_START, ics
 from calendaring_sync.tests._scenarios import (
     REPLAY,
     Login,
@@ -76,11 +83,21 @@ class Server:
     #: Whether the server refuses a wrong password; embedded ones and
     #: Cyrus' fixture let anyone in.
     checks_passwords: bool = False
+    #: The account's own calendar address, which a server schedules from.
+    address: str = "user1@example.com"
+    #: Whether the server refuses a task in a calendar made for events only;
+    #: one that stores it refuses an event without a start instead.
+    refuses_tasks: bool = True
 
 
 SERVERS = by_name(
-    Server("radicale", "/user1/", "http://example.invalid/never-issued"),
-    Server("xandikos", "/sometestuser/calendars/", "http://example.invalid/never-issued"),
+    Server("radicale", "/user1/", "http://example.invalid/never-issued", refuses_tasks=False),
+    Server(
+        "xandikos",
+        "/sometestuser/calendars/",
+        "http://example.invalid/never-issued",
+        address="sometestuser@example.com",
+    ),
     Server(
         "cyrus",
         "/dav/calendars/user/user1/",
@@ -93,6 +110,7 @@ SERVERS = by_name(
         "http://example.invalid/never-issued",
         login=("http://localhost:8809", "testuser@example.org", "testcaldav"),
         checks_passwords=True,
+        address="testuser@example.org",
     ),
     # Baïkal takes a well-formed token past its newest as valid, and
     # answers it with no changes; only another form is refused.
@@ -103,6 +121,7 @@ SERVERS = by_name(
         delete_gone_is_404=False,
         login=("http://127.0.0.1:8811", "test", "test"),
         checks_passwords=True,
+        address="test@example.org",
     ),
 )
 _EMBEDDED = {"radicale": RadicaleServer, "xandikos": XandikosServer}
@@ -157,6 +176,10 @@ class Env(_scenarios.Env):
         self._member(uid).delete()
 
 
+# The method and body marker of a delete's push, which has no body.
+_DELETE = ("DELETE", "")
+
+
 def edit_a_changed_behind(env: Env) -> int:
     """:func:`edit_a`, with the second client changing ``a`` right before the push."""
     key = edit_a(env)
@@ -169,10 +192,15 @@ def rejected(env: Env) -> None:
     rejected_then_conflict(env, edit_a_changed_behind(env), ConflictKind.BOTH_CHANGED)
 
 
+def delete_a_removed_behind(env: Env) -> int:
+    """:func:`_scenarios.delete_a_removed_behind`, their delete right before the push."""
+    return _scenarios.delete_a_removed_behind(env, _DELETE)
+
+
 def delete_gone(env: Env) -> None:
     """:func:`_scenarios.delete_gone`; a server that answers 404 has the record removed at once."""
     first = RecordState.REMOVED if env.server.delete_gone_is_404 else RecordState.PENDING
-    _scenarios.delete_gone(env, ("DELETE", ""), first)
+    _scenarios.delete_gone(env, _DELETE, first)
 
 
 def uid_taken(env: Env) -> None:
@@ -223,6 +251,65 @@ def fetch_after_delete(env: Env) -> None:
     assert env.record("a").state is RecordState.REMOVED
 
 
+# The summary of content a server won't store, which marks its push.
+_NOT_STORED = "not stored"
+
+
+def _not_stored(env: Env, name: str) -> bytes:
+    """Content the server won't store in a calendar for events.
+
+    That's a task, or an event without a start where the server stores tasks.
+    """
+    content = env.content(name, _NOT_STORED)
+    if env.server.refuses_tasks:
+        return content.replace(b"VEVENT", b"VTODO")
+    return content.replace(ICS_START.encode(), b"")
+
+
+def not_allowed(env: Env) -> None:
+    """A change and a create the server won't store become conflicts, and aren't sent again."""
+    changed = env.synced("a")
+    env.change(changed, _not_stored(env, "a"))
+    created = env.create(_not_stored(env, "c"))
+    env.sync()
+    for key in (changed, created):
+        conflict = env.at(key).conflict
+        assert conflict is not None and conflict.kind is ConflictKind.NOT_ALLOWED
+        assert conflict.reason
+    env.never("PUT", f"SUMMARY:{_NOT_STORED}", "An edit the server didn't allow went out again")
+    env.sync()
+    assert env.conflict_kind(changed) is env.conflict_kind(created) is ConflictKind.NOT_ALLOWED
+    env.replica.resolve(env.at(changed), KeepServer())
+    env.replica.resolve(env.at(created), KeepServer())
+    assert env.summary("a") == "one"
+    assert env.replica.record(created) is None
+
+
+def own_write_with_attendees(env: Env) -> None:
+    """An event you organize comes back as your own write.
+
+    That holds whatever the server adds to it to schedule it.
+    """
+    env.sync()
+    address = env.server.address
+    people = (
+        f"ORGANIZER:mailto:{address}",
+        f"ATTENDEE;PARTSTAT=ACCEPTED:mailto:{address}",
+        "ATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:someone@example.net",
+    )
+    key = env.create(ics(env.uid("m"), "meeting", *people))
+    head = env.replica.feed_head()
+    # Each push, then the sync that reads the server's copy of it.
+    env.sync()
+    env.sync()
+    env.change(key, ics(env.uid("m"), "meeting moved", *people))
+    env.sync()
+    env.sync()
+    kinds = [entry.kind for entry in env.replica.read_feed(head) if entry.local_key == key]
+    assert kinds == [FeedEntryKind.PUSHED, FeedEntryKind.PUSHED]
+    assert env.at(key).state is RecordState.SYNCED
+
+
 SCENARIOS: dict[str, Callable[[Env], None]] = by_name(
     reading,
     pushing,
@@ -234,6 +321,8 @@ SCENARIOS: dict[str, Callable[[Env], None]] = by_name(
     listing,
     listing_cut_short,
     fetch_after_delete,
+    not_allowed,
+    own_write_with_attendees,
     key="__name__",
 )
 
@@ -247,11 +336,14 @@ RECORDINGS = [
     ("radicale", "invalid_token"),
     ("radicale", "scope_gone"),
     ("radicale", "listing"),
+    ("radicale", "not_allowed"),
     ("xandikos", "reading"),
     ("xandikos", "invalid_token"),
     ("xandikos", "fetch_after_delete"),
     ("cyrus", "reading"),
     ("cyrus", "invalid_token"),
+    ("cyrus", "not_allowed"),
+    ("cyrus", "own_write_with_attendees"),
     ("stalwart", "reading"),
     ("stalwart", "listing_cut_short"),
     ("baikal", "delete_gone"),
@@ -276,6 +368,17 @@ def caldav_client(asynchronous: bool, **settings: Any) -> Any:
 def adapter_class(asynchronous: bool) -> type[CalDAVAdapter] | type[AsyncCalDAVAdapter]:
     """The CalDAV adapter for an asynchronous client, or for a synchronous one."""
     return AsyncCalDAVAdapter if asynchronous else CalDAVAdapter
+
+
+# What every scenario's calendar is made for: events only (RFC 4791 section 5.3.1).
+_EVENTS_ONLY = (
+    '<?xml version="1.0" encoding="utf-8"?>'
+    '<C:mkcalendar xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><D:set><D:prop>'
+    "<C:supported-calendar-component-set>"
+    '<C:comp name="VEVENT"/>'
+    "</C:supported-calendar-component-set>"
+    "</D:prop></D:set></C:mkcalendar>"
+)
 
 
 def calendar_path(server: Server, scenario: str) -> str:
@@ -306,7 +409,7 @@ def environment(
     other = Calendar(client=other_client, url=url)
     # Start from an empty calendar; one left from an earlier recording goes.
     other_client.request(url, "DELETE")
-    other_client.request(url, "MKCALENDAR")
+    other_client.request(url, "MKCALENDAR", _EVENTS_ONLY, {"Content-Type": "application/xml"})
     replica = Replica(MemoryStore() if store is None else store)
     client = caldav_client(asynchronous, url=base_url, username=username, password=password, **auth)
     client.session = tape.session(client.session, asynchronous=asynchronous)

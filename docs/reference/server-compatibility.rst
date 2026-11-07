@@ -13,7 +13,7 @@ Each table lists how the tested servers behave where sync depends on it, and wha
 CalDAV
 ======
 
-The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1 between 2026-10-10 and 2026-10-12. Its integration tests ran against the same five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. They last ran on 2026-10-30, against Radicale 3.9.0, Xandikos 0.4.10, Cyrus 3.13.8, Stalwart 1.0.1 and Baïkal 0.10.1, with python-caldav 3.7.0. Entries marked (tester) come from `caldav-server-tester <https://github.com/python-caldav/caldav-server-tester>`_, which ran these checks against 22 servers in October 2026; python-caldav publishes its results as compatibility hints (`python-caldav/caldav#822 <https://github.com/python-caldav/caldav/pull/822>`_).
+The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.13.7, Stalwart 0.16.21 and Baïkal 0.10.1 between 2026-10-10 and 2026-10-12. Its integration tests ran against the same five on 2026-10-23, with python-caldav 3.6.0 and Xandikos 0.4.10, and the rows they added are marked with that date. They last ran on 2026-11-07, against Radicale 3.9.0, Xandikos 0.4.10, Cyrus 3.13.8, Stalwart 1.0.1 and Baïkal 0.10.1, with python-caldav 3.7.0. Entries marked (tester) come from `caldav-server-tester <https://github.com/python-caldav/caldav-server-tester>`_, which ran these checks against 22 servers in October 2026; python-caldav publishes its results as compatibility hints (`python-caldav/caldav#822 <https://github.com/python-caldav/caldav/pull/822>`_).
 
 .. list-table::
    :header-rows: 1
@@ -76,6 +76,22 @@ The CalDAV adapter was checked against Radicale 3.8.3, Xandikos 0.4.8, Cyrus 3.1
        - Cyrus, Stalwart: store what was sent
        - CCS, Infomaniak: reorder properties; SOGo adds ``CLASS``; Zimbra and Bedework 5 add properties; all return a strong ETag (tester)
      - Never keeps the ETag a write returns; its :term:`fingerprint` ignores the rewrite
+   * - Event with an organizer and attendees, created and changed (:rfc:`6638#section-7.2`, :rfc:`6638#section-7.3`) (2026-11-07)
+     - - Cyrus 3.13.8: adds ``SCHEDULE-STATUS`` to the attendees it schedules (1.1 for one it sent a request to, 3.8 for another user of the server it may not deliver to), and drops ``SCHEDULE-FORCE-SEND``
+       - Baïkal 0.10.1: adds ``SCHEDULE-STATUS`` 1.1 to the attendee marked ``SCHEDULE-FORCE-SEND``, and drops that parameter
+       - Stalwart 1.0.1, Xandikos 0.4.10: drop ``SCHEDULE-FORCE-SEND``
+       - Radicale 3.9.0: stores both as sent
+       - All: keep ``SEQUENCE`` and ``DTSTAMP`` as sent
+     - Its :term:`fingerprint` leaves both parameters out, so your own write isn't news
+   * - Write to a calendar you may only read (:rfc:`3744#section-7.1.1`) (2026-11-07)
+     - - Radicale 3.9.0 (``owner_write`` rights): 403 with a plain-text explanation
+       - Cyrus 3.13.8 (no rights): 403 with ``need-privileges``
+       - Stalwart 1.0.1 (shared to read): 403 with an empty body
+     - A :term:`conflict` the server didn't allow, with the status and explanation as its reason
+   * - Content a calendar made for events won't store (:rfc:`4791#section-5.2.3`) (2026-11-07)
+     - - An event without ``DTSTART``: Radicale 3.9.0 400; Baïkal 0.10.1 415; Xandikos 0.4.10, Cyrus 3.13.8, Stalwart 1.0.1 store it
+       - A task: Xandikos, Cyrus, Stalwart 403 with ``supported-calendar-component``; Baïkal 403; Radicale stores it
+     - A conflict the server didn't allow, as above
    * - Character set of calendar data (:rfc:`5545#section-3.1.4`: UTF-8 by default)
      - - Xandikos: ``text/calendar`` with no charset
        - Others: ``charset=utf-8``
@@ -115,7 +131,7 @@ Conditional writes behaved as :rfc:`9110#section-13.1.1` and :rfc:`9110#section-
 JMAP
 ====
 
-The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2026-10-10 and 2026-10-12. Its integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap before its 2.0.0 release, and the rows they added are marked with that date. They last ran on 2026-11-04, against Cyrus 3.13.8 and Stalwart 1.0.1, with calendaring-jmap 2.0.1.
+The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2026-10-10 and 2026-10-12. Its integration tests ran against Cyrus 3.13.7 and Stalwart 0.16.27 on 2026-10-25, with calendaring-jmap before its 2.0.0 release, and the rows they added are marked with that date. They last ran on 2026-11-07, against Cyrus 3.13.8 and Stalwart 1.0.1, with calendaring-jmap 2.0.1.
 
 .. list-table::
    :header-rows: 1
@@ -163,7 +179,7 @@ The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2
    * - Create without ``version`` (draft-ietf-jmap-calendars-33 section 5.9: the server sets it)
      - - Cyrus: refused with ``invalidProperties``
        - Stalwart: accepted
-     - Include ``version`` in events you create
+     - A :term:`conflict` the server didn't allow; include ``version`` in events you create
    * - Create with a ``uid`` already in the account (draft-ietf-jmap-calendars-33 section 1.4.1)
      - Both: ``invalidProperties`` on ``uid``
      - Stored as a :term:`conflict record`, refused for its UID
@@ -171,7 +187,7 @@ The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2
      - - Cyrus: accepted, as is one with the same ``uid`` and no ``recurrenceId``, which the draft doesn't allow (2026-10-29)
        - Stalwart 1.0.1: in another calendar, accepted; in the same calendar, ``invalidProperties`` on ``calendarIds``, as for a calendar that doesn't exist (2026-10-29)
        - Stalwart 0.16.27: ``invalidProperties`` on ``uid``
-     - Stored as a conflict record where it's refused; a refusal on ``calendarIds`` counts only when another event with that ``uid`` is in one of the event's calendars, and is raised otherwise
+     - Stored as a conflict record where it's refused; a refusal on ``calendarIds`` counts only when another event with that ``uid`` is in one of the event's calendars, and is a conflict the server didn't allow otherwise
    * - Update sending another ``uid`` (2026-10-25)
      - - Both: accepted, and the event keeps its own ``uid``
        - Cyrus: afterwards no longer refuses a create with the ``uid`` that was sent, even once both events are deleted
@@ -179,7 +195,10 @@ The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2
    * - Event in two calendars (``calendarIds`` with two entries) (2026-10-25)
      - - Cyrus: ``invalidProperties`` on ``calendarIds``
        - Stalwart: stored in both
-     - Raises the refusal; the push stays in flight until the next sync settles it
+     - A conflict the server didn't allow, where it's refused
+   * - Write to a calendar shared with you to read (draft-ietf-jmap-calendars-33 section 5.9) (2026-11-07)
+     - Stalwart 1.0.1: ``forbidden`` for each create, update and destroy, the state unchanged; the session marks the account ``isReadOnly``, yet ``/set`` answers per event, not with ``accountReadOnly``
+     - A conflict the server didn't allow, with ``forbidden`` as its reason; the sync's other pushes still go out
    * - Update or destroy of an event that's gone
      - Both: ``notFound``
      - A change becomes a conflict and a delete is done; with ``ifInState``, another client's delete is refused for the moved state first, and the next ingest reports the removal

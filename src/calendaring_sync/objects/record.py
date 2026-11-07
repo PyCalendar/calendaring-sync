@@ -21,6 +21,9 @@ SyncedCopy: TypeAlias = Changed | LocalEdit | Conflict
 
 _T = TypeVar("_T")
 
+# The conflicts that are a refusal of your edit, so they hold no copy of the server's object.
+_REFUSALS = frozenset({ConflictKind.LOGICAL_KEY_TAKEN, ConflictKind.NOT_ALLOWED})
+
 
 class RecordState(StrEnum):
     """The five states a record can be in."""
@@ -192,15 +195,29 @@ class Record:
 
     @property
     def is_refused(self) -> bool:
-        """Whether the server refused this record's create or change for its :term:`logical key`."""
+        """Whether the server refused this record's edit.
+
+        That's an edit :attr:`refused for its logical key
+        <calendaring_sync.objects.record.Record.is_refused_for_key>`, or any
+        edit the server didn't allow. The
+        conflict then holds no copy of the server's object.
+        """
+        return self.conflict is not None and self.conflict.kind in _REFUSALS
+
+    @property
+    def is_refused_for_key(self) -> bool:
+        """Whether the server refused this record's create or change for its :term:`logical key`.
+
+        Another object holds that key, and once it stops holding it, the
+        edit is pending again.
+        """
         return self.conflict is not None and self.conflict.kind is ConflictKind.LOGICAL_KEY_TAKEN
 
     @property
-    def is_refused_change(self) -> bool:
-        """Whether the server refused this record's change for its :term:`logical key`.
+    def is_refused_existing(self) -> bool:
+        """Whether the server refused this record's change or delete of an object it has.
 
-        The server then still holds the synced copy, and the conflict holds
-        no copy of its own.
+        The server then still holds the synced copy.
         """
         return self.is_refused and not self.is_create
 
@@ -209,8 +226,8 @@ class Record:
         """The :term:`version` of the server's copy, ``None`` if the store knows none.
 
         That's the conflict's while the record is in conflict, but the synced
-        one for a change the server refused, and ``None`` once the server
-        removed the object.
+        one for a change or delete the server refused, and ``None`` once the
+        server removed the object.
         """
         return self._on_server(self.version, lambda conflict: conflict.remote_version, None)
 
@@ -240,6 +257,6 @@ class Record:
         """
         if self.state is RecordState.REMOVED:
             return gone
-        if self.conflict is not None and not self.is_refused_change:
+        if self.conflict is not None and not self.is_refused_existing:
             return in_conflict(self.conflict)
         return synced

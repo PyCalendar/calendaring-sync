@@ -53,6 +53,7 @@ _CONFLICT_SIDES: dict[ConflictKind, tuple[frozenset[EditKind], bool]] = {
     ConflictKind.DELETED_LOCALLY: (frozenset({EditKind.DELETE}), True),
     ConflictKind.BOTH_CREATED: (frozenset({EditKind.CREATE}), True),
     ConflictKind.LOGICAL_KEY_TAKEN: (frozenset({EditKind.CREATE, EditKind.CHANGE}), False),
+    ConflictKind.NOT_ALLOWED: (frozenset(EditKind), False),
 }
 
 
@@ -105,9 +106,12 @@ def _check_record(record: Record) -> None:
     if server_has_it == removed:
         need = "needs" if server_has_it else "can't hold"
         raise RecordValueError(f"A {conflict.kind} conflict {need} the server's copy")
-    # Only a refused edit names the object holding its logical key.
+    # Only an edit refused for its logical key names the object holding it,
+    # and only one the server didn't allow gives the server's reason.
     if conflict.holder is not None and conflict.kind is not ConflictKind.LOGICAL_KEY_TAKEN:
         raise RecordValueError(f"A {conflict.kind} conflict can't name a holder")
+    if conflict.reason is not None and conflict.kind is not ConflictKind.NOT_ALLOWED:
+        raise RecordValueError(f"A {conflict.kind} conflict can't give a reason")
 
 
 def _check_unique(current: StorageTransaction, record: Record) -> None:

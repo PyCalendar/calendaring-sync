@@ -18,7 +18,7 @@ import threading
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import replace
 from functools import partial
-from typing import Any
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
@@ -26,6 +26,7 @@ from caldav.collection import Calendar
 from caldav.lib import error as dav_error
 
 from calendaring_sync import (
+    Conflict,
     ConflictKind,
     OtherScopeError,
     RecordState,
@@ -55,6 +56,7 @@ from calendaring_sync.tests._caldav_scenarios import (
     adapter_class,
     caldav_client,
     calendar_path,
+    delete_a_removed_behind,
     edit_a_changed_behind,
 )
 from calendaring_sync.tests._helpers import _SCOPE, _WAIT, _assert_adapter_refuses
@@ -367,10 +369,39 @@ class TestFingerprint:
                 "\r\n",
                 id="LAST-MODIFIED",
             ),
+            # A scheduling server adds the status of what it sent to each
+            # attendee, and keeps no request to send (RFC 6638 sections 7.3, 7.2).
+            pytest.param(
+                _with(
+                    "ATTENDEE;CN=Ana;ROLE=CHAIR:mailto:ana@example.org",
+                    "ATTENDEE;CN=Ana;ROLE=CHAIR;SCHEDULE-STATUS=3.8:mailto:ana@example.org",
+                ),
+                "\r\n",
+                id="SCHEDULE-STATUS added",
+            ),
+            pytest.param(
+                _with(
+                    "ATTENDEE;CN=Ana;ROLE=CHAIR:mailto:ana@example.org",
+                    "ATTENDEE;CN=Ana;ROLE=CHAIR;SCHEDULE-FORCE-SEND=REQUEST:mailto:ana@example.org",
+                ),
+                "\r\n",
+                id="SCHEDULE-FORCE-SEND dropped",
+            ),
         ],
     )
     def test_what_a_server_rewrites_keeps_the_fingerprint(self, lines, newline):
         assert _fields(_ical(lines, newline)) == _fields(_ical(_EVENT))
+
+    def test_the_organizers_schedule_status_keeps_the_fingerprint(self):
+        # A server adds it to the organizer of an attendee's reply too (RFC 6638 section 7.3).
+        organizer = "ORGANIZER:mailto:bo@example.org"
+        sent = _with("UID:event-1", "UID:event-1", organizer)
+        stored = _with(
+            "UID:event-1",
+            "UID:event-1",
+            'ORGANIZER;SCHEDULE-STATUS="2.0,2.4":mailto:bo@example.org',
+        )
+        assert _fields(_ical(stored)) == _fields(_ical(sent))
 
     @pytest.mark.parametrize(
         "lines",
@@ -392,6 +423,13 @@ class TestFingerprint:
                 _with("SUMMARY:Planning", "SUMMARY:Planning", "LOCATION:Room 1"), id="property"
             ),
             pytest.param(_with("TZOFFSETTO:+0100", "TZOFFSETTO:+0000"), id="time zone"),
+            pytest.param(
+                _with(
+                    "ATTENDEE;CN=Ana;ROLE=CHAIR:mailto:ana@example.org",
+                    "ATTENDEE;CN=Ana;ROLE=CHAIR;PARTSTAT=ACCEPTED:mailto:ana@example.org",
+                ),
+                id="an attendee's answer",
+            ),
         ],
     )
     def test_an_edit_changes_the_fingerprint(self, lines):
@@ -655,6 +693,44 @@ class TestListing:
         assert env.replica.records(env.adapter.scope_id) == []
 
 
+# Each kind of edit, in the recording whose exchange 9 is its push.
+_REFUSED_EDITS = [
+    ("change", "radicale-rejected", edit_a_changed_behind),
+    ("create", "radicale-pushing", create_c),
+    ("delete", "radicale-delete_gone", delete_a_removed_behind),
+]
+_DAV_ERROR = '<error xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">{}</error>'
+# How tested servers refuse a write they won't take as it was sent, and the
+# reason the adapter reads from each answer.
+_REFUSALS = [
+    (
+        "no rights, as Radicale says it",
+        403,
+        "Access to the requested resource forbidden.",
+        "403: Access to the requested resource forbidden.",
+    ),
+    ("no rights, as Stalwart says it", 403, "", "403"),
+    (
+        "no rights, as Cyrus says it",
+        403,
+        _DAV_ERROR.format("<need-privileges/>"),
+        "403 {DAV:}need-privileges",
+    ),
+    (
+        "a component the calendar doesn't take",
+        403,
+        _DAV_ERROR.format("<C:supported-calendar-component/>"),
+        "403 {urn:ietf:params:xml:ns:caldav}supported-calendar-component",
+    ),
+    ("content the server can't read", 400, "Bad Request", "400: Bad Request"),
+    ("a conflict without a UID", 409, "", "409"),
+    ("a media type the server doesn't take", 415, "", "415"),
+    ("no room left", 507, "", "507"),
+]
+_REFUSAL_ANSWERS = [(what, status, body) for what, status, body, _ in _REFUSALS]
+_REFUSAL_REASONS = {(status, body): reason for _, status, body, reason in _REFUSALS}
+
+
 class TestPushing:
     """Sending pending edits, and how each push ends."""
 
@@ -703,15 +779,60 @@ class TestPushing:
     @pytest.mark.parametrize(
         "recording, edit, status, body, state, conflict, raised",
         [
+            *(
+                pytest.param(
+                    recording,
+                    edit,
+                    status,
+                    body,
+                    RecordState.CONFLICT,
+                    ConflictKind.NOT_ALLOWED,
+                    None,
+                    id=f"{name}, {what}",
+                )
+                for name, recording, edit in _REFUSED_EDITS
+                for what, status, body in _REFUSAL_ANSWERS
+            ),
+            *(
+                pytest.param(
+                    "radicale-rejected",
+                    edit_a_changed_behind,
+                    status,
+                    "",
+                    RecordState.IN_FLIGHT,
+                    None,
+                    raised,
+                    id=f"change, {status} raised",
+                )
+                for status, raised in (
+                    (401, dav_error.AuthorizationError),
+                    (408, dav_error.PutError),
+                    (429, dav_error.DAVError),
+                    (503, dav_error.PutError),
+                )
+            ),
+            *(
+                pytest.param(
+                    "radicale-rejected",
+                    edit_a_changed_behind,
+                    status,
+                    "",
+                    RecordState.CONFLICT,
+                    ConflictKind.REMOVED_REMOTELY,
+                    None,
+                    id=f"change, gone with {status}",
+                )
+                for status in (404, 410)
+            ),
             pytest.param(
-                "radicale-rejected",
-                edit_a_changed_behind,
-                404,
+                "radicale-delete_gone",
+                delete_a_removed_behind,
+                410,
                 "",
-                RecordState.CONFLICT,
-                ConflictKind.REMOVED_REMOTELY,
+                RecordState.REMOVED,
                 None,
-                id="change, gone",
+                None,
+                id="delete, gone with 410",
             ),
             pytest.param(
                 "radicale-rejected",
@@ -759,7 +880,7 @@ class TestPushing:
     def test_how_a_refused_push_ends(
         self, store, asynchronous, recording, edit, status, body, state, conflict, raised
     ):
-        # Exchange 9 is the push, in both recordings.
+        # Exchange 9 is the push, in every recording the table names.
         tape = _tape(recording, keep=10)
         _edit(tape, 9, status=status, body=body)
         with _replaying(tape, store, asynchronous) as env:
@@ -768,6 +889,8 @@ class TestPushing:
                 env.sync()
         record = env.at(key)
         assert (record.state, record.conflict and record.conflict.kind) == (state, conflict)
+        if conflict is ConflictKind.NOT_ALLOWED:
+            assert cast(Conflict, record.conflict).reason == _REFUSAL_REASONS[(status, body)]
         # The session ended, after an error too, so the scope takes another.
         with _session(env.replica, env.adapter.scope_id):
             pass

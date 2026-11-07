@@ -28,6 +28,7 @@ from calendaring_sync import (
     LogicalKeyTaken,
     MemoryStore,
     Merge,
+    NotAllowed,
     RecordState,
     Replica,
     Session,
@@ -113,6 +114,7 @@ class TestPackage:
             ChangeSet,
             Applied,
             LogicalKeyTaken,
+            NotAllowed,
             Merge,
             EditFields,
         } == _CHECKED_WHEN_BUILT

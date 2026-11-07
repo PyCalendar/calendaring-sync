@@ -24,12 +24,12 @@ _Resolved: TypeAlias = tuple[Record | None, LocalEdit | None]
 
 def _on_server(record: Record) -> bool:
     """Whether the server has the object the record's conflict is about."""
-    return cast(Conflict, record.conflict).remote_content is not None or record.is_refused_change
+    return cast(Conflict, record.conflict).remote_content is not None or record.is_refused_existing
 
 
 def _over_server_copy(record: Record, now: datetime) -> Record:
     """The record synced to the server's current copy, so the next push goes out against it."""
-    if record.is_refused_change:
+    if record.is_refused_existing:
         # The server kept the synced copy.
         return replace(record, state=RecordState.SYNCED, edit=None, conflict=None)
     return record.synced_to(cast(Conflict, record.conflict), now)
@@ -64,9 +64,10 @@ class _Resolution(ABC):
 class KeepServer(_Resolution):
     """Keep the :term:`server's copy`, and drop your :term:`local edit`.
 
-    Where the server has the object, the record takes the server's copy.
-    Where it doesn't, because the server removed the object or refused your
-    create, the record is removed, or deleted if the server never had it.
+    Where the server has the object, the record takes the server's copy,
+    which for an edit the server refused is the synced copy. Where it
+    doesn't, because the server removed the object or refused your create,
+    the record is removed, or deleted if the server never had it.
     """
 
     def _resolve(self, record: Record, now: datetime) -> _Resolved:
@@ -80,12 +81,15 @@ class KeepLocal(_Resolution):
     """Push your :term:`local edit` as it is, over the server's current copy.
 
     Where the server removed the object, a change goes out as a create. An
-    edit the server refused because another object holds its
-    :term:`logical key` can't go out unchanged, so this refuses it.
+    edit the server didn't allow goes out again, for when the server would
+    now take it, such as once you may write to the object. An edit the
+    server refused because another object holds its :term:`logical key`
+    can't go out unchanged, so this refuses it; it's pending again by
+    itself once that object stops holding the key.
     """
 
     def _check(self, record: Record) -> None:
-        if record.is_refused:
+        if record.is_refused_for_key:
             raise ValueError("An edit refused for its logical key can't be pushed again unchanged")
 
     def _resolve(self, record: Record, now: datetime) -> _Resolved:
@@ -156,9 +160,9 @@ class Delete(_Resolution):
     """Delete the object, whatever the server's copy holds.
 
     Where the server has the object, the delete goes out over its current
-    copy, and for a change the server refused for its :term:`logical key`,
-    that's the object the change was for. Where the server doesn't have it,
-    the record is removed, or deleted if the server never had it.
+    copy, and for a change or delete the server refused, that's the object
+    the edit was for. Where the server doesn't have it, the record is
+    removed, or deleted if the server never had it.
     """
 
     def _resolve(self, record: Record, now: datetime) -> _Resolved:
@@ -178,7 +182,7 @@ class UpdateHolder(_Resolution):
     """
 
     def _check(self, record: Record) -> None:
-        if not record.is_refused:
+        if not record.is_refused_for_key:
             raise ValueError("Only an edit refused for its logical key goes to the key's holder")
 
     def _resolve(self, record: Record, now: datetime) -> _Resolved:

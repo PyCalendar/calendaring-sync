@@ -180,7 +180,7 @@ Every :term:`record` is in one of five states at a time: synced, pending, in fli
        in_flight --> synced: applied
        in_flight --> removed: delete done
        in_flight --> pending: rejected
-       in_flight --> conflict: gone, or UID taken
+       in_flight --> conflict: gone, UID taken, or not allowed
        conflict --> synced: resolved: server's copy
        conflict --> pending: resolved: push it
        conflict --> removed: resolved: removal
@@ -229,6 +229,9 @@ The table lists every transition with its conditions, including these, which the
      - Refused because another object holds its logical key
      - Conflict
    * - in flight
+     - Not allowed by the server
+     - Conflict
+   * - in flight
      - Unknown, or the process stopped
      - Settled by the next complete ingest
    * - conflict
@@ -239,7 +242,7 @@ The table lists every transition with its conditions, including these, which the
      - Pending again, unless another object in the scope still holds the key
    * - conflict
      - Resolved
-     - Synced, pending, or removed, depending on the resolution; a create the server refused is deleted from the store when you discard it or push it as an update to the object holding its logical key
+     - Synced, pending, or removed, depending on the resolution; a create the server refused is deleted from the store when you keep the server's copy or delete it, or push it as an update to the object holding its logical key
    * - removed
      - Remote change: the server holds an object at that id again
      - Synced with the new content, as the same record
@@ -281,7 +284,7 @@ The core classifies each change by looking only at the :term:`synced copy`, the 
    * - ``CONFLICT``
      - Both sides acted; a conflict record is stored, of one :class:`~calendaring_sync.objects.conflict.ConflictKind`
 
-Later remote changes update the record's :term:`server's copy`. The conflict resolves itself when the server reaches your edit, goes back to the synced copy, or removes an object you deleted too. An edit refused for its logical key goes back to pending once the object holding that key no longer holds it.
+Later remote changes update the record's :term:`server's copy`. The conflict resolves itself when the server reaches your edit, goes back to the synced copy, or removes an object you deleted too. An edit the server refused holds no copy of its own: for a change or a delete, the server's copy is the synced copy, so only another copy, or a removal, is news, and the server reporting the synced copy again leaves the refusal open. An edit refused for its logical key goes back to pending once the object holding that key no longer holds it. One the server didn't allow stays open until you resolve it, since nothing tells the client that the server would take it now, so only you know when sending it again makes sense.
 
 The core stores conflicts instead of raising them: an exception for one object would abort every other change in the sync, and a :term:`resolver` called during a sync would run again on every retry. So you resolve them when you choose, outside any sync, each with a :data:`~calendaring_sync.objects.resolution.Resolution`: one with :meth:`~calendaring_sync.replica.Replica.resolve`, or every open one through your :term:`resolver` with :meth:`~calendaring_sync.replica.Replica.resolve_conflicts`. Anything but the server's copy becomes a pending edit over the server's current copy, so its push is checked against the server's current version. :meth:`~calendaring_sync.replica.Replica.resolve` refuses a record whose conflict changed since you read it, so a decision is never applied to news you haven't seen.
 

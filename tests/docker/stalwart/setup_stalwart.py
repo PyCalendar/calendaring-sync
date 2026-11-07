@@ -7,8 +7,9 @@ Waits for Stalwart, then through its admin JMAP API lets weak passwords,
 lifts its rate limits and its bans for failed logins and abuse (the tests
 make many requests quickly, and some log in with a wrong password on
 purpose), reloads its settings so they apply, creates the domain
-``example.org`` and the user ``testuser``, and checks that the user can
-reach the JMAP session. Run by ``start.sh``; it needs nothing beyond
+``example.org``, the user ``testuser`` and a second user ``reader`` that
+``testuser`` can share calendars with, and checks that both can reach the
+JMAP session. Run by ``start.sh``; it needs nothing beyond
 Python's standard library. The integration tests load it to change
 Stalwart's settings through :func:`admin`, :func:`set_singleton` and
 :func:`reload_settings`.
@@ -31,6 +32,8 @@ ADMIN = ("admin", "adminpass")
 ADMIN_ACCOUNT = "d333333"
 DOMAIN = "example.org"
 USER = ("testuser", "testcaldav")
+# A second user, for calendars the first shares with it to read only.
+READER = ("reader", "readerpw")
 # How long to wait for Stalwart, and for the new user to reach JMAP, in seconds.
 WAIT = 60
 # Stalwart's limits on requests, and on failed logins and abuse before a ban, lifted.
@@ -121,20 +124,21 @@ def main() -> None:
     set_singleton("x:Security/set", {"authBanRate": UNLIMITED, "abuseBanRate": UNLIMITED})
     reload_settings()
     domain = _created_or_found("x:Domain/set", {"name": DOMAIN}, "name")
+    for user, password in (USER, READER):
+        _created_or_found(
+            "x:Account/set",
+            {
+                "@type": "User",
+                "name": user,
+                "domainId": domain,
+                "credentials": {"0": {"@type": "Password", "secret": password}},
+            },
+            "name",
+        )
+        session = _wait_for_session(_login(f"{user}@{DOMAIN}", password))
+        if "urn:ietf:params:jmap:calendars" not in session.get("capabilities", {}):
+            raise SystemExit(f"{user}@{DOMAIN} has no JMAP calendars: {session}")
     user, password = USER
-    _created_or_found(
-        "x:Account/set",
-        {
-            "@type": "User",
-            "name": user,
-            "domainId": domain,
-            "credentials": {"0": {"@type": "Password", "secret": password}},
-        },
-        "name",
-    )
-    session = _wait_for_session(_login(f"{user}@{DOMAIN}", password))
-    if "urn:ietf:params:jmap:calendars" not in session.get("capabilities", {}):
-        raise SystemExit(f"{user}@{DOMAIN} has no JMAP calendars: {session}")
     print(f"Stalwart is ready: {user}@{DOMAIN} / {password} at {SESSION}")
 
 

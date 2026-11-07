@@ -411,7 +411,7 @@ class Replica:
             record = _claimed_create(change, claimed)
         in_flight = record is not None and record.state is RecordState.IN_FLIGHT
         live = _live(record)
-        if live is not None and self._refresh_conflict(live, change):
+        if live is not None and self._refresh_conflict(live, change, now):
             return
         edit = None if live is None else live.edit
         synced = live if live is not None and live.content is not None else None
@@ -433,15 +433,21 @@ class Replica:
             ):
                 self._keep_edit(live, change, now, was_conflict=was_conflict, in_flight=in_flight)
 
-    def _refresh_conflict(self, live: Record, change: Changed | Removed) -> bool:
+    def _refresh_conflict(self, live: Record, change: Changed | Removed, now: datetime) -> bool:
         """Keep a conflict open when the server reports nothing new; say whether it did.
 
-        A refused change holds no copy of the server's object, so whatever
-        the server reports about it is news, a removal included. A report
-        of the same data only moves the server copy's version.
+        A report of the same data as the server's copy only moves that
+        copy's version. For a change or delete the server refused, the
+        server's copy is the synced copy, so a removal or other data is
+        news, and the same data leaves the refusal as it is.
         """
-        if live.conflict is None or live.is_refused_change:
+        if live.conflict is None:
             return False
+        if live.is_refused_existing:
+            if not (isinstance(change, Changed) and same_data(change, live)):
+                return False
+            self._store.update_record(live.with_copy(change, now))
+            return True
         if not same_remote(live.conflict, change):
             return False
         if isinstance(change, Changed):
@@ -547,7 +553,7 @@ class Replica:
             return
         for record in self._store.scope_records(scope_id, states=_CONFLICT):
             key = record.edit.logical_key if record.edit else None
-            if not record.is_refused or key is None or key not in freed:
+            if not record.is_refused_for_key or key is None or key not in freed:
                 continue
             holders = [
                 other

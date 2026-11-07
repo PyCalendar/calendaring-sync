@@ -15,4 +15,4 @@ Every error calendaring-sync raises on purpose derives from :class:`~calendaring
    :start-after: # start: sync
    :end-before: # end: sync
 
-The client library's own errors, such as a refused login, reach you unchanged. Each adapter's class description names them.
+Errors from the client library, such as a refused login, reach you unchanged, and each adapter's class description names them. A server refusing one edit isn't among them: that edit becomes a :term:`conflict`, as :doc:`conflicts` explains.

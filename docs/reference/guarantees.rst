@@ -33,6 +33,8 @@ Guarantees
      - :ref:`design-server-answer`
    * - An object the server removed while you edited it is always a :term:`conflict`, never resolved for you.
      - :ref:`design-conflicts`
+   * - An edit the server won't take as it was sent becomes a :term:`conflict`, so it never stops a sync, or the edits after it, and isn't sent again until you resolve it.
+     - :ref:`design-conflicts`
    * - A conflict that changed since you read it can't be resolved, so a decision never applies to changes you haven't seen.
      - :ref:`design-conflicts`
    * - A server's copy of your own write isn't reported as a change, however the server rewrote it.

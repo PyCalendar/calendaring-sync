@@ -28,9 +28,9 @@ from typing import Any
 from unittest import mock
 
 import pytest
-from calendaring_jmap import JMAPAuthError, JMAPClient, JMAPMethodError
+from calendaring_jmap import JMAPAuthError, JMAPClient
 
-from calendaring_sync import RecordState
+from calendaring_sync import ConflictKind, MemoryStore, Record, RecordState, Replica
 from calendaring_sync.adapters import jmap as adapter_module
 from calendaring_sync.adapters.jmap import PAGE_SIZE
 from calendaring_sync.tests import _examples
@@ -84,15 +84,11 @@ def live(request: pytest.FixtureRequest) -> tuple[Server, Login]:
 _env = partial(live_environment, scenarios)
 
 
-@contextmanager
-def _refused_if(refused: bool, error_type: str) -> Iterator[None]:
-    """Expect the block to raise the server's ``error_type`` when ``refused``, and nothing else."""
-    if not refused:
-        yield
-        return
-    with pytest.raises(JMAPMethodError) as caught:
-        yield
-    assert caught.value.error_type == error_type
+def _assert_not_allowed(record: Record | None, reason: str) -> None:
+    """Check the record's edit is a conflict the server didn't allow, with ``reason``."""
+    conflict = None if record is None else record.conflict
+    assert conflict is not None
+    assert (conflict.kind, conflict.reason) == (ConflictKind.NOT_ALLOWED, reason)
 
 
 def _calls(env: Env, method: str, after: int = 0) -> list[Exchange]:
@@ -212,8 +208,7 @@ class TestServers:
                 env.sync()
                 both = {env.calendar: True, second: True}
                 key = env.create(env.content("a", "one", calendarIds=both))
-                with _refused_if(not server.keeps_two_calendars, "invalidProperties"):
-                    env.sync()
+                env.sync()
                 if server.keeps_two_calendars:
                     # The next sync stores the server's copy, which keeps both.
                     env.sync()
@@ -223,11 +218,40 @@ class TestServers:
                         frozenset(both),
                     )
                 else:
-                    assert env.at(key).state is RecordState.IN_FLIGHT
+                    _assert_not_allowed(env.at(key), "invalidProperties calendarIds")
             finally:
                 env.other.delete_calendar(
                     second, on_destroy_remove_events=True, account_id=env.account
                 )
+
+    def test_a_write_to_a_calendar_shared_to_read_is_a_conflict(self, live, asynchronous):
+        server, _ = live
+        if server.reader is None:
+            pytest.skip(f"{server.name}'s fixture has no second user to share with")
+        url, username, password = server.reader
+        with _env(live, "read_only", asynchronous) as env:
+            env.put("a", "one")
+            with JMAPClient(url=url, username=username, password=password) as reader_session:
+                reader = reader_session.get_account_id()
+            env.other.share_calendar(
+                env.calendar,
+                reader,
+                {"mayReadItems": True, "mayReadFreeBusy": True},
+                owning_account_id=env.account,
+            )
+            replica = Replica(MemoryStore())
+            adapter, close = scenarios.adapter_for(
+                replica, server.reader, env.account, env.tape, asynchronous=asynchronous
+            )
+            try:
+                env.run(adapter.sync())
+                (record,) = replica.records(adapter.scope_id)
+                content = record.content or b""
+                env.run(adapter.change(record.local_key, content.replace(b'"one"', b'"mine"')))
+                env.run(adapter.sync())
+                _assert_not_allowed(replica.record(record.local_key), "forbidden")
+            finally:
+                env.run(close())
 
     def test_a_create_without_a_version_is_refused_where_needed(self, live, asynchronous):
         server, _ = live
@@ -236,13 +260,16 @@ class TestServers:
             data = event(env.uid("a"), "one", env.calendar)
             del data["version"]
             key = env.create(json.dumps(data).encode())
-            with _refused_if(server.needs_version, "invalidProperties"):
-                env.sync()
-            expected = RecordState.IN_FLIGHT if server.needs_version else RecordState.SYNCED
-            assert env.at(key).state is expected
+            env.sync()
+            if server.needs_version:
+                _assert_not_allowed(env.at(key), "invalidProperties version")
+            else:
+                assert env.at(key).state is RecordState.SYNCED
 
     def test_a_refused_login_is_raised_and_keeps_the_token(self, live, asynchronous):
         def wrong_login(env: Env, url: str, username: str | None) -> tuple[Any, Any]:
+            # Not through the tape, whose session fetch would turn the refusal
+            # into a plain HTTP error before calendaring-jmap could raise its own.
             client = jmap_client(asynchronous, url=url, username=username, password="not it")
             adapter = adapter_class(asynchronous)(
                 env.replica, client, account_id=env.account, scope_id=env.adapter.scope_id

@@ -7,6 +7,9 @@ from __future__ import annotations
 
 from typing import Any
 
+#: The start of every event :func:`ics` builds, one content line.
+ICS_START = "DTSTART:20261101T100000Z\r\n"
+
 
 def ics(uid: str, summary: str, *lines: str) -> bytes:
     """A small event in iCalendar form, with ``lines`` added to its ``VEVENT``."""
@@ -14,7 +17,7 @@ def ics(uid: str, summary: str, *lines: str) -> bytes:
     return (
         "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//calendaring-sync tests//EN\r\n"
         f"BEGIN:VEVENT\r\nUID:{uid}\r\nDTSTAMP:20261001T000000Z\r\n"
-        f"DTSTART:20261101T100000Z\r\nSUMMARY:{summary}\r\n{added}END:VEVENT\r\nEND:VCALENDAR\r\n"
+        f"{ICS_START}SUMMARY:{summary}\r\n{added}END:VEVENT\r\nEND:VCALENDAR\r\n"
     ).encode()
 
 
