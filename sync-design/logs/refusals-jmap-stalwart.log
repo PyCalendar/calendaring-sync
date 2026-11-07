@@ -1,0 +1,33 @@
+
+===== calendars =====
+>>> Calendar/get {"ids": null}
+<<< Calendar/get {"accountId": "b", "state": "saq", "list": [{"id": "b", "name": "Stalwart Calendar (testuser@example.org)", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": true, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {"c": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": false, "mayWriteOwn": false, "mayUpdatePrivate": false, "mayRSVP": false, "mayShare": false, "mayDelete": false, "maySetMetadata": false}}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}, {"id": "c", "name": "refusals", "description": null, "color": null, "sortOrder": 0, "isSubscribed": true, "isVisible": true, "isDefault": false, "includeInAvailability": "all", "defaultAlertsWithTime": {}, "defaultAlertsWithoutTime": {}, "timeZone": null, "shareWith": {}, "myRights": {"mayReadFreeBusy": true, "mayReadItems": true, "mayWriteAll": true, "mayWriteOwn": true, "mayUpdatePrivate": true, "mayRSVP": true, "mayShare": true, "mayDelete": true, "maySetMetadata": true}}], "notFound": []}
+
+===== share to read =====
+>>> Calendar/set {"update": {"b": {"shareWith/c": {"mayReadItems": true, "mayReadFreeBusy": true}}}}
+<<< Calendar/set {"accountId": "b", "oldState": "saq", "newState": "say", "updated": {"b": null}}
+
+===== owner create =====
+>>> CalendarEvent/set {"create": {"e": {"@type": "Event", "uid": "shared-b37f038a-455a-4641-95df-d46d1dde2d13", "title": "one", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sau", "newState": "sa2", "created": {"e": {"id": "d", "created": "2026-11-07T07:13:51Z", "updated": "2026-11-07T07:13:51Z", "isOrigin": true, "version": "2.0", "isDraft": false, "useDefaultAlerts": false, "mayInviteSelf": false, "mayInviteOthers": false, "hideAttendees": false}}}
+
+===== current state =====
+>>> CalendarEvent/get {"ids": []}
+<<< CalendarEvent/get {"accountId": "b", "state": "sa2", "list": [], "notFound": []}
+
+===== reader update =====
+>>> CalendarEvent/set {"ifInState": "sa2", "update": {"d": {"title": "mine"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sa2", "newState": "sa2", "notUpdated": {"d": {"type": "forbidden", "description": "You are not allowed to modify this event."}}}
+
+===== reader create =====
+>>> CalendarEvent/set {"ifInState": "sa2", "create": {"n": {"@type": "Event", "uid": "n-de8441e6-2ce3-44c4-ac90-56e2ed71704d", "title": "one", "calendarIds": {"b": true}, "start": "2026-10-20T10:00:00", "timeZone": "Etc/UTC", "duration": "PT1H"}}}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sa2", "newState": "sa2", "notCreated": {"n": {"type": "forbidden", "description": "You are not allowed to add calendar events to calendar b."}}}
+
+===== reader destroy =====
+>>> CalendarEvent/set {"ifInState": "sa2", "destroy": ["d"]}
+<<< CalendarEvent/set {"accountId": "b", "oldState": "sa2", "newState": "sa2", "notDestroyed": {"d": {"type": "forbidden", "description": "You are not allowed to remove events from calendar b."}}}
+
+RESULT [Stalwart] reader's session marks the owner's account read-only: True
+RESULT [Stalwart] reader update: CalendarEvent/set {"type": "forbidden", "description": "You are not allowed to modify this event."}, state unchanged
+RESULT [Stalwart] reader create: CalendarEvent/set {"type": "forbidden", "description": "You are not allowed to add calendar events to calendar b."}, state unchanged
+RESULT [Stalwart] reader destroy: CalendarEvent/set {"type": "forbidden", "description": "You are not allowed to remove events from calendar b."}, state unchanged

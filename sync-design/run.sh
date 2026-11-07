@@ -7,7 +7,7 @@
 #   PYTHON=/path/to/python CALENDARING_JMAP=/path/to/calendaring-jmap ./run.sh [section...]
 #
 # Sections: radicale xandikos radicale-expiry unsupported cyrus stalwart stalwart-latest baikal
-# model citations. With no arguments, every section runs. Each section starts its own server
+# refusals model citations. With no arguments, every section runs. Each section starts its own server
 # and stops it again, removing container volumes.
 
 set -u
@@ -190,6 +190,48 @@ baikal() {
     docker stop baikal-evidence > /dev/null
 }
 
+refusals() {
+    # Writes a server won't take as sent, and what it adds to an event you organize, on the
+    # servers and versions calendaring-sync's integration tests run: its own fixtures, and
+    # Radicale and Xandikos embedded. Radicale also runs with owner_write rights, for a reader.
+    rm -rf "$DATA/radicale-refusals" "$DATA/radicale-rights" "$DATA/xandikos-refusals" "$DATA/xandikos-refusals-state"
+    "$PY" -m radicale --config "" --auth-type none --rights-type authenticated \
+        --storage-filesystem-folder "$DATA/radicale-refusals" --server-hosts 127.0.0.1:5236 > "$LOGS/server-radicale-refusals.log" 2>&1 &
+    printf "owner:x\nreader:x\n" > "$DATA/htpasswd-rights"
+    "$PY" -m radicale --config "" --auth-type htpasswd --auth-htpasswd-filename "$DATA/htpasswd-rights" \
+        --auth-htpasswd-encryption plain --rights-type owner_write \
+        --storage-filesystem-folder "$DATA/radicale-rights" --server-hosts 127.0.0.1:5237 > "$LOGS/server-radicale-rights.log" 2>&1 &
+    "$PY" -m xandikos.web -d "$DATA/xandikos-refusals" --defaults -l 127.0.0.1 -p 8091 \
+        --state-dir "$DATA/xandikos-refusals-state" > "$LOGS/server-xandikos-refusals.log" 2>&1 &
+    wait_for http://127.0.0.1:5236/
+    wait_for http://127.0.0.1:5237/
+    wait_for http://127.0.0.1:8091/
+    probe refusals-content-radicale.log refusals.py content Radicale http://127.0.0.1:5236 /test/ test test
+    probe refusals-rights-radicale.log refusals.py rights Radicale http://127.0.0.1:5237 /owner/rights/ owner x reader x
+    probe schedule-parameters-radicale.log schedule_parameters.py Radicale http://127.0.0.1:5236 /test/ test test test@example.com
+    probe refusals-content-xandikos.log refusals.py content Xandikos http://127.0.0.1:8091 /user/calendars/ test test
+    probe schedule-parameters-xandikos.log schedule_parameters.py Xandikos http://127.0.0.1:8091 /user/calendars/ test test user@example.com
+    stop_port 5236
+    stop_port 5237
+    stop_port 8091
+    own_fixture start cyrus
+    probe refusals-content-cyrus.log refusals.py content Cyrus http://localhost:8802 /dav/calendars/user/user1/ user1 x
+    probe refusals-rights-cyrus.log refusals.py rights Cyrus http://localhost:8802 /dav/calendars/user/user1/rights/ user1 x user2 x
+    probe schedule-parameters-cyrus.log schedule_parameters.py Cyrus http://localhost:8802 /dav/calendars/user/user1/ user1 x user1@example.com
+    own_fixture stop cyrus
+    user="testuser@example.org"; home="/dav/cal/testuser%40example.org"
+    own_fixture start stalwart
+    probe refusals-content-stalwart.log refusals.py content Stalwart http://localhost:8809 "$home/" "$user" testcaldav
+    probe refusals-rights-stalwart.log refusals.py rights Stalwart http://localhost:8809 "$home/default/" "$user" testcaldav reader@example.org readerpw share
+    probe refusals-jmap-stalwart.log refusals.py jmap Stalwart http://localhost:8809 "$user" testcaldav reader@example.org readerpw
+    probe schedule-parameters-stalwart.log schedule_parameters.py Stalwart http://localhost:8809 "$home/" "$user" testcaldav "$user"
+    own_fixture stop stalwart
+    own_fixture start baikal
+    probe refusals-content-baikal.log refusals.py content Baikal http://127.0.0.1:8811 /dav.php/calendars/test/ test test
+    probe schedule-parameters-baikal.log schedule_parameters.py Baikal http://127.0.0.1:8811 /dav.php/calendars/test/ test test test@example.org
+    own_fixture stop baikal
+}
+
 model() {
     "$PY" -B -E -s "$PROBES/model.py" > "$LOGS/model.log" 2>&1
     echo "model.log: $(tail -1 "$LOGS/model.log")"
@@ -204,7 +246,7 @@ citations() {
 }
 
 sections=("$@")
-[ ${#sections[@]} -eq 0 ] && sections=(radicale xandikos radicale-expiry unsupported cyrus stalwart stalwart-latest baikal model citations)
+[ ${#sections[@]} -eq 0 ] && sections=(radicale xandikos radicale-expiry unsupported cyrus stalwart stalwart-latest baikal refusals model citations)
 for s in "${sections[@]}"; do
     echo "== $s"
     "${s//-/_}"

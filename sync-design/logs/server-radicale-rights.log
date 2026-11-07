@@ -1,0 +1,129 @@
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Logging level set to: 'INFO'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Logging of backtrace is disabled in this loglevel
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Logging level set to: 'INFO'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Loaded default config
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Loaded command line arguments
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Starting Radicale (python=3.14.0 radicale=3.9.0 vobject=0.9.9 passlib=1.9.3 defusedxml=0.7.1 hypercorn=n/a requests=2.34.2 bcrypt=n/a argon2-cffi=n/a pika=1.4.4 ldap=n/a ldap3=n/a pam=n/a) as user=<user> on Windows-11-10.0.26300-SP0
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth type is 'radicale.auth.htpasswd'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth.strip_domain: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth.lc_username: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth.uc_username: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth.urldecode_username: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth.delay: 1.000000 seconds
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth.cache_logins: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth htpasswd file: '<data>\\htpasswd-rights'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth htpasswd file encoding: 'utf-8'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth htpasswd cache: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] auth htpasswd encryption is 'radicale.auth.htpasswd_encryption.plain'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Read content of htpasswd file start: '<data>\\htpasswd-rights'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Read content of htpasswd file done: '<data>\\htpasswd-rights' (entries: 2, duplicates: 0, errors: 0)
+[2026-11-07 12:42:21 +0530] [26444] [INFO] No user groups lookup method is selected
+[2026-11-07 12:42:21 +0530] [26444] [INFO] group type is 'radicale.group.none'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] storage type is 'radicale.storage.multifilesystem'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location: '<data>\\radicale-rights'
+[2026-11-07 12:42:21 +0530] [26444] [WARNING] Storage location: '<data>\\radicale-rights' does not exist, creating now
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location permissions: path='<data>\\radicale-rights' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder: '<data>\\radicale-rights\\collection-root'
+[2026-11-07 12:42:21 +0530] [26444] [WARNING] Storage location subfolder: '<data>\\radicale-rights\\collection-root' does not exist, creating now
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder permissions: path='<data>\\radicale-rights\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder softlink support: True
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder supports unicode: True
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder supports trailing whitespace: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder supports problematic chars: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache subfolder usage for 'item': False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache subfolder usage for 'history': False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache subfolder usage for 'sync-token': False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache use mtime and size for 'item': False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage item mtime resolution test result: 100 ns
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
+[2026-11-07 12:42:21 +0530] [26444] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] rights type is 'radicale.rights.owner_write'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] web type is 'radicale.web.internal'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing type is 'radicale.sharing.none'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] rights type is 'radicale.rights.owner_write'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] storage type is 'radicale.storage.multifilesystem'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location: '<data>\\radicale-rights'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location permissions: path='<data>\\radicale-rights' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder: '<data>\\radicale-rights\\collection-root'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder permissions: path='<data>\\radicale-rights\\collection-root' owner=UNKNOWN(0) group=UNKNOWN(0) mode=40777
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder softlink support: True
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder is collision free: False (case-sensitive=False no-short-filename=False)
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder supports unicode: True
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder supports trailing whitespace: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage location subfolder supports problematic chars: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache subfolder usage for 'item': False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache subfolder usage for 'history': False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache subfolder usage for 'sync-token': False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache use mtime and size for 'item': False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage item mtime resolution test result: 100 ns
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Storage cache using mtime and size for 'item' may be an option in case of performance issues
+[2026-11-07 12:42:21 +0530] [26444] [WARNING] Group collections folder disabled, file system is not case-sensitive: 'GROUPS'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] No user groups lookup method is selected
+[2026-11-07 12:42:21 +0530] [26444] [INFO] group type is 'radicale.group.none'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.collection_by_map  : False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.collection_by_token: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.permit_create_token: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.permit_create_map  : False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.default_permissions_create_token: 'rp'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.default_permissions_create_map  : 'r'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.permit_properties_overlay: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.enforce_properties_overlay: True
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.conversion_bday_summary_template: '[{n:f} {n:g}|{fn}|{nickname}] ({year}) (BDAY)'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.conversion_bday_description_template: 'BDAY={year}-{month}-{day}'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.conversion_bday_alarm_trigger_template: ''
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.conversion_bday_categories: 'Birthday'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.conversion_bday_age_max: 99
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing.database_type: none
+[2026-11-07 12:42:21 +0530] [26444] [INFO] sharing disabled as no feature is enabled
+[2026-11-07 12:42:21 +0530] [26444] [INFO] hook type is 'radicale.hook.none'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] delay_on_error set to: 1.000 seconds
+[2026-11-07 12:42:21 +0530] [26444] [INFO] max_content_length set to: 100000000 bytes (95.4 Mbytes)
+[2026-11-07 12:42:21 +0530] [26444] [INFO] max_resource_size set to: 10000000 bytes (9.5 Mbytes)
+[2026-11-07 12:42:21 +0530] [26444] [INFO] max_vevent_rrule_occurrence set to: 10000
+[2026-11-07 12:42:21 +0530] [26444] [INFO] log bad put request content: False
+[2026-11-07 12:42:21 +0530] [26444] [NOTICE] log request  header  on notice condition: {}
+[2026-11-07 12:42:21 +0530] [26444] [NOTICE] log request  content on notice condition: {}
+[2026-11-07 12:42:21 +0530] [26444] [NOTICE] log response header  on notice condition: {}
+[2026-11-07 12:42:21 +0530] [26444] [NOTICE] log response content on notice condition: {}
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Default script name to strip from URI if called by reverse proxy is taken from HTTP_X_SCRIPT_NAME or SCRIPT_NAME
+[2026-11-07 12:42:21 +0530] [26444] [INFO] permit delete of collection: True
+[2026-11-07 12:42:21 +0530] [26444] [INFO] permit overwrite of collection: True
+[2026-11-07 12:42:21 +0530] [26444] [INFO] strict preconditions check: False
+[2026-11-07 12:42:21 +0530] [26444] [INFO] validate user value: 'minimal'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] validate path value: 'minimal'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] profiling: 'none'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Listening on '127.0.0.1:5237'
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Maximum parallel connections: 8
+[2026-11-07 12:42:21 +0530] [26444] [INFO] Radicale server ready
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  [2026-11-07 12:42:21 +0530] [11768/Thread-10 (process_request_thread)] [INFO] GET request for '/' received from 127.0.0.1 using 'curl/8.4.0' HTTP/1.1
+[2026-11-07 12:42:21 +0530] [11768/Thread-10 (process_request_thread)] [INFO] GET response status for '/' in 0.001 seconds plain 19 bytes: 302 Found
+[2026-11-07 12:42:22 +0530] [11768/Thread-11 (process_request_thread)] [INFO] DELETE request for '/owner/rights/' received from 127.0.0.1 using 'python-requests/2.34.2' HTTP/1.1
+[2026-11-07 12:42:22 +0530] [11768/Thread-11 (process_request_thread)] [INFO] Successful login: 'owner' (htpasswd)
+[2026-11-07 12:42:22 +0530] [11768/Thread-11 (process_request_thread)] [NOTICE] DELETE response status for '/owner/rights/' in 0.006 seconds gzip 62 bytes: 404 Not Found
+[2026-11-07 12:42:22 +0530] [11768/Thread-12 (process_request_thread)] [INFO] MKCALENDAR request for '/owner/rights/' received from 127.0.0.1 using 'python-requests/2.34.2' HTTP/1.1
+[2026-11-07 12:42:22 +0530] [11768/Thread-12 (process_request_thread)] [INFO] Successful login: 'owner' (htpasswd)
+[2026-11-07 12:42:22 +0530] [11768/Thread-12 (process_request_thread)] [NOTICE] MKCALENDAR response status for '/owner/rights/' in 0.015 seconds: 201 Created
+[2026-11-07 12:42:22 +0530] [11768/Thread-13 (process_request_thread)] [INFO] PUT request for '/owner/rights/shared.ics' received from 127.0.0.1 using 'python-requests/2.34.2' HTTP/1.1
+[2026-11-07 12:42:22 +0530] [11768/Thread-13 (process_request_thread)] [INFO] Successful login: 'owner' (htpasswd)
+[2026-11-07 12:42:22 +0530] [11768/Thread-13 (process_request_thread)] [INFO] PUT response status for '/owner/rights/shared.ics' in 0.064 seconds: 201 Created
+[2026-11-07 12:42:22 +0530] [11768/Thread-14 (process_request_thread)] [INFO] PROPFIND request for '/owner/rights/shared.ics' with depth '0' received from 127.0.0.1 using 'python-requests/2.34.2' HTTP/1.1
+[2026-11-07 12:42:22 +0530] [11768/Thread-14 (process_request_thread)] [INFO] Successful login: 'owner' (htpasswd)
+[2026-11-07 12:42:22 +0530] [11768/Thread-14 (process_request_thread)] [INFO] PROPFIND response status for '/owner/rights/shared.ics' with depth '0' in 0.009 seconds gzip 231 bytes (getetag): 207 Multi-Status
+[2026-11-07 12:42:22 +0530] [11768/Thread-15 (process_request_thread)] [INFO] GET request for '/owner/rights/shared.ics' received from 127.0.0.1 using 'python-requests/2.34.2' HTTP/1.1
+[2026-11-07 12:42:22 +0530] [11768/Thread-15 (process_request_thread)] [INFO] Successful login: 'reader' (htpasswd)
+[2026-11-07 12:42:22 +0530] [11768/Thread-15 (process_request_thread)] [INFO] GET response status for '/owner/rights/shared.ics' in 0.006 seconds gzip 203 bytes: 200 OK
+[2026-11-07 12:42:22 +0530] [11768/Thread-16 (process_request_thread)] [INFO] PUT request for '/owner/rights/shared.ics' received from 127.0.0.1 using 'python-requests/2.34.2' HTTP/1.1
+[2026-11-07 12:42:22 +0530] [11768/Thread-16 (process_request_thread)] [INFO] Successful login: 'reader' (htpasswd)
+[2026-11-07 12:42:22 +0530] [11768/Thread-16 (process_request_thread)] [NOTICE] Access to '/owner/rights/shared.ics' denied for 'reader'
+[2026-11-07 12:42:23 +0530] [11768/Thread-16 (process_request_thread)] [INFO] PUT response status for '/owner/rights/shared.ics' in 0.624 seconds gzip 62 bytes: 403 Forbidden
+[2026-11-07 12:42:23 +0530] [11768/Thread-17 (process_request_thread)] [INFO] PUT request for '/owner/rights/mine.ics' received from 127.0.0.1 using 'python-requests/2.34.2' HTTP/1.1
+[2026-11-07 12:42:23 +0530] [11768/Thread-17 (process_request_thread)] [INFO] Successful login: 'reader' (htpasswd)
+[2026-11-07 12:42:23 +0530] [11768/Thread-17 (process_request_thread)] [NOTICE] Access to '/owner/rights/mine.ics' denied for 'reader'
+[2026-11-07 12:42:24 +0530] [11768/Thread-17 (process_request_thread)] [INFO] PUT response status for '/owner/rights/mine.ics' in 1.475 seconds gzip 62 bytes: 403 Forbidden
+[2026-11-07 12:42:24 +0530] [11768/Thread-18 (process_request_thread)] [INFO] DELETE request for '/owner/rights/shared.ics' received from 127.0.0.1 using 'python-requests/2.34.2' HTTP/1.1
+[2026-11-07 12:42:24 +0530] [11768/Thread-18 (process_request_thread)] [INFO] Successful login: 'reader' (htpasswd)
+[2026-11-07 12:42:24 +0530] [11768/Thread-18 (process_request_thread)] [NOTICE] Access to '/owner/rights/shared.ics' denied for 'reader'
+[2026-11-07 12:42:25 +0530] [11768/Thread-18 (process_request_thread)] [INFO] DELETE response status for '/owner/rights/shared.ics' in 0.798 seconds gzip 62 bytes: 403 Forbidden
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     [2026-11-07 18:05:54 +0530] [11768/Thread-19 (process_request_thread)] [INFO] GET request for '/' received from 127.0.0.1 using 'curl/8.4.0' HTTP/1.1
+[2026-11-07 18:05:54 +0530] [11768/Thread-19 (process_request_thread)] [INFO] GET response status for '/' in 0.007 seconds plain 19 bytes: 302 Found
