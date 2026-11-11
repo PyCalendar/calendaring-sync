@@ -33,22 +33,6 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-dev = [
-  "pytest==9.1.1",
-  "ruff==0.17.2",
-  "mypy==2.4.0",
-  "coverage==7.17.0",
-  "pytest-cov==7.1.0",
-  "reuse==6.2.0",
-  "towncrier==26.9.0",
-  "pre-commit==4.7.0",
-  "caldav==3.7.0",
-  "icalendar==7.3.0",
-  "radicale==3.9.0",
-  "xandikos==0.4.10",
-  "calendaring-jmap==2.0.1",
-  "niquests==3.21.2",
-]
 caldav = [
   "caldav>=3.7.0",
   "icalendar>=7.3.0",
@@ -56,22 +40,58 @@ caldav = [
 jmap = [
   "calendaring-jmap>=2.0.1",
 ]
-docs = [
-  "sphinx==9.2.0",
-  "pydata-sphinx-theme==0.23.0",
-  "matplotlib==3.11.2",
-  "sphinx-autobuild==2025.8.25",
-  "sphinx-copybutton==0.5.2",
-  "sphinx-design==0.7.0",
-  "sphinx-issues==6.0.0",
-  "sphinx-last-updated-by-git==0.3.8",
-  "sphinx-llms-txt==0.7.1",
-  "sphinx-notfound-page==1.1.0",
-  "sphinxcontrib-mermaid==2.1.1",
-  "sphinxext-opengraph==0.13.0",
-  "caldav==3.7.0",
-  "calendaring-jmap==2.0.1",
+
+[dependency-groups]
+dev = [
+  {include-group = "test"},
+  {include-group = "docs"},
+  {include-group = "formatting"},
+  {include-group = "checks"},
 ]
+test = [
+  "pytest>=9.2.0",
+  "mypy>=2.4.1",
+  "coverage>=7.17.2",
+  "pytest-cov>=7.1.0",
+  "caldav>=3.7.0",
+  "icalendar>=7.3.0",
+  "radicale>=3.9.0",
+  "xandikos>=0.4.10",
+  "calendaring-jmap>=2.0.1",
+  "niquests>=3.21.2",
+]
+formatting = [
+  "ruff>=0.17.4", # also update .pre-commit-config.yaml
+  "pre-commit>=4.7.0",
+]
+# The licensing and change log tools, which CI checks in jobs of their own.
+checks = [
+  "reuse>=6.3.0", # also update .pre-commit-config.yaml
+  "towncrier>=26.9.0",
+]
+docs = [
+  "sphinx>=9.2.0",
+  "pydata-sphinx-theme>=0.24.0",
+  "matplotlib>=3.11.2",
+  "sphinx-autobuild>=2025.8.25",
+  "sphinx-autodoc-typehints>=3.17.5",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-design>=0.7.0",
+  "sphinx-issues>=6.0.0",
+  "sphinx-last-updated-by-git>=0.3.8",
+  "sphinx-llms-txt>=0.7.1",
+  "sphinx-notfound-page>=1.1.0",
+  "sphinxcontrib-mermaid>=2.1.1",
+  "sphinxext-opengraph>=0.13.0",
+  "vale>=3.26.0.1",
+  "caldav>=3.7.0",
+  "calendaring-jmap>=2.0.1",
+]
+
+[tool.uv.dependency-groups]
+# Sphinx 9.2 needs Python 3.13, so the docs install only from there, and the
+# tests on older versions install the test group alone.
+docs = {requires-python = ">=3.13"}
 
 [project.urls]
 Repository = "https://github.com/PyCalendar/calendaring-sync"

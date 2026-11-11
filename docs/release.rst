@@ -31,7 +31,7 @@ Cut a release
 
    .. code-block:: bash
 
-       towncrier build --yes --version 1.2.0
+       uv run towncrier build --yes --version 1.2.0
 
    This writes the new section into ``docs/changelog.rst`` and deletes the fragments it consumed. Review the diff: towncrier orders the entries in each category by issue number, not in the order the fragments were added.
 
@@ -50,9 +50,20 @@ Cut a release
        git tag v1.2.0
        git push origin v1.2.0
 
-Pushing the tag triggers the ``release`` GitHub Actions workflow: it runs the unit tests and the integration tests against every server, and only if both pass, builds the package, publishes to PyPI through trusted publishing, and creates a GitHub release that links this release's change log on Read the Docs. Nothing past the tag push is manual.
+Pushing the tag triggers the ``release`` GitHub Actions workflow: it runs the unit tests, the integration tests against every server, and the docs build, and only if all of them pass, builds the package, publishes to PyPI through trusted publishing, and creates a GitHub release that links this release's change log on Read the Docs. Nothing past the tag push is manual.
 
 Read the Docs builds the new version from the same tag push.
+
+Dependency maintenance
+======================
+
+Whenever you add or drop a supported Python version, check which dependencies have newer compatible versions with ``uv tree``:
+
+.. code-block:: bash
+
+    uv tree --all-groups --depth=2 --python-version 3.11
+
+Run it once for each supported Python version, from ``requires-python`` in :file:`pyproject.toml` to the newest in the ``python-version`` matrix of :file:`.github/workflows/tests.yml`. ``--depth=2`` shows each direct dependency and its own dependencies, enough to spot an outdated lower bound without the whole tree. Check each adapter's client library first: an adapter tracks its library, so read a new release of one against its change log. After changing a bound, run ``uv lock`` so :file:`uv.lock` follows.
 
 Maintainer access
 =================

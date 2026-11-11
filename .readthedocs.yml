@@ -7,19 +7,24 @@ build:
   os: ubuntu-26.04
   tools:
     python: "3.14"
-  jobs:
-    post_checkout:
-      # sphinx-last-updated-by-git needs full history; RTD's default clone
-      # is shallow (depth 50), so a file untouched longer than that would
-      # otherwise show no last-updated date.
-      - git fetch --unshallow || true
-
-sphinx:
-  configuration: docs/conf.py
-
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
+  commands:
+    # Read the Docs cancels a pull request's build when it exits with 183, so a
+    # pull request that changes nothing the docs render isn't built.
+    - |
+      if [ "$READTHEDOCS_VERSION_TYPE" = "external" ] && git diff --quiet origin/main -- \
+        docs/ \
+        src/calendaring_sync/ \
+        .readthedocs.yml \
+        .python-version \
+        Makefile \
+        pyproject.toml \
+        uv.lock \
+        ':!src/calendaring_sync/tests';
+      then
+        exit 183;
+      fi
+    # sphinx-last-updated-by-git needs full history; RTD's default clone
+    # is shallow (depth 50), so a file untouched longer than that would
+    # otherwise show no last-updated date.
+    - git fetch --unshallow || true
+    - make rtd-pr-preview UV_GROUPS="--no-default-groups --group docs"

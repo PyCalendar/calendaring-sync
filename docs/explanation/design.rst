@@ -10,6 +10,8 @@ Design
 
 calendaring-sync keeps a local copy of the calendar data your application syncs, and remembers how far each sync got. Your application reads and edits that copy, and calendaring-sync works out what to take from the server, what to send back, and where both sides changed the same object. An :term:`adapter` does the talking to the server.
 
+.. vale off
+
 .. mermaid::
 
    flowchart LR
@@ -20,6 +22,8 @@ calendaring-sync keeps a local copy of the calendar data your application syncs,
        adapter[Adapter] -- "change sets, push outcomes" --> replica
        adapter -- requests --> client[Client library]
        client --> server[(Server)]
+
+.. vale on
 
 One sync of one :term:`scope`, such as one calendar, goes like this:
 
@@ -119,6 +123,8 @@ Each :term:`session` ingests every page before it pushes anything. The core refu
 
 A session is ``ingesting`` while pages remain and ``ingested`` once the token is final. A change set that arrives complete takes it straight from ``idle`` to ``ingested``, and an interrupted session continues from the stored token on the next sync:
 
+.. vale off
+
 .. mermaid::
 
    stateDiagram-v2
@@ -135,6 +141,8 @@ A session is ``ingesting`` while pages remain and ``ingested`` once the token is
        pushing --> idle: pushes done
        note right of ingesting: no pushes while pages remain
        note right of pushing: no ingests until it ends
+
+.. vale on
 
 Before a push goes out, the adapter :term:`claims <claim>` it: the core marks it :term:`in flight` in the store, in one step that fails if another process got there first, so two processes can't send the same edit. The adapter then reports how the push ended as a :data:`~calendaring_sync.objects.push.PushOutcome`.
 
@@ -163,6 +171,8 @@ Why an object has five states
 
 Every :term:`record` is in one of five states at a time: synced, pending, in flight, conflict, or removed. The diagram shows the main ways a record moves between them:
 
+.. vale off
+
 .. mermaid::
 
    stateDiagram-v2
@@ -185,6 +195,8 @@ Every :term:`record` is in one of five states at a time: synced, pending, in fli
        conflict --> pending: resolved: push it
        conflict --> removed: resolved: removal
        removed --> [*]: purged
+
+.. vale on
 
 The table lists every transition with its conditions, including these, which the diagram leaves out:
 

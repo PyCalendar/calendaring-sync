@@ -31,17 +31,16 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          python-version: "3.15"
-          pip-version: "26.2.2"
-
-      - name: Install towncrier
-        run: pip install towncrier==26.9.0
+          version: "0.13.7"
+          enable-cache: false
 
       - name: Check for a news fragment
-        run: towncrier check --compare-with origin/${GITHUB_BASE_REF}
+        run: >-
+          make changes-check PYTHONVERSION=3.15 UV_GROUPS="--no-default-groups --group checks"
+          TOWNCRIEROPTS="--compare-with origin/${GITHUB_BASE_REF}"
 
   lint:
     name: Lint with Ruff
@@ -52,74 +51,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          python-version: "3.15"
-          pip-version: "26.2.2"
+          version: "0.13.7"
+          enable-cache: false
 
-      - name: Install ruff
-        run: pip install ruff==0.17.2
-
-      - name: Lint code
-        run: ruff check .
-
-      - name: Check code format
-        run: ruff format --check .
-
-  vale:
-    name: Check docs prose with Vale
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.15"
-          pip-version: "26.2.2"
-
-      - name: Install docutils
-        run: pip install docutils==0.23
-
-      - name: Install Vale
-        run: |
-          curl -sL https://github.com/errata-ai/vale/releases/download/v3.25.1/vale_3.25.1_Linux_64-bit.tar.gz | tar -xz -C /usr/local/bin vale
-
-      - name: Sync Vale styles
-        run: vale sync
-
-      - name: Lint docs
-        run: vale --no-exit docs/
-
-  docs:
-    name: Build docs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          # Read the Docs builds with 3.14, its newest Python.
-          python-version: "3.14"
-          pip-version: "26.2.2"
-
-      - name: Install dependencies
-        run: pip install -e ".[docs]"
-
-      - name: Build docs
-        run: sphinx-build -W -b html docs docs/_build/html
-
-      - name: Check links
-        run: sphinx-build -b linkcheck docs docs/_build/linkcheck
+      - name: Lint and check the format
+        run: make lint PYTHONVERSION=3.15 UV_GROUPS="--no-default-groups --group formatting"
 
   mypy:
     name: Type check with mypy
@@ -130,18 +69,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          python-version: "3.15"
-          pip-version: "26.2.2"
-
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
+          version: "0.13.7"
+          enable-cache: false
 
       - name: Type check
         # Its settings are in pyproject.toml.
-        run: python -m mypy src/calendaring_sync docs/examples tests/docker
+        run: make type-check PYTHONVERSION=3.15 UV_GROUPS="--no-default-groups --group test"
 
   test:
     name: Test on Python ${{ matrix.python-version }}
@@ -161,20 +97,16 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          python-version: ${{ matrix.python-version }}
-          pip-version: "26.2.2"
+          version: "0.13.7"
+          enable-cache: false
 
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
-
-      - name: Run tests
-        run: |
-          pytest --cov --cov-branch --cov-report=xml \
-            --junitxml=junit.xml -o junit_family=legacy \
-            src/calendaring_sync/tests --ignore-glob="*_integration.py"
+      - name: Run tests with coverage
+        run: >-
+          make test-coverage PYTHONVERSION=${{ matrix.python-version }}
+          UV_GROUPS="--no-default-groups --group test"
 
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}

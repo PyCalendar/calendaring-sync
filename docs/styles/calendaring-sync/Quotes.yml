@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 calendaring-sync contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+extends: existence
+message: 'Commas and periods should be inside the quotes, except for single letters.'
+link: https://learn.microsoft.com/en-us/style-guide/punctuation/quotation-marks
+level: error
+nonword: true
+tokens:
+  - '["“][^"”“]{2,}["”][.,]'

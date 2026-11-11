@@ -27,14 +27,15 @@ calendaring-sync follows the Python Calendaring Ecosystem's `AI policy <https://
 Set up
 ======
 
+You need `uv <https://docs.astral.sh/uv/>`_, which installs Python and the dependencies, along with Git and GNU Make. On Windows, run the commands below in Git Bash, and install Make with ``choco install make``. The integration tests also need `Docker Desktop <https://docs.docker.com/get-started/get-docker/>`_.
+
 .. code-block:: bash
 
     git clone https://github.com/PyCalendar/calendaring-sync
     cd calendaring-sync
-    pip install -e ".[dev]"
-    pre-commit install
+    make init
 
-The ``dev`` extra installs every adapter's client library and the test servers that run embedded. To build the docs, also install the ``docs`` extra, which needs Python 3.13 or later.
+``make init`` installs the Python that :file:`.python-version` names, creates :file:`.venv` with every dependency group, and installs the pre-commit hook. After a change to :file:`pyproject.toml`, ``make sync`` installs the groups again. ``make help`` lists every target.
 
 How the code is laid out
 ========================
@@ -69,7 +70,7 @@ Unit tests need no server, network, or Docker. CI runs every test file except th
 
 .. code-block:: bash
 
-    pytest src/calendaring_sync/tests --ignore-glob="*_integration.py"
+    make test-unit
 
 ``test_caldav.py`` and ``test_jmap.py`` replay HTTP exchanges recorded from real servers, kept in ``src/calendaring_sync/tests/data/``.
 
@@ -77,10 +78,9 @@ Integration tests run each adapter, and the docs examples that need a server, ag
 
 .. code-block:: bash
 
-    bash tests/docker/start.sh stalwart cyrus baikal
-    pytest src/calendaring_sync/tests/test_caldav_integration.py src/calendaring_sync/tests/test_jmap_integration.py
+    make test-integration
 
-Radicale and Xandikos run embedded, and ``tests/docker`` holds a fixture for each other server; one that doesn't answer is skipped. ``bash tests/docker/stop.sh stalwart cyrus baikal`` removes them, so the next start is clean. CI runs every server on each pull request that changes code.
+Radicale and Xandikos run embedded, and ``tests/docker`` holds a fixture for each other server, which the target starts; one that doesn't answer is skipped. ``bash tests/docker/stop.sh stalwart cyrus baikal`` removes them, so the next start is clean. CI runs every server on each pull request that changes code.
 
 Write a test
 ------------
@@ -109,8 +109,8 @@ After a client library upgrade, or for a new scenario, record the exchanges agai
 
 .. code-block:: bash
 
-    python -m calendaring_sync.tests.record_caldav SERVER [SCENARIO...]
-    python -m calendaring_sync.tests.record_jmap SERVER [SCENARIO...]
+    uv run python -m calendaring_sync.tests.record_caldav SERVER [SCENARIO...]
+    uv run python -m calendaring_sync.tests.record_jmap SERVER [SCENARIO...]
 
 Each scenario checks what it records, so a recording that doesn't show its behavior fails instead of being saved. The JMAP scenarios delete every event in the account they use, so record them with a test account. A rule no tested server shows on its own is tested by editing one exchange of a recording inside the test.
 
@@ -121,9 +121,9 @@ If your change touches ingesting, local edits, pushes, a store, or a fingerprint
 
 .. code-block:: bash
 
-    python -m calendaring_sync.tests.benchmark
+    make benchmark
 
-It prints the best time of each scenario, each on a fresh store. ``--size`` and ``--runs`` change the scope's size and the number of runs. Explain any slowdown beyond run-to-run noise in your pull request.
+It prints the best time of each scenario, each on a fresh store. ``BENCHMARKOPTS="--size 2000 --runs 5"`` changes the scope's size and the number of runs. Explain any slowdown beyond run-to-run noise in your pull request.
 
 Check your change
 =================
@@ -137,21 +137,21 @@ CI runs every check below on each pull request; run them before you ask for revi
    * - Check
      - Command
    * - Lint and format
-     - ``ruff check .`` and ``ruff format --check .``
+     - ``make lint``, and ``make format`` to fix what it finds
    * - Types
-     - ``mypy src/calendaring_sync docs/examples tests/docker``, with its settings in ``pyproject.toml``
+     - ``make type-check``, with its settings in :file:`pyproject.toml`
    * - Unit tests
-     - The command in :ref:`running-tests`
+     - ``make test-unit``, or ``make test-coverage`` as CI runs it
    * - Docs build
-     - ``sphinx-build -W -b html docs docs/_build/html``
+     - ``make html``
    * - Links
-     - ``sphinx-build -b linkcheck docs docs/_build/linkcheck``
+     - ``make linkcheckbroken``
    * - Docs prose
-     - ``vale sync`` then ``vale docs/``, as :ref:`vale-check` describes
+     - ``make vale``, as :ref:`vale-check` describes
    * - Licensing
-     - ``reuse lint``
+     - ``uv run reuse lint``
    * - Change log
-     - ``towncrier check --compare-with origin/main``
+     - ``make changes-check TOWNCRIEROPTS="--compare-with origin/main"``
 
 ``pre-commit`` runs the lint, format, and licensing checks on each commit. The docs build fails on any warning, including a cross-reference that doesn't resolve.
 
@@ -183,12 +183,12 @@ Public names
 RFC citations
     The core cites no RFC, as :ref:`write-about-sync` says. In an adapter's docstrings, cite a published RFC with the ``:rfc:`` role and the section inside the role, such as ``:rfc:`5545#section-3.6.1```. Written as ``:rfc:`5545` section 3.6.1``, it links only to the RFC's first page. Check the section number against the RFC's text before you cite it.
 
-    An Internet-Draft has no RFC number, so cite it as plain text with its name and section, such as "draft-ietf-jmap-calendars-33 section 5.9". Comments, tests, and private modules aren't rendered, so cite RFCs there as plain text too, such as "RFC 6578 section 3.2".
+    An Internet-Draft has no RFC number, so cite it as plain text with its name and section, such as ``draft-ietf-jmap-calendars-33 section 5.9``. Comments, tests, and private modules aren't rendered, so cite RFCs there as plain text too, such as ``RFC 6578 section 3.2``.
 
 .. _prose-docstrings-comments:
 
 Docstrings and comments
-    Say what's true about this code, specifically. A comment explains what the code can't show, such as a spec rule or a server's behavior, and never restates the code next to it. Use the punctuation a sentence needs: no em dash or spaced hyphen in place of a colon, comma, or period, and "produces" or "maps to" instead of an arrow. Leave out filler such as delve, leverage, utilize, robust, seamless, and pivotal.
+    Say what's true about this code, specifically. A comment explains what the code can't show, such as a specification's rule or a server's behavior, and never restates the code next to it. Use the punctuation a sentence needs: no em dash or spaced hyphen in place of a colon, comma, or period, and "produces" or "maps to" instead of an arrow. Leave out filler such as delve, leverage, utilize, robust, seamless, and pivotal.
 
 Dead code
     If your change makes a function unreachable, remove it in the same pull request.
@@ -203,9 +203,9 @@ This section covers the pages in ``docs/``. Docstrings follow :ref:`code-style`.
 Choose a Diátaxis category
     The docs follow the `Diátaxis framework <https://diataxis.fr/>`_. Each category answers one question, so put your page where its reader's question is:
 
-    - **Tutorial** (``tutorials/``): one guided path a newcomer follows from start to finish. New content rarely belongs here.
+    - **Tutorial** (``tutorials/``): one guided path a newcomer follows from start to finish. Most new content belongs elsewhere.
     - **How-to guide** (``how-to/``): the steps for one task, for a reader who knows the basics. It links to an explanation page for the why.
-    - **Reference** (``reference/``): the API, generated from docstrings. Each page renders its module's docstring as its introduction, so write the introduction there.
+    - **Reference** (``reference/``): the API, generated from docstrings. Each page renders its module's docstring as its introduction, so write the introduction there. ``make html`` writes the pages under :file:`docs/reference/api/` from the source, so commit the ones it adds or removes with your change.
     - **Explanation** (``explanation/``): why calendaring-sync works the way it does, under "Why" headings, as :doc:`explanation/design` does.
 
 .. _one-place:
@@ -219,7 +219,7 @@ Write about sync, not about protocols
     The core is protocol-agnostic, and so are its docs. Core pages and core docstrings describe sync in its own terms: sync tokens, versions, changes, and conflicts. Don't explain a core behavior through a protocol or a client library, even in an aside, and don't count or list the adapters in shared text: adding an adapter must never mean editing a core page. Protocol names, RFC numbers, and protocol fields belong in that adapter's own pages and docstrings.
 
 Prose style
-    Pages follow the `Microsoft Writing Style Guide <https://learn.microsoft.com/en-us/style-guide/welcome/>`_: plain language, active voice, second person, present tense, sentence-case headings, and no exclamation marks. Contractions are fine. Write "for example" and "that is", not "e.g." and "i.e.", and "such as", not "like", to introduce an example. Leave out "simple", "just", "very", and "easy": to a reader who can't complete the task as described, they read as condescending. :ref:`prose-docstrings-comments` applies here too.
+    Pages follow the `Microsoft Writing Style Guide <https://learn.microsoft.com/en-us/style-guide/welcome/>`_: plain language, active voice, second person, present tense, sentence-case headings, and no exclamation marks. Contractions are fine. Write ``for example`` and ``that is``, not ``e.g.`` and ``i.e.``, and ``such as``, not ``like``, to introduce an example. Leave out ``simple``, ``just``, ``very``, and ``easy``: to a reader who can't complete the task as described, they read as condescending. :ref:`prose-docstrings-comments` applies here too.
 
     Write each paragraph as one line. reStructuredText ignores line breaks inside a paragraph, and every page in this repository is written this way.
 
@@ -237,22 +237,24 @@ Preview the docs
 
 .. code-block:: bash
 
-    pip install -e ".[docs]"
-    sphinx-autobuild docs docs/_build/html
+    make livehtml
+
+It serves the docs at ``http://127.0.0.1:8050`` and rebuilds them when a page or the source changes.
 
 .. _vale-check:
 
 Check prose with Vale
 ---------------------
 
-`Install Vale <https://docs.vale.sh/topics/installation>`_, a standalone program rather than a Python package, then run:
+The ``docs`` group installs Vale, so run:
 
 .. code-block:: bash
 
-    vale sync
-    vale docs/
+    make vale
 
-It runs the Microsoft style package and `signs-of-ai-writing <https://github.com/ammil-industries/vale-signs-of-ai-writing>`_, which catch many of the rules above. CI runs it as a check that warns without failing.
+It checks every page with the Microsoft style package, calendaring-sync's own rules in :file:`docs/styles/calendaring-sync/`, and the words in :file:`docs/styles/config/vocabularies/calendaring-sync/accept.txt`, which catch many of the rules above. CI fails on an error and shows warnings too, as ``make vale VALEOPTS="--minAlertLevel='warning'"`` does. To check one page, add ``VALEFILES="docs/index.rst"``.
+
+Where a page has to break a rule, such as a diagram's source or a sentence naming a word the rules forbid, turn that one rule off around it with ``.. vale RULE = NO`` and back on with ``.. vale RULE = YES``, or all of them with ``.. vale off`` and ``.. vale on``.
 
 .. _commits-and-prs:
 
@@ -280,13 +282,13 @@ A pull request that changes behavior adds a news fragment. Changes to CI or inte
 
 In the file, say in one or two sentences what changed for users and, for a fix, what happened before. Name a class, method or error with a role, such as ``:class:`~calendaring_sync.replica.Replica```, so the entry links to its reference. How it works and how you found it belong in the pull request. The file name's number links the issue. A change with no issue uses ``+`` instead of a number, such as ``+resync-after-invalid-token.bugfix.rst``. Write one fragment per change, numbered when an issue has several (``11.feature.1.rst``, ``11.feature.2.rst``). Don't edit ``docs/changelog.rst``: :doc:`release` builds it from the fragments.
 
-If you used AI to help write the change, disclose it briefly in the fragment, as the :ref:`artificial-intelligence-policy` asks.
+If you used AI to help write the change, say so in a sentence in the fragment, as the :ref:`artificial-intelligence-policy` asks.
 
 To preview the change log:
 
 .. code-block:: bash
 
-    towncrier build --draft --version 0.0.0
+    uv run towncrier build --draft --version 0.0.0
 
 If you're unsure whether your pull request needs a fragment, ask a maintainer for the ``skip-changelog`` label.
 

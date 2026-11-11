@@ -1,8 +1,8 @@
 /* SPDX-FileCopyrightText: 2026 calendaring-sync contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Page content rules on top of pycal-theme.css: tables that fit the content
- * column, and mermaid diagrams in the site's own colors.
+ * Page content rules on top of pydata-sphinx-theme: tables that fit the
+ * content column, and mermaid diagrams in the theme's own colors.
  */
 
 /* Tables take the column widths their :widths: option sets and fit the
@@ -26,7 +26,7 @@
 
 /* Mermaid scopes its inline styles to each diagram's id, so these need
    !important to win. Every color comes from pydata-sphinx-theme's variables,
-   so light and dark mode both follow pycal-theme.css. */
+   so the diagrams follow its light and dark modes. */
 
 pre.mermaid {
   background: transparent;

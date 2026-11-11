@@ -532,12 +532,15 @@ class JMAPAdapter(_JMAPFlow, SyncAdapter):
     """Syncs one account's calendar events through a synchronous calendaring-jmap client.
 
     The account's events are one :term:`scope`. The content
-    :meth:`create` and :meth:`change` take is a JSCalendar event as UTF-8
-    JSON. A create's must have a ``uid`` and at least one calendar in
-    ``calendarIds``, and so must a change to a create not sent yet;
-    anything else raises :class:`ValueError`. The server picks a created
-    event's id, and :meth:`waiting` always returns an empty list. A write
-    the server won't take as it was sent becomes a :term:`conflict` of kind
+    :meth:`~calendaring_sync.adapters.base.SyncAdapter.create` and
+    :meth:`~calendaring_sync.adapters.base.SyncAdapter.change` take is a
+    JSCalendar event as UTF-8 JSON. A create's must have a ``uid`` and at
+    least one calendar in ``calendarIds``, and so must a change to a create
+    not sent yet; anything else raises :class:`ValueError`. The server picks
+    a created event's id, and
+    :meth:`~calendaring_sync.adapters.base.SyncAdapter.waiting` always
+    returns an empty list. A write the server won't take as it was sent
+    becomes a :term:`conflict` of kind
     :attr:`~calendaring_sync.objects.conflict.ConflictKind.NOT_ALLOWED`. Any
     other failure calendaring-jmap reports, such as a refused login,
     reaches you as its
