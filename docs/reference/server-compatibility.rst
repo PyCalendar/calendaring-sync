@@ -190,7 +190,7 @@ The JMAP adapter was checked against Cyrus 3.13.7 and Stalwart 0.16.21 between 2
      - Stored as a conflict record where it's refused; a refusal on ``calendarIds`` counts only when another event with that ``uid`` is in one of the event's calendars, and is a conflict the server didn't allow otherwise
    * - Update sending another ``uid`` (2026-10-25)
      - - Both: accepted, and the event keeps its own ``uid``
-       - Cyrus: afterwards no longer refuses a create with the ``uid`` that was sent, even once both events are deleted
+       - Cyrus: afterward no longer refuses a create with the ``uid`` that was sent, even once both events are deleted
      - The next sync stores the event with the ``uid`` the server kept
    * - Event in two calendars (``calendarIds`` with two entries) (2026-10-25)
      - - Cyrus: ``invalidProperties`` on ``calendarIds``

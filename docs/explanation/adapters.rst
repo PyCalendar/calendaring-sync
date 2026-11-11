@@ -197,7 +197,7 @@ A server generates a ``uid`` only when a create omits it (draft-ietf-jmap-calend
 Why writes use ifInState
 ------------------------
 
-A ``/set`` with ``ifInState``, the state the client expects, fails with ``stateMismatch`` if the type's state has moved (:rfc:`8620#section-5.3`). Each write carries the state after the previous one: the state the sync ingested to, then each applied write's ``newState``, which every ``/set`` answer holds. A write the server refuses changes nothing, so the state stays.
+A ``/set`` with ``ifInState``, the state the client expects, fails with ``stateMismatch`` if the type's state has moved (:rfc:`8620#section-5.3`). Each write carries the state after the previous one: the state the sync ingested to, then the ``newState`` of each applied write, which every ``/set`` answer holds. A write the server refuses changes nothing, so the state stays.
 
 That state covers the whole account, so a rejection means something changed, not necessarily this object. The rest of the sync's pushes would be rejected too, so they aren't sent: every edit stays pending for the next sync, which ingests the change first. Another client's delete moves the state as well, so a delete of an event someone else deleted is rejected before the server would say it's gone; the next ingest reports the removal. When a server does answer ``notFound``, the push ended gone: a change becomes a :term:`conflict` and a delete is done.
 

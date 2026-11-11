@@ -484,11 +484,12 @@ class _CalDAVFlow(Adapter):
 class CalDAVAdapter(_CalDAVFlow, SyncAdapter):
     """Syncs one calendar collection through a synchronous python-caldav client.
 
-    The calendar is one :term:`scope`. The content :meth:`create` and
-    :meth:`change` take is iCalendar data in UTF-8, and a create's must
-    hold an object with a ``UID``; anything else raises
-    :class:`ValueError`. A write the server won't take as it was sent
-    becomes a :term:`conflict` of kind
+    The calendar is one :term:`scope`. The content
+    :meth:`~calendaring_sync.adapters.base.SyncAdapter.create` and
+    :meth:`~calendaring_sync.adapters.base.SyncAdapter.change` take is
+    iCalendar data in UTF-8, and a create's must hold an object with a
+    ``UID``; anything else raises :class:`ValueError`. A write the server
+    won't take as it was sent becomes a :term:`conflict` of kind
     :attr:`~calendaring_sync.objects.conflict.ConflictKind.NOT_ALLOWED`.
     Any other failure python-caldav reports, such as a refused login, reaches
     you as its ``caldav.lib.error.DAVError``, unchanged.

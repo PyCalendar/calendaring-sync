@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: 2026 calendaring-sync contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Documentation build, links, spelling, grammar, and style
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: documentation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Documentation on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The lowest Python the docs build with, and the one Read the Docs uses.
+        python-version: ["3.13", "3.14"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The pages show when each was last changed.
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.7"
+          enable-cache: false
+
+      - name: Build HTML documentation
+        run: >-
+          make html PYTHONVERSION=${{ matrix.python-version }}
+          UV_GROUPS="--no-default-groups --group docs"
+
+      # Vale fails on errors and shows warnings too.
+      - name: Run Vale
+        run: >-
+          make vale VALEOPTS="--minAlertLevel='warning'" PYTHONVERSION=${{ matrix.python-version }}
+          UV_GROUPS="--no-default-groups --group docs"
+
+      - name: Check for broken links
+        run: >-
+          make linkcheckbroken PYTHONVERSION=${{ matrix.python-version }}
+          UV_GROUPS="--no-default-groups --group docs"

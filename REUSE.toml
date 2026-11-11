@@ -10,15 +10,16 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 calendaring-sync contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
-# Bare version string, no comment syntax available
+# uv writes the lock file itself, so a header in it would be stripped.
 [[annotations]]
-path = ".python-version"
+path = "uv.lock"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 calendaring-sync contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
+# Bare version string, no comment syntax available
 [[annotations]]
-path = "docs/.vale/styles/config/vocabularies/Base/accept.txt"
+path = ".python-version"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 calendaring-sync contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"

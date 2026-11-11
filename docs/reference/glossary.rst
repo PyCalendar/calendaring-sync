@@ -10,6 +10,12 @@ Glossary
 
 These are the sync terms calendaring-sync's pages use. :doc:`../explanation/design` explains why each part works the way it does, and :doc:`../explanation/adapters` explains what each term means for a given protocol.
 
+..
+   A term's aliases sit on the lines above its definition, which reads as a
+   repeated word, such as "local edit" over "edit".
+
+.. vale Vale.Repetition = NO
+
 .. glossary::
    :sorted:
 
@@ -130,3 +136,5 @@ These are the sync terms calendaring-sync's pages use. :doc:`../explanation/desi
 
    version
       A marker the server gives each object, which changes when the object does. The core only checks whether two versions are equal.
+
+.. vale Vale.Repetition = YES

@@ -4,9 +4,22 @@
 """Sphinx configuration for calendaring-sync documentation."""
 
 import datetime as dt
+import importlib
+import importlib.metadata
+import inspect
 import os
+import pkgutil
+import re
+
+from packaging.version import Version
+
+import calendaring_sync
 
 project = "calendaring-sync"
+# The navbar shows the version without a development build's suffix, so a build
+# between releases shows the next version hatch-vcs guesses.
+release = importlib.metadata.version("calendaring-sync")
+version = Version(release).base_version
 this_year = dt.date.today().year  # noqa: DTZ011
 copyright = f"{this_year}, calendaring-sync contributors"  # noqa: A001
 author = "calendaring-sync contributors"
@@ -15,6 +28,8 @@ extensions = [
     "notfound.extension",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    # Must come after napoleon: https://github.com/tox-dev/sphinx-autodoc-typehints/issues/15
+    "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
@@ -64,18 +79,18 @@ html_theme_options = {
             "attributes": {"target": "_blank", "rel": "noopener me"},
         },
     ],
-    "footer_start": ["copyright"],
-    "footer_end": ["nlnet"],
-    "logo": {"text": "calendaring-sync"},
-    "show_toc_level": 2,
-    "navbar_align": "content",
-    "show_nav_level": 1,
-    "navigation_with_keys": True,
-    "collapse_navigation": False,
-    "search_bar_text": "Search documentation",
-    "secondary_sidebar_items": ["page-toc", "edit-this-page", "sourcelink"],
-    "use_edit_page_button": True,
     "article_footer_items": ["last-updated"],
+    "footer_start": ["nlnet", "donate"],
+    "footer_center": "copyright",
+    "footer_end": ["rtd-pr-previews", "theme-version", "sphinx-version"],
+    "logo": {"text": "calendaring-sync"},
+    "navbar_start": ["navbar-logo", "version"],
+    "navigation_with_keys": True,
+    "search_bar_text": "Search",
+    "secondary_sidebar_items": ["edit-this-page", "page-toc", "sourcelink"],
+    "show_nav_level": 2,
+    "show_toc_level": 2,
+    "use_edit_page_button": True,
 }
 html_last_updated_fmt = "%Y-%m-%d"
 # sphinx-last-updated-by-git hides the source of a page git doesn't track yet,
@@ -91,24 +106,14 @@ html_context = {
 }
 
 templates_path = ["_templates"]
+# The index of every generated reference page, which the reference section
+# links through the package's own page instead.
+exclude_patterns = ["reference/api/modules.rst"]
 html_static_path = ["_static"]
-# Custom fa-custom/fa-pypi icon used in icon_links above; sync-bootstrap-theme
-# mirrors data-theme onto data-bs-theme so Bootstrap's own dark-mode variables
-# (dropdown menus, tooltips) activate instead of staying stuck in light mode.
-html_js_files = [
-    ("js/custom-icons.js", {"defer": "defer"}),
-    ("js/sync-bootstrap-theme.js", {"defer": "defer"}),
-]
-# Loaded as a separate <link> rather than @import inside pycal-theme.css:
-# an @import must be the first rule in a stylesheet, and if that external
-# request is ever blocked or slow (an ad blocker, a privacy extension, a
-# flaky network), browsers can fail to parse the rest of the file along
-# with it, taking every color override down with the font.
-html_css_files = [
-    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&family=Cascadia+Code&display=swap",
-    "css/pycal-theme.css",
-    "css/content.css",
-]
+# The fa-custom fa-pypi icon in icon_links above.
+html_js_files = [("js/custom-icons.js", {"defer": "defer"})]
+# Tables and the state diagrams.
+html_css_files = ["css/content.css"]
 
 notfound_template = "404.html"
 # Defaults to READTHEDOCS_CANONICAL_URL's path on RTD; outside RTD that env
@@ -154,18 +159,79 @@ napoleon_include_init_with_doc = True
 # dataclass field is listed once.
 napoleon_use_ivar = False
 
+
+def _public_ancestors():
+    """The name of every public class a class of the package inherits from.
+
+    A private base has no page, so what it defines, such as the CalDAV adapters'
+    ``needs_full_listings``, shows on each public class built on it; members a
+    public class defines show on that class's own page, and only there.
+    """
+    names = {"object"}
+    for module_info in pkgutil.walk_packages(calendaring_sync.__path__, "calendaring_sync."):
+        if any(part.startswith("_") or part == "tests" for part in module_info.name.split(".")):
+            continue
+        module = importlib.import_module(module_info.name)
+        for value in vars(module).values():
+            if inspect.isclass(value):
+                names.update(c.__name__ for c in value.__mro__ if not c.__name__.startswith("_"))
+    return names
+
+
 autodoc_default_options = {
     "members": True,
     # Each module's source is grouped by area, so its page reads the same way.
     "member-order": "bysource",
     "show-inheritance": True,
+    # Members inherited from these classes are left out, which leaves those of private bases.
+    "inherited-members": ",".join(sorted(_public_ancestors())),
 }
+
+# The hooks an adapter implements, which the adapter base documents for its authors.
+_ADAPTER_HOOKS = frozenset(
+    {"_read", "_send", "_waits", "_new_object_id", "_edit_fields", "_gone", "_ask"}
+)
+autodoc_default_options["private-members"] = ",".join(sorted(_ADAPTER_HOOKS))
+# Opaque values, documented without the fields their constructor takes.
+_OPAQUE = frozenset({"calendaring_sync.store.memory.MemoryData"})
+
+
+# A base as sphinx_autodoc_typehints hands it over, a rendered role such as
+# :py:class:`~calendaring_sync.objects.push._Outcome`, whose last name is private.
+_PRIVATE_BASE_RE = re.compile(r":py:class:`~?(?:\w+\.)*(_\w+)`")
 
 
 def _public_bases(app, name, obj, options, bases):
-    """Leave private base classes, such as the one every resolution shares, out of "Bases"."""
-    bases[:] = [base for base in bases if not base.__name__.startswith("_")]
+    """Leave private base classes, such as the one every resolution shares, out of "Bases".
+
+    Falls back to ``object`` when every base is private, so "Bases" is never empty.
+    """
+    bases[:] = [base for base in bases if not _is_private(base)] or [":py:class:`object`"]
+
+
+def _is_private(base):
+    """Whether a base is private, given as a class or, by sphinx_autodoc_typehints, a role."""
+    if isinstance(base, str):
+        return _PRIVATE_BASE_RE.fullmatch(base) is not None
+    return getattr(base, "__name__", "").startswith("_")
+
+
+def _adapter_hooks(app, what, name, obj, skip, options):
+    """Show the adapter hooks on the adapter base only, not where an adapter implements them."""
+    if name in _ADAPTER_HOOKS and getattr(obj, "__qualname__", "") != f"Adapter.{name}":
+        return True
+    return None
+
+
+def _opaque_signature(app, what, name, obj, options, signature, return_annotation):
+    """Show an opaque value's constructor without the fields it takes."""
+    if name in _OPAQUE:
+        return "()", return_annotation
+    return None
 
 
 def setup(app):
     app.connect("autodoc-process-bases", _public_bases)
+    app.connect("autodoc-skip-member", _adapter_hooks)
+    # Ahead of sphinx_autodoc_typehints, whose signature Sphinx would keep otherwise.
+    app.connect("autodoc-process-signature", _opaque_signature, priority=400)

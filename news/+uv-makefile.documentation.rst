@@ -1,0 +1,1 @@
+Switched development to uv, with the dependencies in dependency groups instead of the ``dev`` and ``docs`` extras, and to a :file:`Makefile` for the common commands: tests, linting, type checks and the docs build.

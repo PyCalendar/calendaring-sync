@@ -3,7 +3,7 @@
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.2
+    rev: v0.17.4
     hooks:
       - id: ruff-check
         args: [--fix]
@@ -14,10 +14,15 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+        # Jinja drops a template's last newline, so the apidoc templates end with a
+        # blank line for each page they write to end with one newline.
+        exclude: ^docs/_templates/apidoc/
       - id: check-yaml
       - id: check-added-large-files
+        # uv writes the lock file, which is text and grows with the dependencies.
+        exclude: ^uv\.lock$
 
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v6.2.0
+    rev: v6.3.0
     hooks:
       - id: reuse

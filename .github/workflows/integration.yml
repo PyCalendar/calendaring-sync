@@ -39,23 +39,16 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          python-version: "3.15"
-          pip-version: "26.2.2"
+          version: "0.13.7"
+          enable-cache: false
 
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
-
-      # Radicale and Xandikos run embedded; the rest from this repo's fixtures.
-      - name: Start Stalwart, Cyrus and Baïkal
-        run: bash tests/docker/start.sh stalwart cyrus baikal
-
+      # Radicale and Xandikos run embedded; the rest from this repo's fixtures,
+      # which the target starts.
       - name: Run integration tests
-        run: |
-          pytest src/calendaring_sync/tests/test_caldav_integration.py \
-            src/calendaring_sync/tests/test_jmap_integration.py
+        run: make test-integration PYTHONVERSION=3.15 UV_GROUPS="--no-default-groups --group test"
 
       # Each server's log, to read when a test fails; a server that never
       # started has none, and that mustn't hide the others'.
